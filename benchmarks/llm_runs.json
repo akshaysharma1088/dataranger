@@ -1,0 +1,4 @@
+[
+  {"model": "qwen2.5:7b", "seeds": 60, "nshards": 20},
+  {"model": "qwen2.5:14b", "seeds": 24, "nshards": 20}
+]

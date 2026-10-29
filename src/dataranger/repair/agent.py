@@ -102,6 +102,28 @@ class Monitors:
         return True
 
 
+def context(part: pd.DataFrame, d, fs: list[Finding], manifest: pd.DataFrame, mon: "Monitors", reload_ok: bool) -> dict:
+    """What an operator (or an LLM) sees about one incident: the alerts and the numbers behind them."""
+    m = manifest[manifest["txn_date"] == d].set_index("channel")
+    med, _ = mon.vol[pd.Timestamp(d).isoweekday()]
+    ch = {}
+    for c in sorted(set(m.index) - {"*"} | set(part["channel"].dropna())):
+        g = part[part["channel"] == c]
+        ch[c] = {"rows": int(len(g)), "source_rows": int(m.at[c, "n"]) if c in m.index else 0,
+                 "amount": round(float(g["amount"].sum()), 2),
+                 "source_amount": round(float(m.at[c, "amount"]), 2) if c in m.index else 0.0,
+                 "median_amount": round(float(g["amount"].median()), 2) if len(g) else None,
+                 "usual_median_amount": round(float(mon.med.get(c, float("nan"))), 2)}
+    return {"date": pd.Timestamp(d).date().isoformat(), "weekday": pd.Timestamp(d).day_name(),
+            "rows": int(len(part)), "typical_rows_for_weekday": int(round(float(np.exp(med)))),
+            "source_rows": int(m.at["*", "n"]) if "*" in m.index else None,
+            "duplicate_keys": int(part["txn_id"].duplicated().sum()),
+            "duplicate_business_rows": int(part.duplicated(subset=["customer_id", "amount", "category", "channel"]).sum()),
+            "unknown_customers": int((~part["customer_id"].isin(mon.cust)).sum()),
+            "alerts": [{"detector": f.detector, **{k: v for k, v in f.evidence.items()}} for f in fs],
+            "channels": ch, "reload_from_source_available": reload_ok}
+
+
 def run(case: Case, granularity: str = "channel", retention_days: int = 14, reconcile: bool = True) -> list[dict]:
     inst = case.instance
     wh = {k: v.copy() for k, v in case.warehouse.items()}
@@ -159,5 +181,6 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
                          "monitors_quiet": mon.quiet(fixed, d) if len(fixed) else False})
         records.append({"partition": p, "kinds": issue_kinds.get(p, ["false_alarm"]), "table_level": False,
                         "detectors": sorted({f.detector for f in fs}), "reload_ok": reload_ok,
-                        "default": str(default) if default else None, "candidates": rows})
+                        "default": str(default) if default else None, "candidates": rows,
+                        "context": context(part, d, fs, case.manifest, mon, reload_ok)})
     return records
