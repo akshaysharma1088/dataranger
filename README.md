@@ -209,12 +209,12 @@ The target held in every split. Baran's corrections are in `results/baran/`; `be
 ## Reproducing the paper
 
 ```bash
-pip install -e ".[bench]"
-./reproduce.sh          # every analysis from the committed incident records
+pip install -r environment.txt && pip install -e .   # the exact versions used for the paper
+./reproduce.sh          # every analysis from the committed incident records (about 30 minutes, 2 cores)
 ./reproduce.sh full     # regenerate the records too
 ```
 
-Seeds are fixed, so the numbers come out the same. The LLM proposals (from the Actions workflow) and Baran's corrections (needs `raha`) are scored from their saved outputs.
+Seeds are fixed, so the numbers come out the same (wall-clock timings aside). The LLM proposals (from the Actions workflow, saved in `results/llm_responses/`) and Baran's corrections (`results/baran/`, needs `raha`) are scored from their saved outputs, so the archive alone is enough to reproduce every table.
 
 ## Citing
 

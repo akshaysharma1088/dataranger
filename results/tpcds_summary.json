@@ -43,6 +43,13 @@
    "harm": 0.31612002791346827,
    "harm_count": 1359,
    "real_errors_fixed": 0.22152777777777777
+  },
+  "exact_match": {
+   "incidents": 4299,
+   "auto_rate": 0.48871830658292625,
+   "harm": 0.0,
+   "harm_count": 0,
+   "real_errors_fixed": 0.34652777777777777
   }
  },
  "transfer": {
@@ -79,7 +86,8 @@
    "harm_max": 0.012287334593572778,
    "real_errors_fixed_mean": 0.5580277777777778,
    "violation_rate": 0.08,
-   "population_violation_rate": 0.0
+   "clear_exceedance_rate": 0.0,
+   "ci_halfwidth_median": 0.002699965530273858
   },
   "0.02": {
    "lambda_median": 0.05735270442218037,
@@ -88,7 +96,8 @@
    "harm_max": 0.023266635644485806,
    "real_errors_fixed_mean": 0.612,
    "violation_rate": 0.07,
-   "population_violation_rate": 0.0
+   "clear_exceedance_rate": 0.0,
+   "ci_halfwidth_median": 0.005099613040856915
   },
   "0.05": {
    "lambda_median": 0.15754867298486527,
@@ -97,10 +106,17 @@
    "harm_max": 0.05444392740809679,
    "real_errors_fixed_mean": 0.6159027777777778,
    "violation_rate": 0.02,
-   "population_violation_rate": 0.0
+   "clear_exceedance_rate": 0.0,
+   "ci_halfwidth_median": 0.008015008726821954
   }
  },
  "fixed_threshold": {
+  "0.0": {
+   "harm_mean": 0.0,
+   "auto_rate": 0.48871830658292625,
+   "violates_0.01": 0.0,
+   "violates_0.05": 0.0
+  },
   "0.005": {
    "harm_mean": 0.0017286562373164207,
    "auto_rate": 0.7052802977436613,
