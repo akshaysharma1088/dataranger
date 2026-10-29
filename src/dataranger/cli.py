@@ -70,11 +70,12 @@ def main(argv=None):
         from pathlib import Path
         from .bench import generate, inject
         from .patrol import Mapping, patrol, write_outputs
-        case = inject(generate(args.seed, "small"))
+        from datetime import date, timedelta
+        case = inject(generate(args.seed, "small", start=date.today() - timedelta(days=60)))
         res = patrol(case.warehouse["transactions"], case.warehouse["customers"],
                      case.manifest.rename(columns={"channel": "channel"}), Mapping(),
                      source_facts=case.source["transactions"])
-        write_outputs(res, Path(args.out), "DataRanger demo patrol")
+        write_outputs(res, Path(args.out), "DataRanger demo patrol", table="demo.payments_daily")
         n = {d: sum(r["decision"] == d for r in res.incidents) for d in ("auto-fixed", "no action needed", "escalate")}
         print(f"{len(res.incidents)} incidents: {n['auto-fixed']} fixed, {n['no action needed']} checked and left alone, "
               f"{n['escalate']} for you. Report: {args.out}/dashboard.html")
@@ -86,7 +87,7 @@ def main(argv=None):
         mp = Mapping(key=args.key, reference=args.reference, date=args.date, segment=args.segment,
                      category=args.category, amount=args.amount, ref_key=args.ref_key)
         res = patrol(facts, refs, man, mp, lam=args.threshold if args.threshold is not None else DEFAULT_LAMBDA)
-        write_outputs(res, Path(args.out), f"DataRanger patrol: {args.table}")
+        write_outputs(res, Path(args.out), f"DataRanger patrol: {args.table}", table=args.table)
         print(f"{len(res.incidents)} incidents. Report: {args.out}/dashboard.html")
         return 0
     if args.command == "bench":

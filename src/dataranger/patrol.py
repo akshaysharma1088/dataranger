@@ -65,6 +65,9 @@ class Mapping:
 class PatrolResult:
     incidents: list[dict] = field(default_factory=list)
     fixed_table: pd.DataFrame | None = None
+    days: list = field(default_factory=list)
+    lam: float = DEFAULT_LAMBDA
+    rows: int = 0
 
 
 def patrol(facts: pd.DataFrame, refs: pd.DataFrame, manifest: pd.DataFrame, mapping: Mapping,
@@ -97,7 +100,8 @@ def patrol(facts: pd.DataFrame, refs: pd.DataFrame, manifest: pd.DataFrame, mapp
                 new = F.apply(fx, part, sp, cust)
                 fixed = pd.concat([fixed[fixed["txn_date"] != d], new], ignore_index=True)
         r["chosen"] = c
-    return PatrolResult(recs, mapping.to_user(fixed.sort_values(["txn_date", "txn_id"], ignore_index=True)))
+    return PatrolResult(recs, mapping.to_user(fixed.sort_values(["txn_date", "txn_id"], ignore_index=True)),
+                        days=[d.isoformat() for d in days], lam=lam, rows=len(t))
 
 
 def _parse(s: str) -> F.Fix:
@@ -112,7 +116,7 @@ def _parse(s: str) -> F.Fix:
     return F.make(action, **params)
 
 
-def write_outputs(res: PatrolResult, out: Path, title: str = "DataRanger patrol report") -> None:
+def write_outputs(res: PatrolResult, out: Path, title: str = "DataRanger patrol report", table: str = "transactions") -> None:
     from .report import render
     out.mkdir(parents=True, exist_ok=True)
     with open(out / "audit.jsonl", "w") as f:
@@ -123,7 +127,8 @@ def write_outputs(res: PatrolResult, out: Path, title: str = "DataRanger patrol 
             f.write(json.dumps(rec, default=str) + "\n")
     if res.fixed_table is not None:
         res.fixed_table.to_csv(out / "fixed_version.csv", index=False)
-    (out / "dashboard.html").write_text(render(res.incidents, title, run_date=date.today().isoformat()))
+    meta = {"table": table, "days": res.days, "lambda": res.lam, "rows": res.rows, "alpha": 0.01}
+    (out / "dashboard.html").write_text(render(res.incidents, title, run_date=date.today().isoformat(), meta=meta))
 
 
 def from_duckdb(db: str, table: str, ref_table: str, manifest_table: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
