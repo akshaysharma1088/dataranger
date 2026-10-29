@@ -1,0 +1,138 @@
+{
+ "patrols": [
+  {
+   "sf": 1.0,
+   "days": 60,
+   "rows": 78472,
+   "rows_per_day": 1307.8666666666666,
+   "incidents": 45,
+   "candidates": 123,
+   "seconds": 5.990889549255371,
+   "peak_gb": 0.225812
+  },
+  {
+   "sf": 1.0,
+   "days": 365,
+   "rows": 526229,
+   "rows_per_day": 1445.684065934066,
+   "incidents": 264,
+   "candidates": 523,
+   "seconds": 42.36745882034302,
+   "peak_gb": 0.450796
+  },
+  {
+   "sf": 10.0,
+   "days": 60,
+   "rows": 797953,
+   "rows_per_day": 13299.216666666667,
+   "incidents": 60,
+   "candidates": 501,
+   "seconds": 72.35127663612366,
+   "peak_gb": 0.781456
+  },
+  {
+   "sf": 10.0,
+   "days": 365,
+   "rows": 5254595,
+   "rows_per_day": 14435.70054945055,
+   "incidents": 364,
+   "candidates": 2508,
+   "seconds": 534.5146436691284,
+   "peak_gb": 2.87456
+  }
+ ],
+ "partition": [
+  {
+   "rows": 1000000,
+   "per_candidate_seconds": 0.09102106094360352,
+   "candidates": {
+    "none()": {
+     "seconds": 0.029777050018310547,
+     "residual": Infinity
+    },
+    "dedupe(key=txn_id)": {
+     "seconds": 0.14586257934570312,
+     "residual": 0.0
+    },
+    "dedupe(keep=last, key=txn_id)": {
+     "seconds": 0.13988256454467773,
+     "residual": 1.393664288772797e-16
+    },
+    "rescale(channel=ach, factor=0.01)": {
+     "seconds": 0.048562049865722656,
+     "residual": Infinity
+    }
+   },
+   "peak_gb": 2.87456
+  },
+  {
+   "rows": 5000000,
+   "per_candidate_seconds": 0.6209990382194519,
+   "candidates": {
+    "none()": {
+     "seconds": 0.25315189361572266,
+     "residual": Infinity
+    },
+    "dedupe(key=txn_id)": {
+     "seconds": 0.9271481037139893,
+     "residual": 0.0
+    },
+    "dedupe(keep=last, key=txn_id)": {
+     "seconds": 0.9158883094787598,
+     "residual": 0.0
+    },
+    "rescale(channel=ach, factor=0.01)": {
+     "seconds": 0.38780784606933594,
+     "residual": Infinity
+    }
+   },
+   "peak_gb": 2.87456
+  },
+  {
+   "rows": 10000000,
+   "per_candidate_seconds": 1.2218396067619324,
+   "candidates": {
+    "none()": {
+     "seconds": 0.5727698802947998,
+     "residual": Infinity
+    },
+    "dedupe(key=txn_id)": {
+     "seconds": 1.8705806732177734,
+     "residual": 0.0
+    },
+    "dedupe(keep=last, key=txn_id)": {
+     "seconds": 1.801759958267212,
+     "residual": 1.113574614309439e-16
+    },
+    "rescale(channel=ach, factor=0.01)": {
+     "seconds": 0.6422479152679443,
+     "residual": Infinity
+    }
+   },
+   "peak_gb": 2.87456
+  },
+  {
+   "rows": 20000000,
+   "per_candidate_seconds": 2.664049446582794,
+   "candidates": {
+    "none()": {
+     "seconds": 1.2355687618255615,
+     "residual": Infinity
+    },
+    "dedupe(key=txn_id)": {
+     "seconds": 3.8670237064361572,
+     "residual": 0.0
+    },
+    "dedupe(keep=last, key=txn_id)": {
+     "seconds": 3.978924036026001,
+     "residual": 0.0
+    },
+    "rescale(channel=ach, factor=0.01)": {
+     "seconds": 1.574681282043457,
+     "residual": Infinity
+    }
+   },
+   "peak_gb": 4.524756
+  }
+ ]
+}

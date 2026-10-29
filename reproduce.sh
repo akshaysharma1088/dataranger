@@ -32,6 +32,8 @@ if [ "$MODE" = "full" ]; then
   python benchmarks/run_stream.py
   step "TPC-DS store_sales, scale factor 1, 30 windows x 3 injections (Q4)"
   python benchmarks/run_tpcds.py 1 3
+  step "Scale: TPC-DS at scale factors 1 and 10, single partitions to 20M rows (Q8; needs about 8 GB RAM)"
+  python benchmarks/scale.py tpcds_sf1.duckdb:1 tpcds_sf10.duckdb:10
 fi
 
 step "Guarantee, baselines and fixed thresholds (Q1-Q3, Table 2, Figure 3)"

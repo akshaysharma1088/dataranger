@@ -13,6 +13,7 @@ import json
 import resource
 import sys
 import time
+from datetime import date, timedelta
 
 import numpy as np
 import pandas as pd
@@ -31,10 +32,10 @@ def peak_gb():
 out = {"patrols": [], "partition": []}
 for arg in sys.argv[1:]:
     db, sf = arg.rsplit(":", 1)
-    facts, customers = load(float(sf), db)
     for n_days in (60, 365):
-        ws = windows(facts, customers, n_days=n_days)
-        inst = ws[len(ws) // 2]
+        start = date(2000, 7, 1)  # mid-range, crossing the July to August volume step
+        facts, customers = load(float(sf), db, start, start + timedelta(days=n_days - 1))
+        inst = windows(facts, customers, n_days=n_days)[0]
         t0 = time.time()
         recs = run(inject(inst, seed=7))
         secs = time.time() - t0
@@ -45,7 +46,7 @@ for arg in sys.argv[1:]:
                "seconds": secs, "peak_gb": peak_gb()}
         out["patrols"].append(row)
         print(row, flush=True)
-    del facts
+        del facts, inst, recs
 
 rng = np.random.default_rng(0)
 for n in (1_000_000, 5_000_000, 10_000_000, 20_000_000):

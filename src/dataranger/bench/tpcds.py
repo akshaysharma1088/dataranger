@@ -48,14 +48,18 @@ def _load_extension(con: duckdb.DuckDBPyConnection) -> None:
         con.execute("LOAD tpcds")
 
 
-def load(sf: float = 1, db: str | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Generate (or reuse, if `db` already holds it) TPC-DS at scale factor `sf`; return facts and customers."""
+def load(sf: float = 1, db: str | None = None, start=None, end=None) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Generate (or reuse, if `db` already holds it) TPC-DS at scale factor `sf`; return facts and customers.
+
+    `start` and `end` (dates, inclusive) load only that range of sale dates, for scale factors too large
+    to hold in memory as a whole."""
     con = duckdb.connect(db or ":memory:")
     con.execute("SET enable_progress_bar = false")
     if not con.execute("select count(*) from information_schema.tables where table_name = 'store_sales'").fetchone()[0]:
         _load_extension(con)
         con.execute(f"CALL dsdgen(sf={sf})")
-    facts = con.execute(QUERY + " order by txn_date, txn_id").df()
+    where = f" and d_date between DATE '{start}' and DATE '{end}'" if start is not None else ""
+    facts = con.execute(QUERY + where + " order by txn_date, txn_id").df()
     customers = con.execute("select c_customer_sk as customer_id from customer order by 1").df()
     con.close()
     facts["txn_date"] = pd.to_datetime(facts["txn_date"]).dt.date
