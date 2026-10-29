@@ -25,7 +25,10 @@ DEFAULT_FIX = {"duplicate_keys": "dedupe", "duplicate_rows": "dedupe_business", 
                "scale_shift": "rescale"}
 
 
-def propose(findings: list[Finding], reload_ok: bool) -> tuple[list[F.Fix], F.Fix | None]:
+CHANNELS = ("card", "ach", "p2p", "wire")  # the benchmark's segments, in the order v0.1 enumerated them
+
+
+def propose(findings: list[Finding], reload_ok: bool, channels: tuple = CHANNELS) -> tuple[list[F.Fix], F.Fix | None]:
     """All template candidates for one partition, and the naive default a rules engine would pick."""
     c: list[F.Fix] = [F.make("none")]
     default = None
@@ -47,7 +50,7 @@ def propose(findings: list[Finding], reload_ok: bool) -> tuple[list[F.Fix], F.Fi
             c.append(F.make("rescale", factor=0.01))
             if "channel" in e:
                 c.append(F.make("rescale", factor=0.01, channel=e["channel"]))
-            for ch in ("card", "ach", "p2p", "wire"):
+            for ch in channels:
                 c.append(F.make("rescale", factor=0.01, channel=ch))
         if default is None and f.detector in DEFAULT_FIX:
             a = DEFAULT_FIX[f.detector]
@@ -146,6 +149,8 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
         findings = detect(wh, inst.days)
 
     t = wh["transactions"]
+    seen = set(t["channel"].dropna().astype(str))
+    channels = CHANNELS if seen <= set(CHANNELS) else tuple(sorted(seen))
     mon = Monitors(t, wh["customers"])
     issue_kinds: dict[str, list[str]] = {}
     for i in case.issues:
@@ -168,7 +173,7 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
         part = t[t["txn_date"] == d]
         truth = src_t[src_t["txn_date"] == d]
         reload_ok = d >= last - timedelta(days=retention_days)
-        cands, default = propose(fs, reload_ok)
+        cands, default = propose(fs, reload_ok, channels)
         src_of = {fx: "template" for fx in cands}
         llm_fix = (extra or {}).get(p)
         if llm_fix is not None:

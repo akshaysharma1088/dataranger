@@ -32,7 +32,7 @@ def score(month_recs, lam, mem):
 
 out = {}
 for alpha in (0.02, 0.05):
-    res = {p: defaultdict(list) for p in ("static", "epoch", "epoch_memory", "epoch_memory_tolerant")}
+    res = {p: defaultdict(list) for p in ("static", "epoch", "epoch_memory", "epoch_memory_tolerant", "epoch_memory_frozen")}
     for s in streams:
         months = by[s]
         mem_at, tol_at = {}, {}
@@ -47,8 +47,13 @@ for alpha in (0.02, 0.05):
             lam_epoch = calibrate(window, alpha, DELTA)
             lam_mem = M.calibrate(window, [mem_at[k] for k in range(m - WINDOW, m) for _ in months[k]], alpha, DELTA)
             lam_tol = M.calibrate(window, [tol_at[k] for k in range(m - WINDOW, m) for _ in months[k]], alpha, DELTA)
+            # Frozen memory: learned only before the window, then held fixed for calibration and deployment,
+            # so the certified policy is exactly the deployed one and the LTT bound applies as stated.
+            frozen = mem_at[m - WINDOW]
+            lam_frz = M.calibrate(window, [frozen] * len(window), alpha, DELTA)
             for p, lam, mm in (("static", lam_static, None), ("epoch", lam_epoch, None),
-                               ("epoch_memory", lam_mem, mem_at[m]), ("epoch_memory_tolerant", lam_tol, tol_at[m])):
+                               ("epoch_memory", lam_mem, mem_at[m]), ("epoch_memory_tolerant", lam_tol, tol_at[m]),
+                               ("epoch_memory_frozen", lam_frz, frozen)):
                 h, a, ph = score(months[m], lam, mm)
                 res[p][m].append({"harm": h, "auto": a, "pl_harm": ph, "lam": lam})
     summ = {}

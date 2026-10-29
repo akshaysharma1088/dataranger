@@ -53,7 +53,7 @@ dataranger calibrate --audit report/audit.jsonl --labels reviewed.csv --alpha 0.
 
 `reviewed.csv` has columns `partition` and `verdict` (right or wrong). About 300 reviewed incidents certify a 1% target and about 60 certify 5%.
 
-## DQ-Repair benchmark (in progress)
+## DQ-Repair benchmark
 
 DQ-Repair measures how many data-quality issues an agent can fix safely. This branch adds the benchmark data and the detection stage.
 
@@ -82,7 +82,7 @@ dataranger bench --size small --seed 1        # one synthetic case
 python benchmarks/run_detection.py            # all sizes and the real datasets
 ```
 
-## Repair with a calibrated gate (first results)
+## Repair with a calibrated gate
 
 The loop proposes template fixes for each incident, checks every candidate against the source's control totals and the declared invariants (unique keys, valid references), and applies the best-supported fix only if its residual clears a threshold chosen by Learn-then-Test. Fixes that delete data or change meaning always escalate. The source publishes control totals per partition and channel; 15% of them are stale by up to 1%, so even a correct fix can leave a small residual.
 
@@ -113,14 +113,38 @@ Qwen2.5 7B and 14B, served by Ollama on free GitHub Actions runners (`.github/wo
 
 | Model | Policy | Automated | Harm | Real errors fixed |
 |---|---|---|---|---|
-| 7B | Apply the model's fix | 91.4% | 37.3% | 27.9% |
-| 7B | Apply it if the monitors go quiet | 62.2% | 22.6% | 27.3% |
-| 7B | Through the gate | 50.0% | 3.05% | 27.0% |
-| 7B | Gate over model + templates | 76.5% | 3.04% | 58.2% |
-| 14B | Apply the model's fix | 91.3% | 30.4% | 43.2% |
-| 14B | Through the gate | 53.7% | 2.27% | 40.5% |
+| 7B | Apply the model's fix | 93.4% | 42.4% | 23.6% |
+| 7B | Apply it if the monitors go quiet | 66.5% | 29.4% | 23.3% |
+| 7B | Apply it if its own gap to the totals is under 0.5% | 33.6% | 5.58% | 20.8% |
+| 7B | Through the gate | 27.2% | 3.19% | 20.4% |
+| 7B | Gate over model + templates | 79.3% | 3.17% | 63.4% |
+| 14B | Apply the model's fix | 92.8% | 35.5% | 40.1% |
+| 14B | Apply it if its own gap to the totals is under 0.5% | 39.5% | 5.22% | 33.8% |
+| 14B | Through the gate | 32.3% | 2.43% | 31.9% |
 
-The models' fixes were right for 54% (7B) and 61% (14B) of incidents. The gate kept harm under target for both; it cannot make a weak proposer strong, but it makes any proposer safe. `python benchmarks/eval_llm.py <runs/<id>/llm>` reproduces the table.
+The models' fixes were right for 51% (7B) and 57% (14B) of incidents. An agent that checks its own fix against the control totals is not enough: with a 0.5% tolerance it still breaks a 5% target, while the same tolerance is safe for the pooled candidates. The safe tolerance depends on the proposer, which is what calibration measures. `python benchmarks/eval_llm.py <runs/<id>/llm>` reproduces the table.
+
+### TPC-DS
+
+The same loop on a benchmark we did not design: TPC-DS `store_sales` at scale factor 1 (DuckDB's `dsdgen`), store as the segment for control totals, item category as the category, net paid as the amount. Thirty 60-day windows, three injections each: 4,299 incidents, 58% of them false alarms from TPC-DS's seasonal volume. Splits are by window.
+
+| Policy | Automated | Silent harm | Real errors fixed |
+|---|---|---|---|
+| Rules: default fix per alert | 82.8% | 63.4% | 44.0% |
+| Fix must quiet the monitors | 40.1% | 31.6% | 22.2% |
+| Calibrated on TPC-DS, alpha = 1% | 77.6% | 0.59% | 55.8% |
+| Calibrated on TPC-DS, alpha = 5% | 90.7% | 3.74% | 61.6% |
+| Calibrated on DQ-Repair, applied to TPC-DS, alpha = 1% | 75.8% | 0.47% | 54.9% |
+
+```bash
+pip install -e ".[bench]"                      # includes the DuckDB tpcds extension
+python benchmarks/run_tpcds.py 1 3             # about 6 minutes on two cores
+python benchmarks/analyze_tpcds.py
+```
+
+### How strong is the guarantee?
+
+Learn-then-Test assumes independent incidents, and incidents of one table share its manifest. `benchmarks/analyze_guarantee.py` measures it: the intraclass correlation of the loss within an instance is about 0.005 (design effect at most 1.16). `calibrate_clusters` makes the table the unit instead, which needs no independence inside a table; it certifies 5% and 10% targets from 125 tables, and needs about 300 tables for 1%.
 
 ### Larger tables
 
@@ -164,6 +188,16 @@ No source of record here, so the evidence comes from the table itself (agreeing 
 | Beers | DataRanger, alpha 1% | 85.0% | 100.0% | 0.02 |
 
 The target held in every split. Baran's corrections are in `results/baran/`; `benchmarks/run_baran.py` reproduces them (it needs `pip install raha`).
+
+## Reproducing the paper
+
+```bash
+pip install -e ".[bench]"
+./reproduce.sh          # every analysis from the committed incident records
+./reproduce.sh full     # regenerate the records too
+```
+
+Seeds are fixed, so the numbers come out the same. The LLM proposals (from the Actions workflow) and Baran's corrections (needs `raha`) are scored from their saved outputs.
 
 ## Citing
 
