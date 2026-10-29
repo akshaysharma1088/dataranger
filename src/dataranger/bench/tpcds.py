@@ -3,8 +3,8 @@
 The fact table is store_sales joined to its date and item dimensions; the reference table is
 customer. One row is one ticket line, keyed by (ticket number, item). The segment that control
 totals are split by is the store, the category is the item category, and the amount is net paid.
-Rows without a customer or a store (about 8 percent at scale factor 1, with rows lacking a sale date) are dropped, because the
-benchmark's invariants require every row to reference a customer.
+Rows without a sale date, customer or store (about 8 percent at scale factor 1) are dropped, because
+the benchmark's invariants require every row to reference a customer.
 
 Each instance is a window of consecutive days. TPC-DS volume is strongly seasonal (daily rows
 double from July to August and rise again before the holidays), so windows that cross those

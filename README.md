@@ -15,7 +15,7 @@ wrong fixes under a rate you choose. Everything else goes to a person, with the 
   <a href="https://pypi.org/project/dataranger/"><img src="https://img.shields.io/pypi/v/dataranger?label=pypi&color=5fb98a" alt="PyPI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-e8b53a" alt="License"></a>
   <a href="https://github.com/akshaysharma1088/dataranger/actions/workflows/ci.yml"><img src="https://github.com/akshaysharma1088/dataranger/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://doi.org/10.5281/zenodo.23769536"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.23769536.svg" alt="DOI"></a>
+  <a href="https://doi.org/10.5281/zenodo.23781149"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.23781149.svg" alt="DOI"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-5fb98a" alt="Python 3.10+">
 </p>
 
@@ -218,7 +218,7 @@ Seeds are fixed, so the numbers come out the same. The LLM proposals (from the A
 
 ## Citing
 
-See `CITATION.cff`. Archived on Zenodo: [10.5281/zenodo.23769536](https://doi.org/10.5281/zenodo.23769536).
+See `CITATION.cff`. Archived on Zenodo: [10.5281/zenodo.23781149](https://doi.org/10.5281/zenodo.23781149).
 
 ## License
 
