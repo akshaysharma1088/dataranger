@@ -1,6 +1,6 @@
 # DataRanger
 
-[![PyPI](https://img.shields.io/pypi/v/dataranger)](https://pypi.org/project/dataranger/) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23769394.svg)](https://doi.org/10.5281/zenodo.23769394)
+[![PyPI](https://img.shields.io/pypi/v/dataranger)](https://pypi.org/project/dataranger/) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23769536.svg)](https://doi.org/10.5281/zenodo.23769536)
 
 **DataRanger patrols your data, fixes what it can prove, and calls you for the rest.**
 
@@ -147,7 +147,7 @@ The target held in every split. Baran's corrections are in `results/baran/`; `be
 
 ## Citing
 
-See `CITATION.cff`. Archived on Zenodo: [10.5281/zenodo.23769394](https://doi.org/10.5281/zenodo.23769394).
+See `CITATION.cff`. Archived on Zenodo: [10.5281/zenodo.23769536](https://doi.org/10.5281/zenodo.23769536).
 
 ## License
 
