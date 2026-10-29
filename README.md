@@ -102,14 +102,14 @@ Qwen2.5 7B and 14B, served by Ollama on free GitHub Actions runners (`.github/wo
 
 | Model | Policy | Automated | Harm | Real errors fixed |
 |---|---|---|---|---|
-| 7B | Apply the model's fix | 91.4% | 37.3% | 27.9% |
-| 7B | Apply it if the monitors go quiet | 62.2% | 22.6% | 27.3% |
-| 7B | Through the gate | 50.0% | 3.05% | 27.0% |
-| 7B | Gate over model + templates | 76.5% | 3.04% | 58.2% |
-| 14B | Apply the model's fix | 91.3% | 30.4% | 43.2% |
-| 14B | Through the gate | 53.7% | 2.27% | 40.5% |
+| 7B | Apply the model's fix | 93.4% | 42.4% | 23.6% |
+| 7B | Apply it if the monitors go quiet | 66.5% | 29.4% | 23.3% |
+| 7B | Through the gate | 27.2% | 3.19% | 20.4% |
+| 7B | Gate over model + templates | 79.3% | 3.17% | 63.4% |
+| 14B | Apply the model's fix | 92.8% | 35.5% | 40.1% |
+| 14B | Through the gate | 32.3% | 2.43% | 31.9% |
 
-The models' fixes were right for 54% (7B) and 61% (14B) of incidents. The gate kept harm under target for both; it cannot make a weak proposer strong, but it makes any proposer safe. `python benchmarks/eval_llm.py <runs/<id>/llm>` reproduces the table.
+The models' fixes were right for 51% (7B) and 57% (14B) of incidents. On versioned duplicates they kept the pre-settlement copy in 111 of 120 (7B) and 37 of 48 (14B) incidents, and never chose the settled one. The gate kept mean harm under target; it cannot make a weak proposer strong, but it makes any proposer safe. `python benchmarks/eval_llm.py <runs/<id>/llm>` reproduces the table.
 
 ### Larger tables
 
