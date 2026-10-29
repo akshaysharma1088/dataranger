@@ -1,94 +1,99 @@
 {
  "instances": 250,
- "incidents": 6150,
+ "incidents": 6600,
  "table_level": 250,
  "mix": {
   "false_alarm": {
-   "n": 1652,
-   "correct_available": 1652,
-   "best_correct": 1652
-  },
-  "volume_spike": {
-   "n": 498,
-   "correct_available": 498,
-   "best_correct": 486
-  },
-  "rekeyed_duplicates": {
-   "n": 500,
-   "correct_available": 500,
-   "best_correct": 498
+   "n": 1603,
+   "correct_available": 1603,
+   "best_correct": 1603
   },
   "duplicates": {
    "n": 500,
    "correct_available": 500,
    "best_correct": 500
   },
+  "silent_drop": {
+   "n": 500,
+   "correct_available": 159,
+   "best_correct": 159
+  },
+  "partial_late": {
+   "n": 500,
+   "correct_available": 173,
+   "best_correct": 169
+  },
   "big_ticket_day": {
    "n": 500,
    "correct_available": 500,
    "best_correct": 500
   },
-  "partial_late": {
+  "broken_refs": {
    "n": 500,
-   "correct_available": 161,
-   "best_correct": 158
+   "correct_available": 20,
+   "best_correct": 19
+  },
+  "volume_spike": {
+   "n": 497,
+   "correct_available": 497,
+   "best_correct": 485
+  },
+  "rekeyed_duplicates": {
+   "n": 500,
+   "correct_available": 500,
+   "best_correct": 500
   },
   "unit_scale": {
    "n": 500,
    "correct_available": 500,
    "best_correct": 500
   },
-  "silent_drop": {
+  "versioned_duplicates": {
    "n": 500,
-   "correct_available": 157,
-   "best_correct": 157
+   "correct_available": 500,
+   "best_correct": 449
   },
   "late_partition": {
    "n": 500,
-   "correct_available": 158,
-   "best_correct": 158
-  },
-  "broken_refs": {
-   "n": 500,
-   "correct_available": 29,
-   "best_correct": 26
+   "correct_available": 163,
+   "best_correct": 163
   }
  },
  "all": {
   "rules": {
-   "incidents": 6150,
-   "auto_rate": 0.6455284552845528,
-   "harm": 0.2567479674796748,
-   "harm_count": 1579,
-   "real_errors_fixed": 0.56
+   "incidents": 6600,
+   "auto_rate": 0.6657575757575758,
+   "harm": 0.3112121212121212,
+   "harm_count": 2054,
+   "real_errors_fixed": 0.49325
   },
   "monitors": {
-   "incidents": 6150,
-   "auto_rate": 0.5510569105691057,
-   "harm": 0.1730081300813008,
-   "harm_count": 1064,
-   "real_errors_fixed": 0.5677142857142857
+   "incidents": 6600,
+   "auto_rate": 0.5824242424242424,
+   "harm": 0.2381818181818182,
+   "harm_count": 1572,
+   "real_errors_fixed": 0.49675
   },
   "verified_0": {
-   "incidents": 6150,
-   "auto_rate": 0.3026016260162602,
+   "incidents": 6600,
+   "auto_rate": 0.3212121212121212,
    "harm": 0.0,
    "harm_count": 0,
-   "real_errors_fixed": 0.3365714285714286
+   "real_errors_fixed": 0.361
   },
   "verified_0.01": {
-   "incidents": 6150,
-   "auto_rate": 0.5502439024390244,
-   "harm": 0.0035772357723577236,
-   "harm_count": 22,
-   "real_errors_fixed": 0.5134285714285715
+   "incidents": 6600,
+   "auto_rate": 0.5787878787878787,
+   "harm": 0.004696969696969697,
+   "harm_count": 31,
+   "real_errors_fixed": 0.563
   },
   "verified_0.05": {
-   "incidents": 6150,
-   "auto_rate": 0.7668292682926829,
-   "harm": 0.03300813008130081,
-   "harm_count": 203,
-   "real_errors_fixed": 0.5648571428571428
+   "incidents": 6600,
+   "auto_rate": 0.7831818181818182,
+   "harm": 0.033484848484848485,
+   "harm_count": 221,
+   "real_errors_fixed": 0.61
   }
  },
  "calibrated": {
@@ -96,151 +101,151 @@
    "alpha": 0.01,
    "delta": 0.05,
    "evidence": "residual",
-   "lambda_median": 0.013539724668033078,
-   "harm_mean": 0.005726283963028611,
-   "harm_max": 0.01032258064516129,
-   "auto_rate_mean": 0.5991202410416381,
-   "real_errors_fixed_mean": 0.5254800000000001,
-   "violation_rate": 0.03
+   "lambda_median": 0.010144275125288338,
+   "harm_mean": 0.005591542483166948,
+   "harm_max": 0.010033444816053512,
+   "auto_rate_mean": 0.5863362387326366,
+   "real_errors_fixed_mean": 0.5637749999999999,
+   "violation_rate": 0.01
   },
   "residual|0.02": {
    "alpha": 0.02,
    "delta": 0.05,
    "evidence": "residual",
-   "lambda_median": 0.0208782000014305,
-   "harm_mean": 0.013622170687897683,
-   "harm_max": 0.02204928664072633,
-   "auto_rate_mean": 0.6984621628821128,
-   "real_errors_fixed_mean": 0.5515942857142857,
-   "violation_rate": 0.02
+   "lambda_median": 0.01807168494761547,
+   "harm_mean": 0.01415550496027586,
+   "harm_max": 0.021587108543630284,
+   "auto_rate_mean": 0.6942095811948112,
+   "real_errors_fixed_mean": 0.5899,
+   "violation_rate": 0.05
   },
   "residual|0.05": {
    "alpha": 0.05,
    "delta": 0.05,
    "evidence": "residual",
    "lambda_median": 0.05735270442218037,
-   "harm_mean": 0.03915782670134373,
-   "harm_max": 0.05062050947093403,
-   "auto_rate_mean": 0.7781113889303242,
-   "real_errors_fixed_mean": 0.5665771428571429,
+   "harm_mean": 0.03908635717152957,
+   "harm_max": 0.05837640620249316,
+   "auto_rate_mean": 0.793182771973313,
+   "real_errors_fixed_mean": 0.6108399999999999,
    "violation_rate": 0.02
   },
   "residual_partition|0.01": {
    "alpha": 0.01,
    "delta": 0.05,
    "evidence": "residual_partition",
-   "lambda_median": 0.004266331308058115,
-   "harm_mean": 0.005641102309411571,
-   "harm_max": 0.01112565445026178,
-   "auto_rate_mean": 0.5508459564907665,
-   "real_errors_fixed_mean": 0.5143657142857143,
-   "violation_rate": 0.01
+   "lambda_median": 0.003196434168765112,
+   "harm_mean": 0.006226645484018194,
+   "harm_max": 0.01124961994527212,
+   "auto_rate_mean": 0.5459688823480542,
+   "real_errors_fixed_mean": 0.552485,
+   "violation_rate": 0.03
   },
   "residual_partition|0.02": {
    "alpha": 0.02,
    "delta": 0.05,
    "evidence": "residual_partition",
-   "lambda_median": 0.008780648910039301,
-   "harm_mean": 0.013567888717190456,
-   "harm_max": 0.019889142484512554,
-   "auto_rate_mean": 0.6950553971301844,
-   "real_errors_fixed_mean": 0.5518457142857143,
-   "violation_rate": 0.0
+   "lambda_median": 0.006578665409075977,
+   "harm_mean": 0.014396103335691704,
+   "harm_max": 0.024931590148981452,
+   "auto_rate_mean": 0.6631548509514563,
+   "real_errors_fixed_mean": 0.58172,
+   "violation_rate": 0.02
   },
   "residual_partition|0.05": {
    "alpha": 0.05,
    "delta": 0.05,
    "evidence": "residual_partition",
-   "lambda_median": 0.032194098919077645,
-   "harm_mean": 0.03897229107517626,
-   "harm_max": 0.05155642023346303,
-   "auto_rate_mean": 0.7872141051509868,
-   "real_errors_fixed_mean": 0.5705771428571429,
+   "lambda_median": 0.02786646419701295,
+   "harm_mean": 0.04054074554177989,
+   "harm_max": 0.059896625114016416,
+   "auto_rate_mean": 0.7995305924366093,
+   "real_errors_fixed_mean": 0.6125900000000001,
    "violation_rate": 0.01
   }
  },
  "fixed_threshold": {
   "residual|0.005": {
-   "harm_mean": 0.0019360144434252375,
-   "harm_max": 0.0032722513089005235,
+   "harm_mean": 0.0017288192408664485,
+   "harm_max": 0.0030220610456331218,
    "violates_0.01": 0.0,
-   "auto_rate": 0.4816260162601626
+   "auto_rate": 0.5137878787878788
   },
   "residual|0.01": {
-   "harm_mean": 0.0035175578964797417,
-   "harm_max": 0.005483870967741935,
+   "harm_mean": 0.00478879499276481,
+   "harm_max": 0.006993006993006993,
    "violates_0.01": 0.0,
-   "auto_rate": 0.5502439024390244
+   "auto_rate": 0.5787878787878787
   },
   "residual|0.02": {
-   "harm_mean": 0.011151226849517425,
-   "harm_max": 0.014857881136950904,
-   "violates_0.01": 0.8,
-   "auto_rate": 0.6852032520325203
+   "harm_mean": 0.015214436532531234,
+   "harm_max": 0.019762845849802372,
+   "violates_0.01": 1.0,
+   "auto_rate": 0.71
   },
   "residual|0.05": {
-   "harm_mean": 0.03292680729728119,
-   "harm_max": 0.03755715218811234,
+   "harm_mean": 0.033604841094115316,
+   "harm_max": 0.040437823046518696,
    "violates_0.01": 1.0,
-   "auto_rate": 0.7668292682926829
+   "auto_rate": 0.7831818181818182
   },
   "residual|0.1": {
-   "harm_mean": 0.053241355922230865,
-   "harm_max": 0.058365758754863814,
+   "harm_mean": 0.053480268186937636,
+   "harm_max": 0.062024931590148984,
    "violates_0.01": 1.0,
-   "auto_rate": 0.8027642276422764
+   "auto_rate": 0.8145454545454546
   },
   "residual_partition|0.005": {
-   "harm_mean": 0.007898384809237047,
-   "harm_max": 0.010471204188481676,
-   "violates_0.01": 0.03,
-   "auto_rate": 0.5856910569105691
+   "harm_mean": 0.009918919849055421,
+   "harm_max": 0.01263537906137184,
+   "violates_0.01": 0.44,
+   "auto_rate": 0.6112121212121212
   },
   "residual_partition|0.01": {
-   "harm_mean": 0.015750809797715287,
-   "harm_max": 0.01948051948051948,
+   "harm_mean": 0.02222923523339357,
+   "harm_max": 0.028580115536637276,
    "violates_0.01": 1.0,
-   "auto_rate": 0.7372357723577235
+   "auto_rate": 0.7566666666666667
   },
   "residual_partition|0.02": {
-   "harm_mean": 0.02914237519333485,
-   "harm_max": 0.03469520103761349,
+   "harm_mean": 0.032590705780930505,
+   "harm_max": 0.038309516570386136,
    "violates_0.01": 1.0,
-   "auto_rate": 0.7739837398373983
+   "auto_rate": 0.7895454545454546
   },
   "residual_partition|0.05": {
-   "harm_mean": 0.0609279999835918,
-   "harm_max": 0.06647211413748379,
+   "harm_mean": 0.0663375977198169,
+   "harm_max": 0.07540285801155366,
    "violates_0.01": 1.0,
-   "auto_rate": 0.8097560975609757
+   "auto_rate": 0.8257575757575758
   },
   "residual_partition|0.1": {
-   "harm_mean": 0.0771922834072786,
-   "harm_max": 0.08236057068741894,
+   "harm_mean": 0.07878976737039581,
+   "harm_max": 0.08938887199756765,
    "violates_0.01": 1.0,
-   "auto_rate": 0.8261788617886179
+   "auto_rate": 0.8383333333333334
   }
  },
  "held_out_type_alpha_0.05": {
   "partial_late": {
-   "harm_on_type_mean": 0.6824,
-   "auto_rate_on_type": 1.0
+   "harm_on_type_mean": 0.6652000000000001,
+   "auto_rate_on_type": 0.9971999999999998
   },
   "silent_drop": {
    "harm_on_type_mean": 0.0,
-   "auto_rate_on_type": 0.3101333333333334
+   "auto_rate_on_type": 0.3152
   },
   "rekeyed_duplicates": {
-   "harm_on_type_mean": 0.0044,
-   "auto_rate_on_type": 0.9868
+   "harm_on_type_mean": 0.0,
+   "auto_rate_on_type": 0.9917333333333335
   },
   "duplicates": {
    "harm_on_type_mean": 0.0,
-   "auto_rate_on_type": 0.9865333333333333
+   "auto_rate_on_type": 0.9916
   },
   "unit_scale": {
    "harm_on_type_mean": 0.0,
-   "auto_rate_on_type": 0.9902666666666666
+   "auto_rate_on_type": 0.9935999999999999
   }
  }
 }

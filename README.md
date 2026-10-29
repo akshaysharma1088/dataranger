@@ -73,19 +73,20 @@ python benchmarks/run_detection.py            # all sizes and the real datasets
 
 The loop proposes template fixes for each incident, checks every candidate against the source's control totals and the declared invariants (unique keys, valid references), and applies the best-supported fix only if its residual clears a threshold chosen by Learn-then-Test. Fixes that delete data or change meaning always escalate. The source publishes control totals per partition and channel; 15% of them are stale by up to 1%, so even a correct fix can leave a small residual.
 
-250 instances (150 small, 100 medium), 6,150 incidents, 100 random calibration and test splits by instance, delta = 0.05. Silent harm is the share of incidents that end with a wrong fix applied. All numbers are in `results/repair_summary.json`.
+250 instances (150 small, 100 medium), 6,600 incidents, 100 random calibration and test splits by instance, delta = 0.05. Silent harm is the share of incidents that end with a wrong fix applied. All numbers are in `results/repair_summary.json`.
 
 | Policy | Auto-applied | Silent harm | Real errors fixed |
 |---|---|---|---|
-| Rules: default fix for every alert | 64.6% | 25.7% | 56.0% |
-| Agent checked by the monitors | 55.1% | 17.3% | 56.8% |
-| Verified, calibrated for alpha = 1% | 59.9% | 0.57% | 52.5% |
-| Verified, calibrated for alpha = 2% | 69.8% | 1.36% | 55.2% |
-| Verified, calibrated for alpha = 5% | 77.8% | 3.92% | 56.7% |
+| Rules: default fix for every alert | 66.6% | 31.1% | 49.3% |
+| Agent checked by the monitors | 58.2% | 23.8% | 49.7% |
+| Verified, calibrated for alpha = 1% | 58.6% | 0.56% | 56.4% |
+| Verified, calibrated for alpha = 2% | 69.4% | 1.42% | 59.0% |
+| Verified, calibrated for alpha = 5% | 79.3% | 3.91% | 61.1% |
 
-- **The bound holds.** Test harm exceeded alpha in 0 to 3% of splits, within delta = 5%, for both evidence granularities.
-- **Hand-picked thresholds do not travel.** A threshold of 0.01 is safe with per-channel totals but breaks a 1% target in every split when only partition totals exist; calibration moves the threshold to 0.004 on its own.
-- **Exchangeability matters.** Calibrated without any partial-late incidents, the gate then wrongly applies "no action" to 68% of them. New incident types need recalibration, which is what epoch recalibration with repair memory is for.
+- **The bound holds.** Test harm exceeded alpha in 1 to 5% of splits, within delta = 5%, for both evidence granularities.
+- **Versioned duplicates.** Rules and the monitor-checked agent kept the pre-settlement copy in 500 and 498 of 500 such incidents; the gate picked the settled copy by its match to the control totals.
+- **Hand-picked thresholds do not travel.** A threshold of 0.01 is safe with per-channel totals but breaks a 1% target in every split when only partition totals exist; calibration moves the threshold to 0.003 on its own.
+- **Exchangeability matters.** Calibrated without any partial-late incidents, the gate then wrongly applies "no action" to 67% of them. New incident types need recalibration, which is what epoch recalibration with repair memory is for.
 - **Source-aware detection.** The statistical monitors miss every partial-late partition; a reconciliation check against the control totals catches all of them.
 
 ```bash
@@ -110,7 +111,7 @@ The models' fixes were right for 54% (7B) and 61% (14B) of incidents. The gate k
 
 ### Larger tables
 
-On 40 large instances (about 480k rows each, 981 incidents), a threshold calibrated on small and medium tables gave 1.02%, 2.04% and 5.71% harm at targets of 1, 2 and 5%: at or just above target, since relative gaps shrink as partitions grow. Calibrating separately for "no action" decisions and for repairs (`calibrate_groups`) transferred with margin: 0.92%, 1.33% and 3.87%.
+On 40 large instances (about 480k rows each, 1,069 incidents), a threshold calibrated on small and medium tables gave 0.75%, 1.87% and 5.24% harm at targets of 1, 2 and 5%: close to target and just above it at 5%, since relative gaps shrink as partitions grow. Calibrating separately for "no action" decisions and for repairs (`calibrate_groups`) transferred with margin: 0.28%, 1.59% and 4.40%.
 
 ### Repair memory under drift
 
@@ -118,11 +119,11 @@ On 40 large instances (about 480k rows each, 981 incidents), a threshold calibra
 
 | Policy | Silent harm | Automated | Months over target |
 |---|---|---|---|
-| Calibrated once | 4.63% | 83.4% | 89% |
-| Recalibrated monthly | 1.46% | 70.9% | 27% |
-| Monthly + repair memory | 0.51% | 55.3% | 11% (all in month 5) |
+| Calibrated once | 3.05% | 75.4% | 60% |
+| Recalibrated monthly | 1.30% | 62.4% | 18% |
+| Monthly + repair memory | 0.39% | 55.0% | 7% (all in month 5) |
 
-Memory (`dataranger.repair.memory`) escalates unfamiliar incident signatures, blocks signatures whose fixes went wrong, and recalibrates on what it would have done. It recovered from the new incident type within a month (harm on partial-late incidents 38% in month 5, 3% in month 6). The price is automation: when the world changes, staying inside the promise means asking people more often.
+Memory (`dataranger.repair.memory`) escalates unfamiliar incident signatures, blocks signatures whose fixes went wrong, and recalibrates on what it would have done. It recovered from the new incident type within a month (harm on partial-late incidents 32% in month 5, 5% in month 6). The price is automation: when the world changes, staying inside the promise means asking people more often.
 
 ### Real datasets: Hospital, Flights, Beers
 
