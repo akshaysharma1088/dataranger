@@ -18,7 +18,21 @@ def main(argv=None):
     parser.add_argument("--version", action="version", version=f"dataranger {__version__}")
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("plan", help="show the patrol loop DataRanger will run")
+    b = sub.add_parser("bench", help="generate a DQ-Repair case and run the detectors on it")
+    b.add_argument("--size", choices=["small", "medium", "large"], default="small")
+    b.add_argument("--seed", type=int, default=1)
     args = parser.parse_args(argv)
+    if args.command == "bench":
+        from .bench import detect, generate, inject, score
+        inst = generate(args.seed, args.size)
+        case = inject(inst)
+        s = score(detect(case.warehouse, inst.days), case.issues)
+        for r in s["issues"]:
+            status = ("flagged (decoy: leave alone)" if r["flagged"] else "not flagged") if r["decoy"] else \
+                ("caught" if r["caught"] else "missed")
+            print(f"{r['issue']} {r['kind']:<15} {status}")
+        print(f"false alarms on clean partitions: {len(s['false_alarms'])}")
+        return 0
     if args.command == "plan":
         for i, (name, what) in enumerate(STAGES, 1):
             print(f"{i}. {name}: {what}")
