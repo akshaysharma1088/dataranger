@@ -1,0 +1,113 @@
+{
+ "0.0": {
+  "incidents": 3982,
+  "exact_match": {
+   "incidents": 3982,
+   "auto_rate": 0.31366147664490207,
+   "harm": 0.0,
+   "harm_count": 0,
+   "real_errors_fixed": 0.34833333333333333
+  },
+  "tolerance_0.01": {
+   "incidents": 3982,
+   "auto_rate": 0.5728277247614264,
+   "harm": 0.0032646911099949772,
+   "harm_count": 13,
+   "real_errors_fixed": 0.5629166666666666
+  },
+  "in_distribution|0.01": {
+   "auto_rate": 0.5900373880935718,
+   "harm": 0.004918955124703499,
+   "violation_rate": 0.03,
+   "lambda_median": 0.011719671162331342
+  },
+  "in_distribution|0.05": {
+   "auto_rate": 0.7910609097906187,
+   "harm": 0.037925613999727846,
+   "violation_rate": 0.03,
+   "lambda_median": 0.0662595235043209
+  }
+ },
+ "0.05": {
+  "incidents": 3964,
+  "exact_match": {
+   "incidents": 3964,
+   "auto_rate": 0.31659939455095865,
+   "harm": 0.010090817356205853,
+   "harm_count": 40,
+   "real_errors_fixed": 0.33669185558354325
+  },
+  "tolerance_0.01": {
+   "incidents": 3964,
+   "auto_rate": 0.5718970736629667,
+   "harm": 0.013118062563067608,
+   "harm_count": 52,
+   "real_errors_fixed": 0.5449202350965575
+  },
+  "in_distribution|0.01": {
+   "auto_rate": 0.004535980148883375,
+   "harm": 0.0001488833746898263,
+   "violation_rate": 0.01,
+   "lambda_median": -1.0
+  },
+  "shift|0.01": {
+   "auto_rate": 0.5888478763315885,
+   "harm": 0.015001140624214695,
+   "violation_rate": 0.99,
+   "lambda_median": 0.011719671162331342
+  },
+  "in_distribution|0.05": {
+   "auto_rate": 0.769836712628062,
+   "harm": 0.03911178463469904,
+   "violation_rate": 0.04,
+   "lambda_median": 0.04964316871858405
+  },
+  "shift|0.05": {
+   "auto_rate": 0.790790114132695,
+   "harm": 0.04910303491180217,
+   "violation_rate": 0.4,
+   "lambda_median": 0.0662595235043209
+  }
+ },
+ "0.2": {
+  "incidents": 3903,
+  "exact_match": {
+   "incidents": 3903,
+   "auto_rate": 0.32436587240584164,
+   "harm": 0.0415065334358186,
+   "harm_count": 162,
+   "real_errors_fixed": 0.2977165015079707
+  },
+  "tolerance_0.01": {
+   "incidents": 3903,
+   "auto_rate": 0.5626441199077633,
+   "harm": 0.04406866512938765,
+   "harm_count": 172,
+   "real_errors_fixed": 0.47694959069366655
+  },
+  "in_distribution|0.01": {
+   "auto_rate": 0.0,
+   "harm": 0.0,
+   "violation_rate": 0.0,
+   "lambda_median": -1.0
+  },
+  "shift|0.01": {
+   "auto_rate": 0.5798109662167478,
+   "harm": 0.0462981496269957,
+   "violation_rate": 1.0,
+   "lambda_median": 0.011719671162331342
+  },
+  "in_distribution|0.05": {
+   "auto_rate": 0.18481717476323956,
+   "harm": 0.01641049217691536,
+   "violation_rate": 0.05,
+   "lambda_median": -1.0
+  },
+  "shift|0.05": {
+   "auto_rate": 0.7919183606398862,
+   "harm": 0.08329457887653334,
+   "violation_rate": 1.0,
+   "lambda_median": 0.0662595235043209
+  }
+ }
+}

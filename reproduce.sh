@@ -32,6 +32,8 @@ if [ "$MODE" = "full" ]; then
   python benchmarks/run_stream.py
   step "TPC-DS store_sales, scale factor 1, 30 windows x 3 injections (Q4)"
   python benchmarks/run_tpcds.py 1 3
+  step "Corrupt control totals: 150 small instances at 5% and 20% corruption (Q8)"
+  python benchmarks/run_corrupt.py
   step "Scale: TPC-DS at scale factors 1 and 10, single partitions to 20M rows (Q8; needs about 8 GB RAM)"
   python benchmarks/scale.py tpcds_sf1.duckdb:1 tpcds_sf10.duckdb:10
 fi
@@ -49,6 +51,8 @@ python benchmarks/analyze_stream.py
 step "Reconciliation monitor ablation and sensitivity (Q8, detection, Figure 6)"
 python benchmarks/ablation_reconcile.py
 python benchmarks/ablations.py
+step "Corrupt control totals (Q8)"
+python benchmarks/analyze_corrupt.py
 step "Real datasets against Baran and conformal cleaning (Q7, Figure 5)"
 python benchmarks/run_cells.py results/baran
 
