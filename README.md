@@ -127,6 +127,15 @@ On 40 large instances (about 480k rows each, 1,069 incidents), a threshold calib
 
 Memory (`dataranger.repair.memory`) escalates unfamiliar incident signatures, blocks signatures whose fixes went wrong, and recalibrates on what it would have done. It recovered from the new incident type within a month (harm on partial-late incidents 32% in month 5, 5% in month 6). The price is automation: when the world changes, staying inside the promise means asking people more often.
 
+### Sensitivity and cost
+
+`benchmarks/ablations.py` (results in `results/ablations.json`):
+
+- **Labels needed.** A 5% target is certifiable from about 130 labeled incidents (66% automated); a 1% target needs about 300 before anything is automated, then reaches 50% at about 530 and 59% at 3,300.
+- **Stale control totals.** At a 1% target, automation falls from 71% with exact totals to 29% when half of them are stale; harm stays under target.
+- **Without invariant checks** the calibration refuses to certify any threshold and automation collapses to about 0%: the gate fails safe.
+- **Cost.** A full patrol takes 2.7 s, 4.1 s and 10.1 s on one CPU core for 23k, 117k and 470k-row tables.
+
 ### Real datasets: Hospital, Flights, Beers
 
 No source of record here, so the evidence comes from the table itself (agreeing dependencies, normalization rules). Half the rows are labels: a quarter fits an evidence score and a quarter certifies the threshold. Compared on held-out rows with Baran (20 labeled tuples, Raha detection) and conformal data cleaning (reimplemented, trained on clean rows):
