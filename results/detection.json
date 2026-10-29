@@ -8,7 +8,9 @@
     "late_partition": 1.0,
     "broken_refs": 1.0,
     "unit_scale": 1.0,
-    "silent_drop": 0.3,
+    "silent_drop": 0.6,
+    "partial_late": 0.0,
+    "rekeyed_duplicates": 1.0,
     "schema_drift": 1.0
    },
    "n": {
@@ -19,9 +21,11 @@
     "broken_refs": 10,
     "unit_scale": 10,
     "silent_drop": 10,
+    "partial_late": 10,
+    "rekeyed_duplicates": 10,
     "schema_drift": 5
    },
-   "false_alarms_per_instance": 0.8
+   "false_alarms_per_instance": 0.4
   },
   "medium": {
    "rate": {
@@ -31,7 +35,9 @@
     "late_partition": 1.0,
     "broken_refs": 1.0,
     "unit_scale": 1.0,
-    "silent_drop": 1.0,
+    "silent_drop": 0.8,
+    "partial_late": 0.0,
+    "rekeyed_duplicates": 1.0,
     "schema_drift": 1.0
    },
    "n": {
@@ -42,9 +48,11 @@
     "broken_refs": 10,
     "unit_scale": 10,
     "silent_drop": 10,
+    "partial_late": 10,
+    "rekeyed_duplicates": 10,
     "schema_drift": 5
    },
-   "false_alarms_per_instance": 0.2
+   "false_alarms_per_instance": 0.6
   },
   "large": {
    "rate": {
@@ -55,6 +63,8 @@
     "broken_refs": 1.0,
     "unit_scale": 1.0,
     "silent_drop": 1.0,
+    "partial_late": 0.0,
+    "rekeyed_duplicates": 1.0,
     "schema_drift": 1.0
    },
    "n": {
@@ -65,9 +75,11 @@
     "broken_refs": 10,
     "unit_scale": 10,
     "silent_drop": 10,
+    "partial_late": 10,
+    "rekeyed_duplicates": 10,
     "schema_drift": 5
    },
-   "false_alarms_per_instance": 0.2
+   "false_alarms_per_instance": 0.4
   }
  },
  "real": {
