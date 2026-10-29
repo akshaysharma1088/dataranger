@@ -1,0 +1,128 @@
+{
+ "hospital": {
+  "all_candidates": {
+   "changes": 306.25,
+   "precision": 0.7387637195158117,
+   "errors_fixed": 0.8892802159622757,
+   "wrong_per_1000_cells": 8.015,
+   "wrong_share_of_changes": 0.2612362804841884
+  },
+  "dataranger_0.01": {
+   "changes": 0.0,
+   "precision": 1.0,
+   "errors_fixed": 0.0,
+   "wrong_per_1000_cells": 0.0,
+   "wrong_share_of_changes": 0.0,
+   "risk": 0.0,
+   "violated": 0.0
+  },
+  "dataranger_0.05": {
+   "changes": 162.35,
+   "precision": 0.9817261652209666,
+   "errors_fixed": 0.6278025367764622,
+   "wrong_per_1000_cells": 0.37,
+   "wrong_share_of_changes": 0.018273834779033403,
+   "risk": 0.01215203185065503,
+   "violated": 0.0
+  },
+  "baran_20": {
+   "changes": 149.65,
+   "precision": 0.9348043510108411,
+   "errors_fixed": 0.5503829923327508,
+   "wrong_per_1000_cells": 0.9550000000000001,
+   "wrong_share_of_changes": 0.06519564898915872
+  },
+  "cdc_0.999": {
+   "changes": 333.0,
+   "precision": 0.646916399814419,
+   "errors_fixed": 0.8504320310518597,
+   "wrong_per_1000_cells": 11.8,
+   "wrong_share_of_changes": 0.35308360018558116
+  },
+  "candidates": 615
+ },
+ "flights": {
+  "all_candidates": {
+   "changes": 1067.8,
+   "precision": 0.6539753344965821,
+   "errors_fixed": 0.2855127147149748,
+   "wrong_per_1000_cells": 44.43843193843195,
+   "wrong_share_of_changes": 0.34602466550341787
+  },
+  "dataranger_0.01": {
+   "changes": 82.85,
+   "precision": 0.998366865415704,
+   "errors_fixed": 0.03362135257999288,
+   "wrong_per_1000_cells": 0.10822510822510822,
+   "wrong_share_of_changes": 0.0016331345842959901,
+   "risk": 0.0008405386559748977,
+   "violated": 0.0
+  },
+  "dataranger_0.05": {
+   "changes": 642.75,
+   "precision": 0.9529094093952937,
+   "errors_fixed": 0.2503258353348182,
+   "wrong_per_1000_cells": 3.667628667628668,
+   "wrong_share_of_changes": 0.04709059060470623,
+   "risk": 0.028539881360106833,
+   "violated": 0.0
+  },
+  "baran_20": {
+   "changes": 1537.05,
+   "precision": 0.816865527734012,
+   "errors_fixed": 0.5115033444194156,
+   "wrong_per_1000_cells": 34.36748436748437,
+   "wrong_share_of_changes": 0.183134472265988
+  },
+  "cdc_0.999": {
+   "changes": 1343.0,
+   "precision": 0.9455206028013953,
+   "errors_fixed": 0.5159213284294569,
+   "wrong_per_1000_cells": 8.826358826358824,
+   "wrong_share_of_changes": 0.05447939719860476
+  },
+  "candidates": 2160
+ },
+ "beers": {
+  "all_candidates": {
+   "changes": 2221.1,
+   "precision": 0.9810060202862765,
+   "errors_fixed": 1.0,
+   "wrong_per_1000_cells": 3.1837042625424368,
+   "wrong_share_of_changes": 0.018993979713723595
+  },
+  "dataranger_0.01": {
+   "changes": 1850.95,
+   "precision": 0.9998853699012924,
+   "errors_fixed": 0.85,
+   "wrong_per_1000_cells": 0.01886080724254998,
+   "wrong_share_of_changes": 0.00011463009870761731,
+   "risk": 0.00011284918388778677,
+   "violated": 0.0
+  },
+  "dataranger_0.05": {
+   "changes": 2221.1,
+   "precision": 0.9810060202862765,
+   "errors_fixed": 1.0,
+   "wrong_per_1000_cells": 3.1837042625424368,
+   "wrong_share_of_changes": 0.018993979713723595,
+   "risk": 0.018993979713723595,
+   "violated": 0.0
+  },
+  "baran_20": {
+   "changes": 2068.0,
+   "precision": 0.9404941972138372,
+   "errors_fixed": 0.8916242486428058,
+   "wrong_per_1000_cells": 9.460580912863069,
+   "wrong_share_of_changes": 0.05950580278616269
+  },
+  "cdc_0.999": {
+   "changes": 2345.6,
+   "precision": 0.6021576576126468,
+   "errors_fixed": 0.6490800192228472,
+   "wrong_per_1000_cells": 70.40362127499057,
+   "wrong_share_of_changes": 0.3978423423873532
+  },
+  "candidates": 4450
+ }
+}

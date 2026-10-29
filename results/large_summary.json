@@ -1,0 +1,88 @@
+{
+ "large_incidents": 981,
+ "baselines_large": {
+  "rules": {
+   "incidents": 981,
+   "auto_rate": 0.6615698267074414,
+   "harm": 0.2945973496432212,
+   "harm_count": 289,
+   "real_errors_fixed": 0.5267857142857143
+  },
+  "monitors": {
+   "incidents": 981,
+   "auto_rate": 0.5300713557594292,
+   "harm": 0.17329255861365953,
+   "harm_count": 170,
+   "real_errors_fixed": 0.5535714285714286
+  }
+ },
+ "transfer|0.01": {
+  "incidents": 981,
+  "auto_rate": 0.6829765545361876,
+  "harm": 0.010193679918450561,
+  "harm_count": 10,
+  "real_errors_fixed": 0.5410714285714285,
+  "lambda": 0.013539724668033078
+ },
+ "transfer_grouped|0.01": {
+  "incidents": 981,
+  "auto_rate": 0.6605504587155964,
+  "harm": 0.009174311926605505,
+  "harm_count": 9,
+  "real_errors_fixed": 0.5517857142857143,
+  "lambdas": {
+   "none": 0.011719671162331342,
+   "repair": 0.5
+  }
+ },
+ "transfer|0.02": {
+  "incidents": 981,
+  "auto_rate": 0.7502548419979612,
+  "harm": 0.020387359836901122,
+  "harm_count": 20,
+  "real_errors_fixed": 0.5517857142857143,
+  "lambda": 0.024120564106959404
+ },
+ "transfer_grouped|0.02": {
+  "incidents": 981,
+  "auto_rate": 0.7329255861365953,
+  "harm": 0.013251783893985729,
+  "harm_count": 13,
+  "real_errors_fixed": 0.5517857142857143,
+  "lambdas": {
+   "none": 0.01807168494761547,
+   "repair": 0.5
+  }
+ },
+ "transfer|0.05": {
+  "incidents": 981,
+  "auto_rate": 0.7961264016309888,
+  "harm": 0.05708460754332314,
+  "harm_count": 56,
+  "real_errors_fixed": 0.5517857142857143,
+  "lambda": 0.0662595235043209
+ },
+ "transfer_grouped|0.05": {
+  "incidents": 981,
+  "auto_rate": 0.7767584097859327,
+  "harm": 0.03873598369011213,
+  "harm_count": 38,
+  "real_errors_fixed": 0.5517857142857143,
+  "lambdas": {
+   "none": 0.03719381109435677,
+   "repair": 0.5
+  }
+ },
+ "within_large|0.02": {
+  "auto_rate": 0.5978184900747384,
+  "harm": 0.0058938305472152185,
+  "real_errors_fixed": 0.5196428571428571,
+  "violations": 0.0
+ },
+ "within_large|0.05": {
+  "auto_rate": 0.7625561181362889,
+  "harm": 0.028198548506460114,
+  "real_errors_fixed": 0.5530714285714285,
+  "violations": 0.02
+ }
+}

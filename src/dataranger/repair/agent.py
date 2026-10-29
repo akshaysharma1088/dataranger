@@ -124,7 +124,10 @@ def context(part: pd.DataFrame, d, fs: list[Finding], manifest: pd.DataFrame, mo
             "channels": ch, "reload_from_source_available": reload_ok}
 
 
-def run(case: Case, granularity: str = "channel", retention_days: int = 14, reconcile: bool = True) -> list[dict]:
+def run(case: Case, granularity: str = "channel", retention_days: int = 14, reconcile: bool = True,
+        extra: dict[str, F.Fix | None] | None = None) -> list[dict]:
+    """`extra` maps a partition to a fix from another proposer (an LLM); it is verified like the rest
+    and marked with source 'llm'. A None value records that the proposer chose to escalate."""
     inst = case.instance
     wh = {k: v.copy() for k, v in case.warehouse.items()}
     src_t = case.source["transactions"]
@@ -166,6 +169,14 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
         truth = src_t[src_t["txn_date"] == d]
         reload_ok = d >= last - timedelta(days=retention_days)
         cands, default = propose(fs, reload_ok)
+        src_of = {fx: "template" for fx in cands}
+        llm_fix = (extra or {}).get(p)
+        if llm_fix is not None:
+            if llm_fix in src_of:
+                src_of[llm_fix] = "template+llm"
+            else:
+                cands.append(llm_fix)
+                src_of[llm_fix] = "llm"
         rows = []
         for fx in cands:
             try:
@@ -173,7 +184,7 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
             except ValueError:
                 continue
             inv = invariants_hold(fixed, wh["customers"])
-            rows.append({"fix": str(fx), "action": fx.action, "tier": fx.tier, "invariants": inv,
+            rows.append({"fix": str(fx), "action": fx.action, "tier": fx.tier, "invariants": inv, "source": src_of[fx],
                          "residual": residual(fixed, case.manifest, d, granularity) if inv else float("inf"),
                          "residual_partition": residual(fixed, case.manifest, d, "partition") if inv else float("inf"),
                          "changed": int(abs(len(fixed) - len(part)) + (fixed["amount"].sum() != part["amount"].sum())),
@@ -182,5 +193,6 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
         records.append({"partition": p, "kinds": issue_kinds.get(p, ["false_alarm"]), "table_level": False,
                         "detectors": sorted({f.detector for f in fs}), "reload_ok": reload_ok,
                         "default": str(default) if default else None, "candidates": rows,
+                        "llm": str(llm_fix) if llm_fix is not None else None,
                         "context": context(part, d, fs, case.manifest, mon, reload_ok)})
     return records
