@@ -125,7 +125,7 @@ def context(part: pd.DataFrame, d, fs: list[Finding], manifest: pd.DataFrame, mo
 
 
 def run(case: Case, granularity: str = "channel", retention_days: int = 14, reconcile: bool = True,
-        extra: dict[str, F.Fix | None] | None = None) -> list[dict]:
+        extra: dict[str, F.Fix | None] | None = None, check_invariants: bool = True) -> list[dict]:
     """`extra` maps a partition to a fix from another proposer (an LLM); it is verified like the rest
     and marked with source 'llm'. A None value records that the proposer chose to escalate."""
     inst = case.instance
@@ -183,7 +183,7 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
                 fixed = F.apply(fx, part, truth if reload_ok else None, wh["customers"])
             except ValueError:
                 continue
-            inv = invariants_hold(fixed, wh["customers"])
+            inv = invariants_hold(fixed, wh["customers"]) if check_invariants else bool(len(fixed))
             rows.append({"fix": str(fx), "action": fx.action, "tier": fx.tier, "invariants": inv, "source": src_of[fx],
                          "residual": residual(fixed, case.manifest, d, granularity) if inv else float("inf"),
                          "residual_partition": residual(fixed, case.manifest, d, "partition") if inv else float("inf"),
