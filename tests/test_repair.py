@@ -5,7 +5,7 @@ import pytest
 from dataranger.bench import generate, inject
 from dataranger.repair import fixes as F
 from dataranger.repair.agent import run
-from dataranger.repair.gate import calibrate, decide, evaluate, hb_pvalue
+from dataranger.repair.gate import calibrate, calibrate_clusters, decide, evaluate, hb_pvalue
 from dataranger.repair.verify import matches_truth, residual
 
 
@@ -62,3 +62,14 @@ def test_escalate_tier_is_never_auto_applied(records):
     for r in records:
         a = decide(r, "verified", 1e9)
         assert a is None or a["tier"] == "auto"
+
+
+def test_cluster_ltt_needs_more_clusters_than_incidents():
+    # 200 clean clusters of 20 incidents: 4,000 incidents certify 1% at the incident level,
+    # but 200 clusters are too few to certify 1% at the cluster level (about 300 needed); 5% is fine.
+    recs = [{"table_level": False, "kinds": ["x"], "cluster": k, "candidates": [
+        {"fix": "f", "action": "dedupe", "tier": "auto", "residual": 0.0, "changed": 1, "correct": True}]}
+        for k in range(200) for _ in range(20)]
+    assert calibrate(recs, alpha=0.01, delta=0.05) >= 0
+    assert calibrate_clusters(recs, lambda r: r["cluster"], alpha=0.01, delta=0.05) == -1.0
+    assert calibrate_clusters(recs, lambda r: r["cluster"], alpha=0.05, delta=0.05) >= 0

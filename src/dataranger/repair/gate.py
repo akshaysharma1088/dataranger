@@ -78,6 +78,30 @@ def calibrate(records: list[dict], alpha: float = 0.05, delta: float = 0.05, gri
     return best
 
 
+def calibrate_clusters(records: list[dict], cluster, alpha: float = 0.05, delta: float = 0.05, grid=GRID,
+                       res: str | None = None) -> float:
+    """Learn-then-Test with the cluster (a table, an estate, a period) as the unit of exchangeability.
+
+    The loss of a cluster is the share of its incidents that end in silent harm, a number in [0, 1],
+    so the Hoeffding-Bentkus p-value stays valid with n = number of clusters, however strongly the
+    incidents inside a cluster depend on each other. The certified risk is the expected harm rate of
+    a new cluster.
+    """
+    groups: dict = {}
+    for r in records:
+        if not r["table_level"]:
+            groups.setdefault(cluster(r), []).append(r)
+    n = len(groups)
+    best = -1.0
+    for lam in grid:
+        risk = np.mean([np.mean([loss(r, decide(r, "verified", lam, res)) for r in g]) for g in groups.values()]) if n else 1.0
+        if hb_pvalue(float(risk), n, alpha) <= delta:
+            best = float(lam)
+        else:
+            break
+    return best
+
+
 def evaluate(records: list[dict], policy: str, lam: float | None = None, res: str | None = None) -> dict:
     recs = [r for r in records if not r["table_level"]]
     applied = [decide(r, policy, lam, res) for r in recs]

@@ -119,11 +119,25 @@ if __name__ == "__main__":
                     vals.append(stats(test, pol, lam) | {"lam": lam})
                 res[f"{pol}|{alpha}"] = {k: float(np.mean([v[k] for v in vals])) for k in vals[0]} | \
                     {"violations": float(np.mean([v["harm"] > alpha for v in vals]))}
+        # Self-checking agents: the proposal is applied when its own gap to the control totals is under a
+        # hand-set tolerance, as an engineer would configure it. Same checks as the gate, no calibration.
+        for tol in (0.001, 0.005, 0.01, 0.02, 0.05):
+            for pol, name in (("llm_gate", "llm_selfcheck"), ("llm+templates", "llm+templates_selfcheck")):
+                vals = []
+                rng2 = np.random.default_rng(0)
+                for _ in range(SPLITS):
+                    perm = rng2.permutation(len(keys))
+                    ck = {keys[i] for i in perm[: len(keys) // 2]}
+                    vals.append(stats([r for r in inc if (r["size"], r["seed"]) not in ck], pol, tol))
+                res[f"{name}|{tol}"] = {k: float(np.mean([v[k] for v in vals])) for k in vals[0]} | \
+                    {"violates_0.01": float(np.mean([v["harm"] > 0.01 for v in vals])),
+                     "violates_0.05": float(np.mean([v["harm"] > 0.05 for v in vals]))}
         out[model_dir.name] = res
         print(f"\n{model_dir.name}: {res['incidents']} incidents, {res['seconds_per_call']:.0f}s per call, "
               f"LLM fix correct {res['llm_choice_correct']:.3f}, actions {res['llm_actions']}")
         for k, v in res.items():
             if isinstance(v, dict) and "harm" in v:
                 print(f"  {k:22s} auto {v['auto']:.3f} harm {v['harm']:.4f} fixed {v['fixed']:.3f}"
-                      + (f" violations {v['violations']:.2f}" if "violations" in v else ""))
+                      + (f" violations {v['violations']:.2f}" if "violations" in v else "")
+                      + (f" P(>1%) {v['violates_0.01']:.2f} P(>5%) {v['violates_0.05']:.2f}" if "violates_0.01" in v else ""))
     json.dump(out, open("results/llm_summary.json", "w"), indent=1)

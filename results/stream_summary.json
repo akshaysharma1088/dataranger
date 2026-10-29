@@ -279,6 +279,76 @@
     "auto": 0.5498066602985736,
     "violations": 0.06666666666666667
    }
+  },
+  "epoch_memory_frozen": {
+   "4": {
+    "harm": 0.0,
+    "auto": 0.0,
+    "partial_late_harm": NaN,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "5": {
+    "harm": 0.03706612970540711,
+    "auto": 0.5978082166588028,
+    "partial_late_harm": 0.47000000000000003,
+    "violations": 1.0,
+    "lambda": 0.5
+   },
+   "6": {
+    "harm": 0.0208855855411553,
+    "auto": 0.655276712555513,
+    "partial_late_harm": 0.26,
+    "violations": 0.6,
+    "lambda": 0.0662595235043209
+   },
+   "7": {
+    "harm": 0.01446922174055136,
+    "auto": 0.6582866757174027,
+    "partial_late_harm": 0.18,
+    "violations": 0.2,
+    "lambda": 0.04964316871858405
+   },
+   "8": {
+    "harm": 0.004975601546855714,
+    "auto": 0.632717140942898,
+    "partial_late_harm": 0.06000000000000001,
+    "violations": 0.0,
+    "lambda": 0.032194098919077645
+   },
+   "9": {
+    "harm": 0.0041081764596290525,
+    "auto": 0.5014377257250227,
+    "partial_late_harm": 0.06000000000000001,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "10": {
+    "harm": 0.0020221860955554416,
+    "auto": 0.48104568230065653,
+    "partial_late_harm": 0.030000000000000006,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "11": {
+    "harm": 0.003392357875116496,
+    "auto": 0.4671919850885368,
+    "partial_late_harm": 0.05,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "12": {
+    "harm": 0.0013333333333333335,
+    "auto": 0.49072778297800496,
+    "partial_late_harm": 0.02,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "overall": {
+    "harm": 0.009805843588622647,
+    "auto": 0.4982768802185376,
+    "violations": 0.2
+   }
   }
  },
  "0.05": {
@@ -560,6 +630,76 @@
     "harm": 0.006827365197900024,
     "auto": 0.6077674060318888,
     "violations": 0.0
+   }
+  },
+  "epoch_memory_frozen": {
+   "4": {
+    "harm": 0.0,
+    "auto": 0.0,
+    "partial_late_harm": NaN,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "5": {
+    "harm": 0.03706612970540711,
+    "auto": 0.5978082166588028,
+    "partial_late_harm": 0.47000000000000003,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "6": {
+    "harm": 0.02966478177782842,
+    "auto": 0.6696480136216273,
+    "partial_late_harm": 0.36,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "7": {
+    "harm": 0.028075505192762307,
+    "auto": 0.6885982668886259,
+    "partial_late_harm": 0.35,
+    "violations": 0.2,
+    "lambda": 0.5
+   },
+   "8": {
+    "harm": 0.020598861847255328,
+    "auto": 0.6688371354309783,
+    "partial_late_harm": 0.25,
+    "violations": 0.0,
+    "lambda": 0.08843763539566564
+   },
+   "9": {
+    "harm": 0.0041081764596290525,
+    "auto": 0.5014377257250227,
+    "partial_late_harm": 0.06000000000000001,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "10": {
+    "harm": 0.0020221860955554416,
+    "auto": 0.48104568230065653,
+    "partial_late_harm": 0.030000000000000006,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "11": {
+    "harm": 0.003392357875116496,
+    "auto": 0.4671919850885368,
+    "partial_late_harm": 0.05,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "12": {
+    "harm": 0.0013333333333333335,
+    "auto": 0.49072778297800496,
+    "partial_late_harm": 0.02,
+    "violations": 0.0,
+    "lambda": 0.5
+   },
+   "overall": {
+    "harm": 0.014029036920765276,
+    "auto": 0.507254978743584,
+    "violations": 0.022222222222222223
    }
   }
  }

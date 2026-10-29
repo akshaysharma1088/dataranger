@@ -94,8 +94,8 @@ def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, war
             detail = {"volume_factor": round(factor, 2)}
         else:  # a big-ticket day: real travel bookings push amounts up
             idx = day.sample(frac=float(rng.uniform(0.25, 0.4)), random_state=int(rng.integers(1 << 30))).index
-            txn.loc[idx, "category"] = "travel"
-            txn.loc[idx, "amount"] = np.round(320 * rng.lognormal(0.3, 0.5, len(idx)), 2)
+            txn.loc[idx, "category"] = inst.meta.get("big_ticket_category", "travel")
+            txn.loc[idx, "amount"] = np.round(inst.meta.get("big_ticket_amount", 320) * rng.lognormal(0.3, 0.5, len(idx)), 2)
             detail = {"rows_changed": int(len(idx))}
         issues.append(Issue(f"I{len(issues)+1:02d}", k, "transactions", d.isoformat(), True,
                             {"action": "none"}, "none", detail))
@@ -139,7 +139,7 @@ def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, war
             fix["rows"] = sorted(int(x) for x in t.loc[idx, "txn_id"])
             detail = {"rows_affected": int(len(idx))}
         elif k == "unit_scale":  # one upstream channel started sending cents
-            ch = str(rng.choice(["card", "ach", "p2p"]))
+            ch = str(rng.choice(inst.meta.get("scale_channels", ["card", "ach", "p2p"])))
             sel = mask & (t["channel"] == ch)
             t.loc[sel, "amount"] = np.round(t.loc[sel, "amount"] * 100, 2)
             fix.update({"factor": 0.01, "where": {"channel": ch}})
