@@ -17,11 +17,22 @@ Most data-quality tools stop at an alert. Letting an AI agent fix data is the ob
 5. **Gate.** Proven and low risk: applied as a new version, never an overwrite. Anything else: escalated.
 6. **Report.** Every detection, fix and decision lands on a live dashboard and an audit log.
 
+## The patrol console
+
+Every patrol writes one self-contained page that answers a data team's morning question: what broke, what DataRanger fixed, and what needs a person.
+
+![DataRanger patrol console](docs/patrol-console.png)
+
+- **The trail** across the top shows every daily partition on the patrol. Yellow diamonds need you, solid green markers were fixed and proven against the source, hollow ones were checked and left alone.
+- **The queue** lists incidents by what they need from you.
+- **The evidence view** shows what fired, the partition next to its source totals, and every fix DataRanger tested on a copy, with its gap to the source against the certified threshold. Above, two copies of re-sent rows disagree: keeping the first copy would leave a 0.12% gap, so DataRanger kept the latest copy, which matches exactly.
+- **Decisions** (approve, reject, roll back, reopen) are recorded in the audit log and feed the next calibration.
+
 ## Try it
 
 ```bash
 pip install dataranger
-dataranger demo                 # patrol a generated table with planted problems; writes dataranger-demo/dashboard.html
+dataranger demo                 # patrol a sample table with planted problems; opens as dataranger-demo/dashboard.html
 ```
 
 On your own DuckDB tables (a fact table partitioned by date, a reference table, and the source's control totals):
