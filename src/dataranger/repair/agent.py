@@ -32,7 +32,7 @@ def propose(findings: list[Finding], reload_ok: bool) -> tuple[list[F.Fix], F.Fi
     for f in findings:
         e = f.evidence
         if f.detector == "duplicate_keys":
-            c.append(F.make("dedupe", key="txn_id"))
+            c += [F.make("dedupe", key="txn_id"), F.make("dedupe", key="txn_id", keep="last")]
         elif f.detector == "duplicate_rows":
             c.append(F.make("dedupe_business"))
         elif f.detector in ("missing_partition", "volume_drop", "mix_drop", "reconcile_gap") and reload_ok:

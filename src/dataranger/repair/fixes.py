@@ -43,7 +43,7 @@ def apply(fix: Fix, part: pd.DataFrame, source_part: pd.DataFrame | None, custom
     if a == "none":
         return p
     if a == "dedupe":
-        return p.drop_duplicates(subset=[fix.p("key", "txn_id")], keep="first")
+        return p.drop_duplicates(subset=[fix.p("key", "txn_id")], keep=fix.p("keep", "first"))
     if a == "dedupe_business":  # same customer, amount, category and channel on one day
         return p.sort_values("txn_id").drop_duplicates(subset=["customer_id", "amount", "category", "channel"])
     if a == "reload":

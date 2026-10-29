@@ -14,7 +14,7 @@ from . import fixes as F
 
 MENU = """Choose exactly one action:
 - none: the data is correct; the alert reflects a real event or a stale control total
-- dedupe: remove rows that repeat the same txn_id
+- dedupe: remove rows that repeat the same txn_id; set "keep" to "first" (earliest loaded copy) or "last" (latest loaded copy)
 - dedupe_business: remove rows that repeat the same customer, amount, category and channel under new txn_ids
 - reload: replace the partition with a fresh copy from the source (only if reload_from_source_available is true)
 - rescale: multiply amounts by "factor", optionally only for one "channel"
@@ -29,7 +29,7 @@ Incident:
 
 {menu}
 
-Reply with JSON only: {{"diagnosis": "<one sentence>", "action": "<action>", "channel": "<channel or null>", "factor": <number or null>}}"""
+Reply with JSON only: {{"diagnosis": "<one sentence>", "action": "<action>", "channel": "<channel or null>", "factor": <number or null>, "keep": "<first, last or null>"}}"""
 
 
 def prompt(context: dict) -> str:
@@ -56,7 +56,8 @@ def parse(text: str) -> tuple[F.Fix | None, str]:
         return (F.make("rescale", factor=factor, channel=ch) if ch not in (None, "", "null", "all")
                 else F.make("rescale", factor=factor)), diag
     if a == "dedupe":
-        return F.make("dedupe", key="txn_id"), diag
+        keep = str(j.get("keep") or "first").lower()
+        return (F.make("dedupe", key="txn_id", keep="last") if keep == "last" else F.make("dedupe", key="txn_id")), diag
     if a in ("none", "dedupe_business", "reload", "quarantine"):
         return F.make(a), diag
     return None, diag
