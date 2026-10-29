@@ -1,0 +1,74 @@
+name: LLM proposer (open-weights, no paid API)
+on:
+  push:
+    branches: [llm-run]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          runs = json.load(open("benchmarks/llm_runs.json"))
+          inc = [{"model": r["model"], "seeds": r["seeds"], "nshards": r["nshards"], "shard": s}
+                 for r in runs for s in range(r["nshards"])]
+          print("matrix=" + json.dumps({"include": inc}))
+          PY
+  llm:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e .
+      - name: Install and start Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          sudo systemctl stop ollama 2>/dev/null || true
+          (OLLAMA_NUM_PARALLEL=1 OLLAMA_MAX_LOADED_MODELS=1 ollama serve > /tmp/ollama.log 2>&1 &)
+          sleep 5
+          ollama pull ${{ matrix.model }}
+      - name: Propose fixes for this shard
+        run: python benchmarks/run_llm.py --model ${{ matrix.model }} --shard ${{ matrix.shard }} --nshards ${{ matrix.nshards }} --seeds ${{ matrix.seeds }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: llm-${{ strategy.job-index }}
+          path: results/llm/
+          retention-days: 90
+  publish:
+    needs: llm
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: llm-*
+          path: out/llm
+          merge-multiple: true
+      - name: Commit responses to the llm-results branch
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          mv out /tmp/out
+          if git fetch origin llm-results; then git checkout -B llm-results origin/llm-results
+          else git checkout --orphan llm-results && git rm -rqf .; fi
+          mkdir -p runs/${{ github.run_id }}
+          cp -r /tmp/out/llm runs/${{ github.run_id }}/
+          git add runs
+          git commit -qm "LLM proposer responses from run ${{ github.run_id }}"
+          git push origin llm-results

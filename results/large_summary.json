@@ -1,0 +1,88 @@
+{
+ "large_incidents": 1069,
+ "baselines_large": {
+  "rules": {
+   "incidents": 1069,
+   "auto_rate": 0.7053320860617399,
+   "harm": 0.343311506080449,
+   "harm_count": 367,
+   "real_errors_fixed": 0.478125
+  },
+  "monitors": {
+   "incidents": 1069,
+   "auto_rate": 0.5902712815715622,
+   "harm": 0.23573433115060805,
+   "harm_count": 252,
+   "real_errors_fixed": 0.496875
+  }
+ },
+ "transfer|0.01": {
+  "incidents": 1069,
+  "auto_rate": 0.6884939195509823,
+  "harm": 0.007483629560336763,
+  "harm_count": 8,
+  "real_errors_fixed": 0.596875,
+  "lambda": 0.011719671162331342
+ },
+ "transfer_grouped|0.01": {
+  "incidents": 1069,
+  "auto_rate": 0.6679139382600561,
+  "harm": 0.002806361085126286,
+  "harm_count": 3,
+  "real_errors_fixed": 0.5703125,
+  "lambdas": {
+   "none": 0.011719671162331342,
+   "repair": 0.007600325733395653
+  }
+ },
+ "transfer|0.02": {
+  "incidents": 1069,
+  "auto_rate": 0.7726847521047708,
+  "harm": 0.018709073900841908,
+  "harm_count": 20,
+  "real_errors_fixed": 0.61875,
+  "lambda": 0.0208782000014305
+ },
+ "transfer_grouped|0.02": {
+  "incidents": 1069,
+  "auto_rate": 0.7558465855940131,
+  "harm": 0.015902712815715623,
+  "harm_count": 17,
+  "real_errors_fixed": 0.6078125,
+  "lambdas": {
+   "none": 0.01807168494761547,
+   "repair": 0.013539724668033078
+  }
+ },
+ "transfer|0.05": {
+  "incidents": 1069,
+  "auto_rate": 0.8194574368568756,
+  "harm": 0.052385406922357346,
+  "harm_count": 56,
+  "real_errors_fixed": 0.6203125,
+  "lambda": 0.05735270442218037
+ },
+ "transfer_grouped|0.05": {
+  "incidents": 1069,
+  "auto_rate": 0.8101028999064547,
+  "harm": 0.04396632366697849,
+  "harm_count": 47,
+  "real_errors_fixed": 0.6203125,
+  "lambdas": {
+   "none": 0.04296997369610899,
+   "repair": 0.5
+  }
+ },
+ "within_large|0.02": {
+  "auto_rate": 0.6728973434037389,
+  "harm": 0.007390480430404697,
+  "real_errors_fixed": 0.5938125,
+  "violations": 0.0
+ },
+ "within_large|0.05": {
+  "auto_rate": 0.791405081989722,
+  "harm": 0.030122691498832958,
+  "real_errors_fixed": 0.617375,
+  "violations": 0.0
+ }
+}

@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use DataRanger or the DQ-Repair benchmark, please cite it as below."
+title: "DataRanger: data repair with a bound on silent harm, and the DQ-Repair benchmark"
+authors:
+  - family-names: Sharma
+    given-names: Akshay
+    affiliation: Salesforce
+type: software
+license: MIT
+repository-code: "https://github.com/akshaysharma1088/dataranger"
+doi: 10.5281/zenodo.23769394
+version: 0.1.1

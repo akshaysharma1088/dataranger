@@ -4,3 +4,5 @@ dist/
 build/
 *.egg-info/
 .venv/
+results/repair_records.jsonl
+results/repair_records_large.jsonl

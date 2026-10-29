@@ -1,0 +1,20 @@
+{
+ "with_reconciliation": {
+  "incidents": 2655,
+  "auto_rate": 0.5747645951035781,
+  "harm": 0.003389830508474576,
+  "harm_count": 9,
+  "real_errors_fixed": 0.569375,
+  "errors_never_surfaced": 0.0,
+  "lambda": 0.010144275125288338
+ },
+ "without_reconciliation": {
+  "incidents": 1777,
+  "auto_rate": 0.6876758581879572,
+  "harm": 0.0028137310073157004,
+  "harm_count": 5,
+  "real_errors_fixed": 0.6192969334330591,
+  "errors_never_surfaced": 0.164375,
+  "lambda": 0.010144275125288338
+ }
+}

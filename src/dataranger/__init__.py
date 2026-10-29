@@ -1,3 +1,3 @@
 """DataRanger: patrols your data, fixes what it can prove, and calls you for the rest."""
 
-__version__ = "0.0.1"
+__version__ = "0.1.1"

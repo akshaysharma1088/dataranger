@@ -59,6 +59,12 @@ def detect(warehouse: dict[str, pd.DataFrame], expected_days: list[date],
                             "group by 1 having count(*) > count(distinct txn_id) order by 1").fetchall():
         out.append(Finding("duplicate_keys", "transactions", _iso(d), float(n), {"extra_rows": int(n)}))
 
+    # Duplicate rows under different keys (same customer, amount, category and channel on one day).
+    for d, n in con.execute("select txn_date, sum(c - 1) from (select txn_date, count(*) c from txn "
+                            "group by txn_date, customer_id, amount, category, channel having count(*) > 1) "
+                            "group by 1 order by 1").fetchall():
+        out.append(Finding("duplicate_rows", "transactions", _iso(d), float(n), {"extra_rows": int(n)}))
+
     # Missing partitions against the expected calendar.
     for (d,) in con.execute("select d from cal anti join (select distinct txn_date from txn) p "
                             "on cal.d = p.txn_date order by 1").fetchall():
@@ -128,11 +134,14 @@ def detect(warehouse: dict[str, pd.DataFrame], expected_days: list[date],
 # Which detector finding counts as a correct catch for which issue type.
 CATCHES = {
     "duplicates": {"duplicate_keys"},
+    "versioned_duplicates": {"duplicate_keys"},
     "late_partition": {"missing_partition"},
     "schema_drift": {"schema_contract", "null_spike"},
     "broken_refs": {"orphan_keys"},
     "unit_scale": {"scale_shift"},
     "silent_drop": {"volume_drop", "mix_drop"},
+    "partial_late": {"volume_drop", "mix_drop"},
+    "rekeyed_duplicates": {"duplicate_rows"},
 }
 
 

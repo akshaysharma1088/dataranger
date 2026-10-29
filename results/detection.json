@@ -5,69 +5,87 @@
     "volume_spike": 1.0,
     "big_ticket_day": 1.0,
     "duplicates": 1.0,
+    "versioned_duplicates": 1.0,
     "late_partition": 1.0,
     "broken_refs": 1.0,
     "unit_scale": 1.0,
-    "silent_drop": 0.3,
+    "silent_drop": 0.6,
+    "partial_late": 0.0,
+    "rekeyed_duplicates": 1.0,
     "schema_drift": 1.0
    },
    "n": {
     "volume_spike": 10,
     "big_ticket_day": 10,
     "duplicates": 10,
+    "versioned_duplicates": 10,
     "late_partition": 10,
     "broken_refs": 10,
     "unit_scale": 10,
     "silent_drop": 10,
+    "partial_late": 10,
+    "rekeyed_duplicates": 10,
     "schema_drift": 5
    },
-   "false_alarms_per_instance": 0.8
+   "false_alarms_per_instance": 0.4
   },
   "medium": {
    "rate": {
     "volume_spike": 1.0,
     "big_ticket_day": 1.0,
     "duplicates": 1.0,
+    "versioned_duplicates": 1.0,
     "late_partition": 1.0,
     "broken_refs": 1.0,
     "unit_scale": 1.0,
-    "silent_drop": 1.0,
+    "silent_drop": 0.9,
+    "partial_late": 0.0,
+    "rekeyed_duplicates": 1.0,
     "schema_drift": 1.0
    },
    "n": {
     "volume_spike": 10,
     "big_ticket_day": 10,
     "duplicates": 10,
+    "versioned_duplicates": 10,
     "late_partition": 10,
     "broken_refs": 10,
     "unit_scale": 10,
     "silent_drop": 10,
+    "partial_late": 10,
+    "rekeyed_duplicates": 10,
     "schema_drift": 5
    },
-   "false_alarms_per_instance": 0.2
+   "false_alarms_per_instance": 0.8
   },
   "large": {
    "rate": {
     "volume_spike": 1.0,
     "big_ticket_day": 1.0,
     "duplicates": 1.0,
+    "versioned_duplicates": 1.0,
     "late_partition": 1.0,
     "broken_refs": 1.0,
     "unit_scale": 1.0,
-    "silent_drop": 1.0,
+    "silent_drop": 0.9,
+    "partial_late": 0.0,
+    "rekeyed_duplicates": 1.0,
     "schema_drift": 1.0
    },
    "n": {
     "volume_spike": 10,
     "big_ticket_day": 10,
     "duplicates": 10,
+    "versioned_duplicates": 10,
     "late_partition": 10,
     "broken_refs": 10,
     "unit_scale": 10,
     "silent_drop": 10,
+    "partial_late": 10,
+    "rekeyed_duplicates": 10,
     "schema_drift": 5
    },
-   "false_alarms_per_instance": 0.2
+   "false_alarms_per_instance": 0.6
   }
  },
  "real": {
