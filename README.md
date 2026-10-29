@@ -21,7 +21,7 @@ Most data-quality tools stop at an alert. Letting an AI agent fix data is the ob
 
 Every patrol writes one self-contained page that answers a data team's morning question: what broke, what DataRanger fixed, and what needs a person.
 
-![DataRanger patrol console](docs/patrol-console.png)
+![DataRanger patrol console](https://raw.githubusercontent.com/akshaysharma1088/dataranger/main/docs/patrol-console.png)
 
 - **The trail** across the top shows every daily partition on the patrol. Yellow diamonds need you, solid green markers were fixed and proven against the source, hollow ones were checked and left alone.
 - **The queue** lists incidents by what they need from you.
