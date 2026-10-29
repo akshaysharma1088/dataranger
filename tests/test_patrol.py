@@ -18,7 +18,10 @@ def test_patrol_with_renamed_columns_never_touches_input(tmp_path):
     pd.testing.assert_frame_equal(facts, before)
     assert {"id", "amt", "src"} <= set(res.fixed_table.columns)
     write_outputs(res, tmp_path)
-    assert (tmp_path / "dashboard.html").read_text().count("<tr>") >= len(res.incidents)
+    page = (tmp_path / "dashboard.html").read_text()
+    data = json.loads(page.split('<script type="application/json" id="data">')[1].split("</script>")[0])
+    assert len(data["incidents"]) == len(res.incidents)
+    assert '"correct"' not in page and '"kinds"' not in page
     for line in open(tmp_path / "audit.jsonl"):
         assert '"correct"' not in line and '"kinds"' not in line
 
