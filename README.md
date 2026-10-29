@@ -1,12 +1,29 @@
-# DataRanger
+<p align="center">
+  <img src="https://raw.githubusercontent.com/akshaysharma1088/dataranger/main/docs/assets/banner.svg" alt="DataRanger" width="720">
+</p>
 
-[![PyPI](https://img.shields.io/pypi/v/dataranger)](https://pypi.org/project/dataranger/) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23769536.svg)](https://doi.org/10.5281/zenodo.23769536)
+<h3 align="center">DataRanger patrols your data, fixes what it can prove, and calls you for the rest.</h3>
 
-**DataRanger patrols your data, fixes what it can prove, and calls you for the rest.**
+<p align="center">
+A park ranger walks the trails, fixes what is safe to fix on the spot, radios in anything dangerous,
+and files a report. DataRanger does the same for your tables. It finds data-quality incidents, tests every
+candidate fix on a copy against the source's control totals, applies only the fixes it can prove, and keeps
+wrong fixes under a rate you choose. Everything else goes to a person, with the evidence attached.
+</p>
 
-A park ranger patrols the trails, fixes what is safe to fix on the spot, calls in anything dangerous, and files a report. DataRanger does the same for your tables.
+<p align="center">
+  <a href="https://pypi.org/project/dataranger/"><img src="https://img.shields.io/pypi/v/dataranger?label=pypi&color=5fb98a" alt="PyPI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-e8b53a" alt="License"></a>
+  <a href="https://github.com/akshaysharma1088/dataranger/actions/workflows/ci.yml"><img src="https://github.com/akshaysharma1088/dataranger/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://doi.org/10.5281/zenodo.23769536"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.23769536.svg" alt="DOI"></a>
+  <img src="https://img.shields.io/badge/python-3.10%2B-5fb98a" alt="Python 3.10+">
+</p>
 
-Most data-quality tools stop at an alert. Letting an AI agent fix data is the obvious next step, and a risky one: a wrong fix can pass every monitor you have. DataRanger only applies a fix after it has been **proven against source data**, and it hands everything else to a person with the evidence attached.
+<p align="center"><sub>The dotted line under the name is a patrol trail: one marker per daily partition, the same marks the patrol console uses.</sub></p>
+
+---
+
+Most data-quality tools stop at an alert. Letting an AI agent fix data is the obvious next step, and a risky one: a wrong fix can pass every monitor you have. In the DQ-Repair benchmark, a rules engine left wrong data behind in 31% of incidents and an agent checked only by monitors in 24%. DataRanger's calibrated gate kept it under 1% while handling 59% of incidents without a person.
 
 ## The patrol loop
 
