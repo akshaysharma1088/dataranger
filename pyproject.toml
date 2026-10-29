@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dataranger"
+dynamic = ["version"]
+description = "An agent that patrols your data, fixes what it can prove, and calls you for the rest."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Akshay Sharma", email = "akshay.sharma1088@gmail.com" }]
+keywords = ["data quality", "data engineering", "agents", "llm", "verification", "data observability"]
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Topic :: Database",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://github.com/akshaysharma1088/dataranger"
+Issues = "https://github.com/akshaysharma1088/dataranger/issues"
+
+[project.scripts]
+dataranger = "dataranger.cli:main"
+
+[tool.hatch.version]
+path = "src/dataranger/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dataranger"]
