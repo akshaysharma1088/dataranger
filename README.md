@@ -93,6 +93,21 @@ python benchmarks/run_repair.py 150 100       # about 6 minutes on two cores
 python benchmarks/analyze_repair.py
 ```
 
+### Language models as proposers
+
+Qwen2.5 7B and 14B, served by Ollama on free GitHub Actions runners (`.github/workflows/llm.yml`, triggered by pushing to the `llm-run` branch; responses are committed to `llm-results`), proposed one fix per incident. At a 5% target:
+
+| Model | Policy | Automated | Harm | Real errors fixed |
+|---|---|---|---|---|
+| 7B | Apply the model's fix | 91.4% | 37.3% | 27.9% |
+| 7B | Apply it if the monitors go quiet | 62.2% | 22.6% | 27.3% |
+| 7B | Through the gate | 50.0% | 3.05% | 27.0% |
+| 7B | Gate over model + templates | 76.5% | 3.04% | 58.2% |
+| 14B | Apply the model's fix | 91.3% | 30.4% | 43.2% |
+| 14B | Through the gate | 53.7% | 2.27% | 40.5% |
+
+The models' fixes were right for 54% (7B) and 61% (14B) of incidents. The gate kept harm under target for both; it cannot make a weak proposer strong, but it makes any proposer safe. `python benchmarks/eval_llm.py <runs/<id>/llm>` reproduces the table.
+
 ### Larger tables
 
 On 40 large instances (about 480k rows each, 981 incidents), a threshold calibrated on small and medium tables gave 1.02%, 2.04% and 5.71% harm at targets of 1, 2 and 5%: at or just above target, since relative gaps shrink as partitions grow. Calibrating separately for "no action" decisions and for repairs (`calibrate_groups`) transferred with margin: 0.92%, 1.33% and 3.87%.
