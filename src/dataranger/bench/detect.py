@@ -134,6 +134,7 @@ def detect(warehouse: dict[str, pd.DataFrame], expected_days: list[date],
 # Which detector finding counts as a correct catch for which issue type.
 CATCHES = {
     "duplicates": {"duplicate_keys"},
+    "versioned_duplicates": {"duplicate_keys"},
     "late_partition": {"missing_partition"},
     "schema_drift": {"schema_contract", "null_spike"},
     "broken_refs": {"orphan_keys"},

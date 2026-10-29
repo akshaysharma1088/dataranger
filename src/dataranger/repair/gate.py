@@ -87,3 +87,33 @@ def evaluate(records: list[dict], policy: str, lam: float | None = None, res: st
     return {"incidents": len(recs), "auto_rate": float(np.mean([a is not None for a in applied])),
             "harm": float(np.mean(harm)), "harm_count": int(sum(harm)),
             "real_errors_fixed": float(np.sum(fixed_real) / max(sum(real), 1))}
+
+
+def group_of(rec: dict) -> str:
+    """Calibration group: 'none' decisions (declaring an alert benign) carry different risk from repairs."""
+    c = select(rec)
+    return "none" if c is None or c["action"] == "none" else "repair"
+
+
+def calibrate_groups(records: list[dict], alpha: float = 0.05, delta: float = 0.05, grid=GRID) -> dict:
+    """One Learn-then-Test threshold per group, each certified at alpha within its group.
+
+    Silent harm overall is a mixture of the group risks, so it is also at most alpha
+    (each group's bound holds with probability 1 - delta/2 when two groups are tested at delta/2).
+    """
+    groups: dict[str, list[dict]] = {}
+    for r in records:
+        if not r["table_level"]:
+            groups.setdefault(group_of(r), []).append(r)
+    return {g: calibrate(rs, alpha, delta / len(groups), grid) for g, rs in groups.items()}
+
+
+def evaluate_groups(records: list[dict], lams: dict) -> dict:
+    recs = [r for r in records if not r["table_level"]]
+    applied = [decide(r, "verified", lams.get(group_of(r), -1.0)) for r in recs]
+    harm = [loss(r, a) for r, a in zip(recs, applied)]
+    real = [any(k not in ("false_alarm", "volume_spike", "big_ticket_day") for k in r["kinds"]) for r in recs]
+    fixed_real = [a is not None and a["correct"] and x for a, x in zip(applied, real)]
+    return {"incidents": len(recs), "auto_rate": float(np.mean([a is not None for a in applied])),
+            "harm": float(np.mean(harm)), "harm_count": int(sum(harm)),
+            "real_errors_fixed": float(np.sum(fixed_real) / max(sum(real), 1))}

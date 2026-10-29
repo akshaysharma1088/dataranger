@@ -12,13 +12,14 @@ import pandas as pd
 
 from .tables import Instance
 
-ERROR_TYPES = ["duplicates", "late_partition", "schema_drift", "broken_refs", "unit_scale", "silent_drop",
+ERROR_TYPES = ["duplicates", "versioned_duplicates", "late_partition", "schema_drift", "broken_refs", "unit_scale", "silent_drop",
                "partial_late", "rekeyed_duplicates"]
 DECOY_TYPES = ["volume_spike", "big_ticket_day"]
 
 # The decision a careful engineer would make for each type.
 EXPECTED = {
     "duplicates": ("dedupe", "auto"),
+    "versioned_duplicates": ("dedupe_keep_latest", "auto"),
     "late_partition": ("reload_partition", "auto"),
     "schema_drift": ("remap_column", "escalate"),
     "broken_refs": ("quarantine", "escalate"),
@@ -30,7 +31,7 @@ EXPECTED = {
     "big_ticket_day": ("none", "none"),
 }
 
-DEFAULT_MIX = {"duplicates": 2, "late_partition": 2, "schema_drift": 1, "broken_refs": 2,
+DEFAULT_MIX = {"duplicates": 2, "versioned_duplicates": 2, "late_partition": 2, "schema_drift": 1, "broken_refs": 2,
                "unit_scale": 2, "silent_drop": 2, "partial_late": 2, "rekeyed_duplicates": 2,
                "volume_spike": 2, "big_ticket_day": 2}
 
@@ -117,6 +118,18 @@ def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, war
             t = pd.concat([t, dup], ignore_index=True)
             fix["key"] = "txn_id"
             detail = {"rows_added": int(len(dup))}
+        elif k == "versioned_duplicates":
+            # Settlement adjustments re-sent rows under the same key. The warehouse first loaded the
+            # pre-adjustment amount; the settled version was appended later. Keeping the first copy
+            # clears the duplicate-key alert and leaves the wrong amounts.
+            idx = t[mask].sample(frac=float(rng.uniform(0.005, 0.05)), random_state=int(rng.integers(1 << 30))).index
+            settled = t.loc[idx].copy()
+            f_adj = rng.uniform(0.85, 1.15, len(idx))
+            f_adj = np.where(np.abs(f_adj - 1) < 0.01, 1.02, f_adj)
+            t.loc[idx, "amount"] = np.round(t.loc[idx, "amount"].to_numpy() * f_adj, 2)
+            t = pd.concat([t, settled], ignore_index=True)
+            fix.update({"key": "txn_id", "keep": "last"})
+            detail = {"rows_adjusted": int(len(idx))}
         elif k == "late_partition":  # the file arrived after the job ran
             detail = {"rows_missing": int(mask.sum())}
             t = t[~mask]

@@ -32,7 +32,7 @@ def propose(findings: list[Finding], reload_ok: bool) -> tuple[list[F.Fix], F.Fi
     for f in findings:
         e = f.evidence
         if f.detector == "duplicate_keys":
-            c.append(F.make("dedupe", key="txn_id"))
+            c += [F.make("dedupe", key="txn_id"), F.make("dedupe", key="txn_id", keep="last")]
         elif f.detector == "duplicate_rows":
             c.append(F.make("dedupe_business"))
         elif f.detector in ("missing_partition", "volume_drop", "mix_drop", "reconcile_gap") and reload_ok:
@@ -102,7 +102,32 @@ class Monitors:
         return True
 
 
-def run(case: Case, granularity: str = "channel", retention_days: int = 14, reconcile: bool = True) -> list[dict]:
+def context(part: pd.DataFrame, d, fs: list[Finding], manifest: pd.DataFrame, mon: "Monitors", reload_ok: bool) -> dict:
+    """What an operator (or an LLM) sees about one incident: the alerts and the numbers behind them."""
+    m = manifest[manifest["txn_date"] == d].set_index("channel")
+    med, _ = mon.vol[pd.Timestamp(d).isoweekday()]
+    ch = {}
+    for c in sorted(set(m.index) - {"*"} | set(part["channel"].dropna())):
+        g = part[part["channel"] == c]
+        ch[c] = {"rows": int(len(g)), "source_rows": int(m.at[c, "n"]) if c in m.index else 0,
+                 "amount": round(float(g["amount"].sum()), 2),
+                 "source_amount": round(float(m.at[c, "amount"]), 2) if c in m.index else 0.0,
+                 "median_amount": round(float(g["amount"].median()), 2) if len(g) else None,
+                 "usual_median_amount": round(float(mon.med.get(c, float("nan"))), 2)}
+    return {"date": pd.Timestamp(d).date().isoformat(), "weekday": pd.Timestamp(d).day_name(),
+            "rows": int(len(part)), "typical_rows_for_weekday": int(round(float(np.exp(med)))),
+            "source_rows": int(m.at["*", "n"]) if "*" in m.index else None,
+            "duplicate_keys": int(part["txn_id"].duplicated().sum()),
+            "duplicate_business_rows": int(part.duplicated(subset=["customer_id", "amount", "category", "channel"]).sum()),
+            "unknown_customers": int((~part["customer_id"].isin(mon.cust)).sum()),
+            "alerts": [{"detector": f.detector, **{k: v for k, v in f.evidence.items()}} for f in fs],
+            "channels": ch, "reload_from_source_available": reload_ok}
+
+
+def run(case: Case, granularity: str = "channel", retention_days: int = 14, reconcile: bool = True,
+        extra: dict[str, F.Fix | None] | None = None) -> list[dict]:
+    """`extra` maps a partition to a fix from another proposer (an LLM); it is verified like the rest
+    and marked with source 'llm'. A None value records that the proposer chose to escalate."""
     inst = case.instance
     wh = {k: v.copy() for k, v in case.warehouse.items()}
     src_t = case.source["transactions"]
@@ -144,6 +169,14 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
         truth = src_t[src_t["txn_date"] == d]
         reload_ok = d >= last - timedelta(days=retention_days)
         cands, default = propose(fs, reload_ok)
+        src_of = {fx: "template" for fx in cands}
+        llm_fix = (extra or {}).get(p)
+        if llm_fix is not None:
+            if llm_fix in src_of:
+                src_of[llm_fix] = "template+llm"
+            else:
+                cands.append(llm_fix)
+                src_of[llm_fix] = "llm"
         rows = []
         for fx in cands:
             try:
@@ -151,7 +184,7 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
             except ValueError:
                 continue
             inv = invariants_hold(fixed, wh["customers"])
-            rows.append({"fix": str(fx), "action": fx.action, "tier": fx.tier, "invariants": inv,
+            rows.append({"fix": str(fx), "action": fx.action, "tier": fx.tier, "invariants": inv, "source": src_of[fx],
                          "residual": residual(fixed, case.manifest, d, granularity) if inv else float("inf"),
                          "residual_partition": residual(fixed, case.manifest, d, "partition") if inv else float("inf"),
                          "changed": int(abs(len(fixed) - len(part)) + (fixed["amount"].sum() != part["amount"].sum())),
@@ -159,5 +192,7 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
                          "monitors_quiet": mon.quiet(fixed, d) if len(fixed) else False})
         records.append({"partition": p, "kinds": issue_kinds.get(p, ["false_alarm"]), "table_level": False,
                         "detectors": sorted({f.detector for f in fs}), "reload_ok": reload_ok,
-                        "default": str(default) if default else None, "candidates": rows})
+                        "default": str(default) if default else None, "candidates": rows,
+                        "llm": str(llm_fix) if llm_fix is not None else None,
+                        "context": context(part, d, fs, case.manifest, mon, reload_ok)})
     return records

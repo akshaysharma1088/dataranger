@@ -15,16 +15,30 @@ Most data-quality tools stop at an alert. Letting an AI agent fix data is the ob
 5. **Gate.** Proven and low risk: applied as a new version, never an overwrite. Anything else: escalated.
 6. **Report.** Every detection, fix and decision lands on a live dashboard and an audit log.
 
-## Status
-
-Early. Version 0.0.1 reserves the name and ships the command-line skeleton:
+## Try it
 
 ```bash
 pip install dataranger
-dataranger plan
+dataranger demo                 # patrol a generated table with planted problems; writes dataranger-demo/dashboard.html
 ```
 
-The first working patrol loop (DuckDB, open-weights models through Ollama, static dashboard) is planned for 0.1.0, alongside the DQ-Repair benchmark.
+On your own DuckDB tables (a fact table partitioned by date, a reference table, and the source's control totals):
+
+```bash
+dataranger patrol --db warehouse.duckdb --table payments --ref-table customers \
+    --manifest-table control_totals --key payment_id --reference customer_id \
+    --date booking_date --segment channel --amount amount
+```
+
+The control-totals table has one row per date and segment, plus a row with segment `*` for the whole day, with columns `n` (rows) and `amount` (sum). DataRanger never modifies your tables: fixed partitions go to `fixed_version.csv`, every decision and its evidence to `audit.jsonl`, and the morning report to `dashboard.html`.
+
+The default threshold was calibrated on the DQ-Repair benchmark for a 1% target. Once people have reviewed some of DataRanger's decisions, calibrate on your own data:
+
+```bash
+dataranger calibrate --audit report/audit.jsonl --labels reviewed.csv --alpha 0.01
+```
+
+`reviewed.csv` has columns `partition` and `verdict` (right or wrong). About 300 reviewed incidents certify a 1% target and about 60 certify 5%.
 
 ## DQ-Repair benchmark (in progress)
 
@@ -59,19 +73,20 @@ python benchmarks/run_detection.py            # all sizes and the real datasets
 
 The loop proposes template fixes for each incident, checks every candidate against the source's control totals and the declared invariants (unique keys, valid references), and applies the best-supported fix only if its residual clears a threshold chosen by Learn-then-Test. Fixes that delete data or change meaning always escalate. The source publishes control totals per partition and channel; 15% of them are stale by up to 1%, so even a correct fix can leave a small residual.
 
-250 instances (150 small, 100 medium), 6,150 incidents, 100 random calibration and test splits by instance, delta = 0.05. Silent harm is the share of incidents that end with a wrong fix applied. All numbers are in `results/repair_summary.json`.
+250 instances (150 small, 100 medium), 6,600 incidents, 100 random calibration and test splits by instance, delta = 0.05. Silent harm is the share of incidents that end with a wrong fix applied. All numbers are in `results/repair_summary.json`.
 
 | Policy | Auto-applied | Silent harm | Real errors fixed |
 |---|---|---|---|
-| Rules: default fix for every alert | 64.6% | 25.7% | 56.0% |
-| Agent checked by the monitors | 55.1% | 17.3% | 56.8% |
-| Verified, calibrated for alpha = 1% | 59.9% | 0.57% | 52.5% |
-| Verified, calibrated for alpha = 2% | 69.8% | 1.36% | 55.2% |
-| Verified, calibrated for alpha = 5% | 77.8% | 3.92% | 56.7% |
+| Rules: default fix for every alert | 66.6% | 31.1% | 49.3% |
+| Agent checked by the monitors | 58.2% | 23.8% | 49.7% |
+| Verified, calibrated for alpha = 1% | 58.6% | 0.56% | 56.4% |
+| Verified, calibrated for alpha = 2% | 69.4% | 1.42% | 59.0% |
+| Verified, calibrated for alpha = 5% | 79.3% | 3.91% | 61.1% |
 
-- **The bound holds.** Test harm exceeded alpha in 0 to 3% of splits, within delta = 5%, for both evidence granularities.
-- **Hand-picked thresholds do not travel.** A threshold of 0.01 is safe with per-channel totals but breaks a 1% target in every split when only partition totals exist; calibration moves the threshold to 0.004 on its own.
-- **Exchangeability matters.** Calibrated without any partial-late incidents, the gate then wrongly applies "no action" to 68% of them. New incident types need recalibration, which is what epoch recalibration with repair memory is for.
+- **The bound holds.** Test harm exceeded alpha in 1 to 5% of splits, within delta = 5%, for both evidence granularities.
+- **Versioned duplicates.** Rules and the monitor-checked agent kept the pre-settlement copy in 500 and 498 of 500 such incidents; the gate picked the settled copy by its match to the control totals.
+- **Hand-picked thresholds do not travel.** A threshold of 0.01 is safe with per-channel totals but breaks a 1% target in every split when only partition totals exist; calibration moves the threshold to 0.003 on its own.
+- **Exchangeability matters.** Calibrated without any partial-late incidents, the gate then wrongly applies "no action" to 67% of them. New incident types need recalibration, which is what epoch recalibration with repair memory is for.
 - **Source-aware detection.** The statistical monitors miss every partial-late partition; a reconciliation check against the control totals catches all of them.
 
 ```bash
@@ -79,7 +94,54 @@ python benchmarks/run_repair.py 150 100       # about 6 minutes on two cores
 python benchmarks/analyze_repair.py
 ```
 
-The proposer here enumerates fix templates without a language model. The LLM proposer (Qwen2.5 through Ollama) is next.
+### Language models as proposers
+
+Qwen2.5 7B and 14B, served by Ollama on free GitHub Actions runners (`.github/workflows/llm.yml`, triggered by pushing to the `llm-run` branch; responses are committed to `llm-results`), proposed one fix per incident. At a 5% target:
+
+| Model | Policy | Automated | Harm | Real errors fixed |
+|---|---|---|---|---|
+| 7B | Apply the model's fix | 91.4% | 37.3% | 27.9% |
+| 7B | Apply it if the monitors go quiet | 62.2% | 22.6% | 27.3% |
+| 7B | Through the gate | 50.0% | 3.05% | 27.0% |
+| 7B | Gate over model + templates | 76.5% | 3.04% | 58.2% |
+| 14B | Apply the model's fix | 91.3% | 30.4% | 43.2% |
+| 14B | Through the gate | 53.7% | 2.27% | 40.5% |
+
+The models' fixes were right for 54% (7B) and 61% (14B) of incidents. The gate kept harm under target for both; it cannot make a weak proposer strong, but it makes any proposer safe. `python benchmarks/eval_llm.py <runs/<id>/llm>` reproduces the table.
+
+### Larger tables
+
+On 40 large instances (about 480k rows each, 1,069 incidents), a threshold calibrated on small and medium tables gave 0.75%, 1.87% and 5.24% harm at targets of 1, 2 and 5%: close to target and just above it at 5%, since relative gaps shrink as partitions grow. Calibrating separately for "no action" decisions and for repairs (`calibrate_groups`) transferred with margin: 0.28%, 1.59% and 4.40%.
+
+### Repair memory under drift
+
+`benchmarks/run_stream.py` simulates a year: five data estates of ten tables each, a new incident type (partial-late partitions) from month 5, and staler control totals from month 9. At a 2% target:
+
+| Policy | Silent harm | Automated | Months over target |
+|---|---|---|---|
+| Calibrated once | 3.05% | 75.4% | 60% |
+| Recalibrated monthly | 1.30% | 62.4% | 18% |
+| Monthly + repair memory | 0.39% | 55.0% | 7% (all in month 5) |
+
+Memory (`dataranger.repair.memory`) escalates unfamiliar incident signatures, blocks signatures whose fixes went wrong, and recalibrates on what it would have done. It recovered from the new incident type within a month (harm on partial-late incidents 32% in month 5, 5% in month 6). The price is automation: when the world changes, staying inside the promise means asking people more often.
+
+### Real datasets: Hospital, Flights, Beers
+
+No source of record here, so the evidence comes from the table itself (agreeing dependencies, normalization rules). Half the rows are labels: a quarter fits an evidence score and a quarter certifies the threshold. Compared on held-out rows with Baran (20 labeled tuples, Raha detection) and conformal data cleaning (reimplemented, trained on clean rows):
+
+| Data | Method | Errors fixed | Precision | Wrong per 1k cells |
+|---|---|---|---|---|
+| Hospital | Baran | 55.0% | 93.5% | 0.96 |
+| Hospital | Conformal cleaning | 85.0% | 64.7% | 11.80 |
+| Hospital | DataRanger, alpha 5% | 62.8% | 98.2% | 0.37 |
+| Flights | Baran | 51.2% | 81.7% | 34.37 |
+| Flights | Conformal cleaning | 51.6% | 94.6% | 8.83 |
+| Flights | DataRanger, alpha 5% | 25.0% | 95.3% | 3.67 |
+| Beers | Baran | 89.2% | 94.0% | 9.46 |
+| Beers | Conformal cleaning | 64.9% | 60.2% | 70.40 |
+| Beers | DataRanger, alpha 1% | 85.0% | 100.0% | 0.02 |
+
+The target held in every split. Baran's corrections are in `results/baran/`; `benchmarks/run_baran.py` reproduces them (it needs `pip install raha`).
 
 ## License
 
