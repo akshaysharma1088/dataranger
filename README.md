@@ -1,5 +1,7 @@
 # DataRanger
 
+[![PyPI](https://img.shields.io/pypi/v/dataranger)](https://pypi.org/project/dataranger/) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23769394.svg)](https://doi.org/10.5281/zenodo.23769394)
+
 **DataRanger patrols your data, fixes what it can prove, and calls you for the rest.**
 
 A park ranger patrols the trails, fixes what is safe to fix on the spot, calls in anything dangerous, and files a report. DataRanger does the same for your tables.
@@ -142,6 +144,10 @@ No source of record here, so the evidence comes from the table itself (agreeing 
 | Beers | DataRanger, alpha 1% | 85.0% | 100.0% | 0.02 |
 
 The target held in every split. Baran's corrections are in `results/baran/`; `benchmarks/run_baran.py` reproduces them (it needs `pip install raha`).
+
+## Citing
+
+See `CITATION.cff`. Archived on Zenodo: [10.5281/zenodo.23769394](https://doi.org/10.5281/zenodo.23769394).
 
 ## License
 
