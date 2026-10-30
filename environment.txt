@@ -1,0 +1,13 @@
+# Exact environment used for the results in the paper (Linux x86_64, 2 CPU cores, 8 GB RAM).
+# Install with: pip install -r environment.txt && pip install -e .
+# python 3.13.16
+duckdb==1.5.5
+duckdb_extension_tpcds==1.5.5
+matplotlib==3.11.2
+numpy==2.5.3
+pandas==3.0.5
+pytest==9.1.1
+scikit-learn==1.9.1
+scipy==1.18.1
+# Only for benchmarks/run_baran.py (Baran's corrections are committed in results/baran/):
+# raha==1.26

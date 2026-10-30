@@ -185,6 +185,7 @@ Memory (`dataranger.repair.memory`) escalates unfamiliar incident signatures, bl
 
 - **Labels needed.** A 5% target is certifiable from about 130 labeled incidents (66% automated); a 1% target needs about 300 before anything is automated, then reaches 50% at about 530 and 59% at 3,300.
 - **Stale control totals.** At a 1% target, automation falls from 71% with exact totals to 29% when half of them are stale; harm stays under target.
+- **Corrupt control totals** (`run_corrupt.py`, `analyze_corrupt.py`): totals computed downstream of the error agree with the wrong data, so no check against them can see it. Calibrated on the same corrupted source, the gate fails safe (no threshold certified at 1%); calibrated on clean totals and then hit by corruption, the bound breaks like under any drift. Such a source needs a second, independent check.
 - **Without invariant checks** the calibration refuses to certify any threshold and automation collapses to about 0%: the gate fails safe.
 - **Cost.** A full patrol takes 2.7 s, 4.1 s and 10.1 s on one CPU core for 23k, 117k and 470k-row tables.
 
@@ -209,12 +210,12 @@ The target held in every split. Baran's corrections are in `results/baran/`; `be
 ## Reproducing the paper
 
 ```bash
-pip install -e ".[bench]"
-./reproduce.sh          # every analysis from the committed incident records
+pip install -r environment.txt && pip install -e .   # the exact versions used for the paper
+./reproduce.sh          # every analysis from the committed incident records (about 30 minutes, 2 cores)
 ./reproduce.sh full     # regenerate the records too
 ```
 
-Seeds are fixed, so the numbers come out the same. The LLM proposals (from the Actions workflow) and Baran's corrections (needs `raha`) are scored from their saved outputs.
+Seeds are fixed, so the numbers come out the same (wall-clock timings aside). The LLM proposals (from the Actions workflow, saved in `results/llm_responses/`) and Baran's corrections (`results/baran/`, needs `raha`) are scored from their saved outputs, so the archive alone is enough to reproduce every table.
 
 ## Citing
 

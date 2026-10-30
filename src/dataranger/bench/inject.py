@@ -63,7 +63,9 @@ class Case:
 
 
 def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, warmup: int = 14,
-           p_stale: float = 0.15) -> Case:
+           p_stale: float = 0.15, p_corrupt: float = 0.0) -> Case:
+    """`p_corrupt` is the chance that an errored partition's control totals are themselves corrupt:
+    computed downstream of the error, from the warehouse copy, so they agree with the wrong data."""
     mix = dict(DEFAULT_MIX if mix is None else mix)
     rng = np.random.default_rng(inst.seed * 1000 + 7 if seed is None else seed)
     src = inst.clean_warehouse()
@@ -177,8 +179,26 @@ def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, war
                             "escalate", {"since": d.isoformat(), "rows_affected": int(sel.sum())}))
 
     wh["transactions"] = t.reset_index(drop=True)
-    return Case(instance=inst, source=src, warehouse=wh, issues=issues,
-                manifest=make_manifest(src["transactions"], rng, p_stale))
+    manifest = make_manifest(src["transactions"], rng, p_stale)
+    if p_corrupt > 0:  # separate stream, so p_corrupt = 0 reproduces earlier cases exactly
+        crng = np.random.default_rng((inst.seed * 1000 + 7 if seed is None else seed) + 99_991)
+        w = wh["transactions"]
+        for i in issues:
+            if i.decoy or i.partition is None or crng.random() >= p_corrupt:
+                continue
+            d = pd.Timestamp(i.partition).date()
+            part = w[w["txn_date"] == d]
+            if part.empty:
+                continue
+            g = part.groupby("channel").agg(n=("txn_id", "size"), amount=("amount", "sum"))
+            keep = manifest["txn_date"] != d
+            rows = [{"txn_date": d, "channel": "*", "n": len(part), "amount": float(part["amount"].sum()), "stale_rows": 0}]
+            rows += [{"txn_date": d, "channel": ch, "n": int(r["n"]), "amount": float(r["amount"]), "stale_rows": 0}
+                     for ch, r in g.iterrows()]
+            manifest = pd.concat([manifest[keep], pd.DataFrame(rows)], ignore_index=True)
+            i.detail["corrupt_manifest"] = True
+        manifest = manifest.sort_values(["txn_date", "channel"], ignore_index=True)
+    return Case(instance=inst, source=src, warehouse=wh, issues=issues, manifest=manifest)
 
 
 def make_manifest(txn: pd.DataFrame, rng: np.random.Generator, p_stale: float = 0.15) -> pd.DataFrame:
