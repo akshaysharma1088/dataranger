@@ -3,6 +3,9 @@ version: 2
 updates:
   - package-ecosystem: pip
     directory: "/"
+    # environment.txt records the exact versions behind the paper's results; it must not be bumped.
+    exclude-paths:
+      - "environment.txt"
     schedule:
       interval: monthly
     open-pull-requests-limit: 3
