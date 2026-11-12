@@ -1,7 +1,7 @@
 # Exact environment used for the results in the paper (Linux x86_64, 2 CPU cores, 8 GB RAM).
 # Install with: pip install -r environment.txt && pip install -e .
 # python 3.13.16
-duckdb==1.5.5
+duckdb==1.5.6
 duckdb_extension_tpcds==1.5.5
 matplotlib==3.11.2
 numpy==2.5.3
