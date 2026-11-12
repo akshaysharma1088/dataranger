@@ -2,6 +2,8 @@
   <img src="https://raw.githubusercontent.com/akshaysharma1088/dataranger/main/docs/assets/banner.svg" alt="DataRanger" width="720">
 </p>
 
+<!-- mcp-name: io.github.akshaysharma1088/dataranger -->
+
 <h3 align="center">DataRanger patrols your data, fixes what it can prove, and calls you for the rest.</h3>
 
 <p align="center">
@@ -99,14 +101,10 @@ dataranger calibrate --audit report/audit.jsonl --labels reviewed.csv --alpha 0.
 
 Agents now change pipelines and query data on their own. DataRanger can run as an [MCP](https://modelcontextprotocol.io) server, so an agent can check a table before it trusts it, and hand anything it cannot prove to a person.
 
-```bash
-pip install "dataranger[mcp]"
-```
-
-Claude Code:
+With [uv](https://docs.astral.sh/uv/) there is nothing to install first. Claude Code:
 
 ```bash
-claude mcp add dataranger -- dataranger mcp
+claude mcp add dataranger -- uvx dataranger mcp
 ```
 
 Claude Desktop, Cursor or VS Code (add to the client's MCP config):
@@ -114,10 +112,12 @@ Claude Desktop, Cursor or VS Code (add to the client's MCP config):
 ```json
 {
   "mcpServers": {
-    "dataranger": { "command": "dataranger", "args": ["mcp"] }
+    "dataranger": { "command": "uvx", "args": ["dataranger", "mcp"] }
   }
 }
 ```
+
+Or `pip install dataranger` and use `dataranger mcp` as the command. DataRanger is listed in the [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.akshaysharma1088/dataranger`.
 
 The server exposes four tools:
 

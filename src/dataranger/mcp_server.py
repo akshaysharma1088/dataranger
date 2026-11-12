@@ -1,6 +1,6 @@
 """DataRanger as an MCP server, so AI agents can patrol data before they trust it.
 
-Run it with ``dataranger mcp`` (after ``pip install "dataranger[mcp]"``) and point any MCP
+Run it with ``dataranger mcp`` (or ``uvx dataranger mcp``) and point any MCP
 client at that command: Claude Desktop, Claude Code, Cursor, VS Code or your own agent.
 
 The tools are read-only towards your data. Inputs are opened read-only, nothing is written
@@ -172,7 +172,7 @@ def build_server():
             from mcp.server.fastmcp import FastMCP as Server
             from mcp.server.fastmcp.exceptions import ToolError
         except ImportError:
-            raise SystemExit('The MCP server needs the mcp package: pip install "dataranger[mcp]"') from None
+            raise SystemExit("The MCP server needs the mcp package: pip install mcp") from None
 
     def visible_errors(fn):
         # Input problems (wrong column, missing file) go back to the agent as a readable message.

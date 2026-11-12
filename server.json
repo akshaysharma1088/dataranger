@@ -1,0 +1,24 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.akshaysharma1088/dataranger",
+  "title": "DataRanger",
+  "description": "Read-only data patrol for AI agents: find broken partitions, prove fixes, escalate the rest.",
+  "repository": {
+    "url": "https://github.com/akshaysharma1088/dataranger",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/akshaysharma1088/dataranger",
+  "version": "0.4.1",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "dataranger",
+      "version": "0.4.1",
+      "runtimeHint": "uvx",
+      "transport": { "type": "stdio" },
+      "packageArguments": [
+        { "type": "positional", "value": "mcp" }
+      ]
+    }
+  ]
+}

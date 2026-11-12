@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 (2026-11-12)
+
+- Listed in the official [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.akshaysharma1088/dataranger`. Each release now publishes there automatically.
+- `mcp` is now a core dependency, so `uvx dataranger mcp` runs the server with nothing to install first. `pip install "dataranger[mcp]"` still works.
+- New Colab demo notebook with an "Open in Colab" badge in the README. (#44, thanks @KingEmma7)
+
 ## 0.4.0 (2026-11-12)
 
 DataRanger now works as a guardrail for AI agents.
