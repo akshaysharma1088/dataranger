@@ -13,7 +13,9 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from typing import Annotated, Any, TypedDict
+from typing import Annotated, Any
+
+from typing_extensions import TypedDict  # pydantic needs this TypedDict on Python < 3.12
 
 from pydantic import Field
 
