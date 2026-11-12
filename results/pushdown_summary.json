@@ -1,0 +1,147 @@
+[
+ {
+  "rows": 1010006,
+  "build_seconds": 0.6944668292999268,
+  "per_candidate_seconds": 0.23595714569091797,
+  "candidates": {
+   "none()": {
+    "seconds": 0.12912535667419434,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "dedupe(key=txn_id)": {
+    "seconds": 0.3661160469055176,
+    "residual": 3.5605130549997735e-14,
+    "invariants": true
+   },
+   "dedupe(keep=last, key=txn_id)": {
+    "seconds": 0.35686254501342773,
+    "residual": 2.8994405985340175e-14,
+    "invariants": true
+   },
+   "rescale(channel=ach, factor=0.01)": {
+    "seconds": 0.09172463417053223,
+    "residual": Infinity,
+    "invariants": false
+   }
+  },
+  "peak_client_gb": 0.276632,
+  "db_gb": 0.012070912
+ },
+ {
+  "rows": 5050111,
+  "build_seconds": 3.033562660217285,
+  "per_candidate_seconds": 0.795138955116272,
+  "candidates": {
+   "none()": {
+    "seconds": 0.37676215171813965,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "dedupe(key=txn_id)": {
+    "seconds": 1.2976994514465332,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "dedupe(keep=last, key=txn_id)": {
+    "seconds": 1.098611831665039,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "rescale(channel=ach, factor=0.01)": {
+    "seconds": 0.407482385635376,
+    "residual": Infinity,
+    "invariants": false
+   }
+  },
+  "peak_client_gb": 0.63726,
+  "db_gb": 0.068431872
+ },
+ {
+  "rows": 10099554,
+  "build_seconds": 6.0618696212768555,
+  "per_candidate_seconds": 1.7879222631454468,
+  "candidates": {
+   "none()": {
+    "seconds": 0.8613951206207275,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "dedupe(key=txn_id)": {
+    "seconds": 2.6652584075927734,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "dedupe(keep=last, key=txn_id)": {
+    "seconds": 2.7274720668792725,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "rescale(channel=ach, factor=0.01)": {
+    "seconds": 0.8975634574890137,
+    "residual": Infinity,
+    "invariants": false
+   }
+  },
+  "peak_client_gb": 1.034904,
+  "db_gb": 0.180629504
+ },
+ {
+  "rows": 20199396,
+  "build_seconds": 12.612929582595825,
+  "per_candidate_seconds": 3.604660391807556,
+  "candidates": {
+   "none()": {
+    "seconds": 1.72153639793396,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "dedupe(key=txn_id)": {
+    "seconds": 5.65956711769104,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "dedupe(keep=last, key=txn_id)": {
+    "seconds": 5.179928541183472,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "rescale(channel=ach, factor=0.01)": {
+    "seconds": 1.857609510421753,
+    "residual": Infinity,
+    "invariants": false
+   }
+  },
+  "peak_client_gb": 2.196816,
+  "db_gb": 0.405024768
+ },
+ {
+  "rows": 50499725,
+  "build_seconds": 33.64308166503906,
+  "per_candidate_seconds": 9.680530607700348,
+  "candidates": {
+   "none()": {
+    "seconds": 4.973134279251099,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "dedupe(key=txn_id)": {
+    "seconds": 14.614466905593872,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "dedupe(keep=last, key=txn_id)": {
+    "seconds": 13.621222257614136,
+    "residual": Infinity,
+    "invariants": false
+   },
+   "rescale(channel=ach, factor=0.01)": {
+    "seconds": 5.513298988342285,
+    "residual": Infinity,
+    "invariants": false
+   }
+  },
+  "peak_client_gb": 3.94226,
+  "db_gb": 0.96548864
+ }
+]

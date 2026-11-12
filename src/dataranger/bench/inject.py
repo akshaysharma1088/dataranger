@@ -15,6 +15,9 @@ from .tables import Instance
 ERROR_TYPES = ["duplicates", "versioned_duplicates", "late_partition", "schema_drift", "broken_refs", "unit_scale", "silent_drop",
                "partial_late", "rekeyed_duplicates"]
 DECOY_TYPES = ["volume_spike", "big_ticket_day"]
+# Harder families, not in the default mix (Section 6.8 of the paper): two errors in one partition,
+# repeated out-of-order adjustments, and wrong data that preserves every count and sum.
+HARD_TYPES = ["compound", "multi_version", "category_relabel"]
 
 # The decision a careful engineer would make for each type.
 EXPECTED = {
@@ -29,7 +32,14 @@ EXPECTED = {
     "rekeyed_duplicates": ("dedupe_business", "auto"),
     "volume_spike": ("none", "none"),
     "big_ticket_day": ("none", "none"),
+    "compound": ("dedupe_then_rescale", "auto"),
+    "multi_version": ("reload_partition", "auto"),
+    "category_relabel": ("reload_partition", "auto"),
+    "missing_manifest": ("none", "escalate"),
 }
+HARD_MIX = {**{"duplicates": 2, "versioned_duplicates": 2, "late_partition": 2, "schema_drift": 1, "broken_refs": 2,
+               "unit_scale": 2, "silent_drop": 2, "partial_late": 2, "rekeyed_duplicates": 2, "volume_spike": 2, "big_ticket_day": 2},
+            "compound": 2, "multi_version": 2, "category_relabel": 2}
 
 DEFAULT_MIX = {"duplicates": 2, "versioned_duplicates": 2, "late_partition": 2, "schema_drift": 1, "broken_refs": 2,
                "unit_scale": 2, "silent_drop": 2, "partial_late": 2, "rekeyed_duplicates": 2,
@@ -63,9 +73,11 @@ class Case:
 
 
 def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, warmup: int = 14,
-           p_stale: float = 0.15, p_corrupt: float = 0.0) -> Case:
+           p_stale: float = 0.15, p_corrupt: float = 0.0, p_missing: float = 0.0, category_totals: bool = False) -> Case:
     """`p_corrupt` is the chance that an errored partition's control totals are themselves corrupt:
-    computed downstream of the error, from the warehouse copy, so they agree with the wrong data."""
+    computed downstream of the error, from the warehouse copy, so they agree with the wrong data.
+    `p_missing` is the chance that a partition's control totals were never published at all.
+    `category_totals` makes the source publish totals per channel and category as well as per channel."""
     mix = dict(DEFAULT_MIX if mix is None else mix)
     rng = np.random.default_rng(inst.seed * 1000 + 7 if seed is None else seed)
     src = inst.clean_warehouse()
@@ -166,6 +178,41 @@ def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, war
             t = pd.concat([t, dup], ignore_index=True)
             fix["key"] = ["customer_id", "amount", "category", "channel"]
             detail = {"rows_added": int(len(dup))}
+        elif k == "compound":  # a retried load appended part of the partition AND one channel switched to cents
+            frac = float(rng.uniform(0.002, 0.08))
+            dup = t[mask].sample(frac=frac, random_state=int(rng.integers(1 << 30)))
+            t = pd.concat([t, dup], ignore_index=True)
+            mask = t["txn_date"] == d
+            ch = str(rng.choice(inst.meta.get("scale_channels", ["card", "ach", "p2p"])))
+            sel = mask & (t["channel"] == ch)
+            t.loc[sel, "amount"] = np.round(t.loc[sel, "amount"] * 100, 2)
+            fix.update({"steps": [{"action": "dedupe", "key": "txn_id"}, {"action": "rescale", "factor": 0.01, "where": {"channel": ch}}]})
+            detail = {"rows_added": int(len(dup)), "channel": ch, "rows_rescaled": int(sel.sum())}
+        elif k == "multi_version":
+            # Settlement adjustments arrived two or three times per affected row and out of order, so the
+            # last-loaded copy is the settled one for only some rows. No de-duplication order is right.
+            idx = t[mask].sample(frac=float(rng.uniform(0.005, 0.05)), random_state=int(rng.integers(1 << 30))).index
+            settled = t.loc[idx].copy()
+            versions = [settled]
+            for _ in range(int(rng.integers(1, 3))):  # 1 or 2 pre-settlement versions per row
+                v = settled.copy()
+                f_adj = rng.uniform(0.85, 1.15, len(idx))
+                v["amount"] = np.round(v["amount"].to_numpy() * np.where(np.abs(f_adj - 1) < 0.01, 1.02, f_adj), 2)
+                versions.append(v)
+            # per row, shuffle which version loaded last: keep one copy in place (as "first") and append the rest
+            rest = pd.concat(versions[1:], ignore_index=True)
+            first_is_settled = rng.random(len(idx)) < 0.5
+            t.loc[idx[~first_is_settled], "amount"] = rest.iloc[: len(idx)]["amount"].to_numpy()[~first_is_settled]
+            appended = pd.concat([settled[~first_is_settled], rest], ignore_index=True)
+            appended = appended.sample(frac=1.0, random_state=int(rng.integers(1 << 30)))
+            t = pd.concat([t, appended], ignore_index=True)
+            detail = {"rows_adjusted": int(len(idx)), "versions": len(versions)}
+        elif k == "category_relabel":  # a mapping bug relabels one category as another: counts and sums per channel unchanged
+            cats = t.loc[mask, "category"].value_counts()
+            src_c, dst_c = (str(x) for x in rng.choice(cats.index[: max(3, len(cats))], 2, replace=False))
+            sel = mask & (t["category"] == src_c)
+            t.loc[sel, "category"] = dst_c
+            detail = {"from": src_c, "to": dst_c, "rows_affected": int(sel.sum())}
         issues.append(Issue(f"I{len(issues)+1:02d}", k, "transactions", d.isoformat(), False, fix, decision, detail))
 
     if "schema_drift" in kinds:  # upstream renamed a column from some day onward
@@ -179,7 +226,14 @@ def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, war
                             "escalate", {"since": d.isoformat(), "rows_affected": int(sel.sum())}))
 
     wh["transactions"] = t.reset_index(drop=True)
-    manifest = make_manifest(src["transactions"], rng, p_stale)
+    manifest = make_manifest(src["transactions"], rng, p_stale, category_totals)
+    if p_missing > 0:  # the source never published totals for some partitions
+        mrng = np.random.default_rng((inst.seed * 1000 + 7 if seed is None else seed) + 77_777)
+        gone = [d for d in days if mrng.random() < p_missing]
+        manifest = manifest[~manifest["txn_date"].isin(gone)].reset_index(drop=True)
+        for d in gone:
+            issues.append(Issue(f"I{len(issues)+1:02d}", "missing_manifest", "transactions", d.isoformat(), True,
+                                {"action": "none"}, "escalate", {}))
     if p_corrupt > 0:  # separate stream, so p_corrupt = 0 reproduces earlier cases exactly
         crng = np.random.default_rng((inst.seed * 1000 + 7 if seed is None else seed) + 99_991)
         w = wh["transactions"]
@@ -201,7 +255,7 @@ def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, war
     return Case(instance=inst, source=src, warehouse=wh, issues=issues, manifest=manifest)
 
 
-def make_manifest(txn: pd.DataFrame, rng: np.random.Generator, p_stale: float = 0.15) -> pd.DataFrame:
+def make_manifest(txn: pd.DataFrame, rng: np.random.Generator, p_stale: float = 0.15, category_totals: bool = False) -> pd.DataFrame:
     """Control totals per partition and channel, as a source system would publish them.
 
     With probability p_stale a partition's manifest was written before its last rows arrived,
@@ -220,5 +274,9 @@ def make_manifest(txn: pd.DataFrame, rng: np.random.Generator, p_stale: float = 
     tot = k.groupby("txn_date").agg(n=("txn_id", "size"), amount=("amount", "sum")).reset_index()
     tot["channel"] = "*"
     m = pd.concat([tot, by_ch], ignore_index=True)
+    if category_totals:
+        by_cc = k.groupby(["txn_date", "channel", "category"]).agg(n=("txn_id", "size"), amount=("amount", "sum")).reset_index()
+        by_cc["channel"] = by_cc["channel"] + "/" + by_cc["category"]
+        m = pd.concat([m, by_cc.drop(columns=["category"])], ignore_index=True)
     m["stale_rows"] = m["txn_date"].map(stale).fillna(0).astype(int).where(m["channel"] == "*", 0)
     return m.sort_values(["txn_date", "channel"], ignore_index=True)

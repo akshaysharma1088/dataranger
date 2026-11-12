@@ -4,7 +4,7 @@ import pytest
 from dataranger.bench import detect, generate, inject, score
 from dataranger.bench import realdata
 from dataranger.bench.detect_cells import detect_cells, prf
-from dataranger.bench.inject import EXPECTED
+from dataranger.bench.inject import HARD_TYPES, EXPECTED
 from dataranger.cli import main
 
 
@@ -21,7 +21,7 @@ def test_generation_is_deterministic():
 
 def test_every_issue_has_an_expected_decision(case):
     _, c = case
-    assert {i.kind for i in c.issues} == set(EXPECTED)
+    assert {i.kind for i in c.issues} == set(EXPECTED) - set(HARD_TYPES) - {"missing_manifest"}
     for i in c.issues:
         assert (i.fix["action"], i.decision) == EXPECTED[i.kind]
 
@@ -67,3 +67,25 @@ def test_cell_detectors_on_a_tiny_table(tmp_path):
 def test_cli_bench(capsys):
     assert main(["bench", "--size", "small", "--seed", "2"]) == 0
     assert "false alarms" in capsys.readouterr().out
+
+
+def test_hard_mix_adds_the_harder_families_and_a_composite_fix():
+    from dataranger.bench.inject import HARD_MIX
+    from dataranger.repair import fixes as F
+    from dataranger.repair.agent import run
+
+    inst = generate(3, "small")
+    case = inject(inst, mix=HARD_MIX, p_missing=0.05, category_totals=True)
+    kinds = {i.kind for i in case.issues}
+    assert set(HARD_TYPES) <= kinds and "missing_manifest" in kinds
+    # the per-channel-and-category manifest carries both kinds of segment rows
+    assert case.manifest["channel"].astype(str).str.contains("/").any()
+    recs = run(case, granularity="channel+category")
+    compound = [r for r in recs if "compound" in r["kinds"]]
+    assert compound and all(any(c["correct"] for c in r["candidates"]) for r in compound)
+    assert any(" then " in c["fix"] for r in compound for c in r["candidates"])
+    seq = F.seq(F.make("dedupe", key="txn_id"), F.make("quarantine"))
+    assert seq.tier == "escalate" and str(seq) == "dedupe(key=txn_id) then quarantine()"
+    # partitions whose totals were never published can only be escalated
+    missing = [r for r in recs if "missing_manifest" in r["kinds"]]
+    assert missing and all(c["residual"] == float("inf") for r in missing for c in r["candidates"])

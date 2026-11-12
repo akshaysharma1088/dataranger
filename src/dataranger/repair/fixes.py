@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 TIER = {"none": "auto", "dedupe": "auto", "dedupe_business": "auto", "reload": "auto", "rescale": "auto",
-        "trim": "escalate", "trim_value": "escalate", "quarantine": "escalate", "remap": "escalate"}
+        "trim": "escalate", "trim_value": "escalate", "quarantine": "escalate", "remap": "escalate", "seq": "auto"}
 
 
 @dataclass(frozen=True)
@@ -22,14 +22,23 @@ class Fix:
 
     @property
     def tier(self) -> str:
+        if self.action == "seq":  # a composite is as risky as its riskiest step
+            return "escalate" if any(st.tier == "escalate" for st in self.p("steps")) else "auto"
         return TIER[self.action]
 
     def p(self, key, default=None):
         return dict(self.params).get(key, default)
 
     def __str__(self) -> str:
+        if self.action == "seq":
+            return " then ".join(str(st) for st in self.p("steps"))
         args = ", ".join(f"{k}={v}" for k, v in self.params)
         return f"{self.action}({args})"
+
+
+def seq(*steps: "Fix") -> "Fix":
+    """Two or more templates applied in order; a candidate for partitions with more than one error."""
+    return Fix("seq", (("steps", tuple(steps)),))
 
 
 def make(action: str, **params) -> Fix:
@@ -41,6 +50,10 @@ def apply(fix: Fix, part: pd.DataFrame, source_part: pd.DataFrame | None, custom
     p = part.copy()
     a = fix.action
     if a == "none":
+        return p
+    if a == "seq":
+        for st in fix.p("steps"):
+            p = apply(st, p, source_part, customers)
         return p
     if a == "dedupe":
         return p.drop_duplicates(subset=[fix.p("key", "txn_id")], keep=fix.p("keep", "first"))

@@ -107,3 +107,34 @@ ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,
 ax.legend(fontsize=6, frameon=False, loc="lower right")
 fig.savefig(OUT / "fig_size.pdf", bbox_inches="tight"); plt.close(fig)
 print("extra figures written")
+
+# 7. Independent cohorts against the held-out population (Q1)
+if (R / "cohort_summary.json").exists():
+    c = json.load(open(R / "cohort_summary.json"))["cohorts"]
+    fig, axes = plt.subplots(1, 3, figsize=(7.0, 1.9), sharey=False)
+    for ax, alpha in zip(axes, (0.01, 0.02, 0.05)):
+        x = 0
+        ticks, labels = [], []
+        for level, col in (("incident", BLUE), ("cluster", ORANGE)):
+            for m in (100, 200, 400):
+                v = c[f"{level}|{m}|{alpha}"]
+                hs = [r["harm"] * 100 for r in v["per_cohort"] if r["certified"]]
+                n_unc = sum(not r["certified"] for r in v["per_cohort"])
+                jit = [x + (i - len(hs) / 2) * 0.02 for i in range(len(hs))]
+                ax.scatter(jit, hs, s=9, color=col, edgecolor=INK, lw=0.3, zorder=4)
+                if n_unc:
+                    ax.text(x, alpha * 100 * 0.05, "none\ncertified", ha="center", va="bottom", fontsize=5.5, color=col)
+                ticks.append(x); labels.append(f"{m}")
+                x += 1
+            x += 0.5
+        ax.axhline(alpha * 100, color=RED, lw=0.8, ls="--")
+        ax.set_xticks(ticks); ax.set_xticklabels(labels, fontsize=6.5)
+        ax.set_title(f"target α = {alpha*100:g}%", fontsize=8)
+        ax.set_ylim(0, alpha * 100 * 1.25)
+        ax.set_xlabel("instances per calibration cohort", fontsize=7)
+    axes[0].set_ylabel("harm on held-out\npopulation (%)", fontsize=7)
+    axes[0].scatter([], [], s=9, color=BLUE, edgecolor=INK, lw=0.3, label="incident-level gate (Thm. 4.1)")
+    axes[0].scatter([], [], s=9, color=ORANGE, edgecolor=INK, lw=0.3, label="cluster-level gate (Thm. 4.2)")
+    fig.legend(frameon=False, fontsize=6.5, loc="upper center", ncol=2, bbox_to_anchor=(0.5, 1.08), handletextpad=0.2)
+    fig.tight_layout(w_pad=1.0)
+    fig.savefig(OUT / "fig_cohorts.pdf", bbox_inches="tight"); plt.close(fig)

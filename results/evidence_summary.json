@@ -1,0 +1,302 @@
+{
+ "synthetic": {
+  "decomposition": {
+   "0.01": {
+    "incidents": 3301.73,
+    "automated": 0.5863362387326366,
+    "repairs_right": 0.3415057877247343,
+    "repairs_wrong": 0.0038920798775823164,
+    "benign_right": 0.2392389085247354,
+    "benign_wrong": 0.0016994626055846327,
+    "escalated": 0.4136637612673633,
+    "harm": 0.005591542483166948,
+    "harm_among_automated": 0.009483968168182538,
+    "real_errors_repaired": 0.5637749999999999,
+    "real_errors_escalated": 0.4284800000000001,
+    "real_share": 0.6057575918918743
+   },
+   "0.02": {
+    "incidents": 3301.73,
+    "automated": 0.6942095811948112,
+    "repairs_right": 0.35733443957299316,
+    "repairs_wrong": 0.007299992383873882,
+    "benign_right": 0.3227196366615425,
+    "benign_wrong": 0.006855512576401979,
+    "escalated": 0.3057904188051885,
+    "harm": 0.01415550496027586,
+    "harm_among_automated": 0.02027181210416125,
+    "real_errors_repaired": 0.5899,
+    "real_errors_escalated": 0.389615,
+    "real_share": 0.6057575918918743
+   },
+   "0.05": {
+    "incidents": 3301.73,
+    "automated": 0.793182771973313,
+    "repairs_right": 0.370017977444138,
+    "repairs_wrong": 0.009446942422798782,
+    "benign_right": 0.3840784373576453,
+    "benign_wrong": 0.02963941474873079,
+    "escalated": 0.20681722802668706,
+    "harm": 0.03908635717152957,
+    "harm_among_automated": 0.04925241002944724,
+    "real_errors_repaired": 0.6108399999999999,
+    "real_errors_escalated": 0.32758500000000007,
+    "real_share": 0.6057575918918743
+   }
+  },
+  "baselines": {
+   "rules": {
+    "escalated": 0.33424242424242423,
+    "repair_right": 0.35454545454545455,
+    "repair_wrong": 0.3112121212121212
+   },
+   "monitors": {
+    "escalated": 0.4175757575757576,
+    "repair_right": 0.34424242424242424,
+    "repair_wrong": 0.2381818181818182
+   }
+  },
+  "evidence_ablation": {
+   "residual|0.01": {
+    "auto_rate": 0.5863362387326366,
+    "harm": 0.005591542483166948,
+    "real_errors_fixed": 0.5637749999999999,
+    "certified": 1.0
+   },
+   "residual|0.02": {
+    "auto_rate": 0.6942095811948112,
+    "harm": 0.01415550496027586,
+    "real_errors_fixed": 0.5899,
+    "certified": 1.0
+   },
+   "residual|0.05": {
+    "auto_rate": 0.793182771973313,
+    "harm": 0.03908635717152957,
+    "real_errors_fixed": 0.6108399999999999,
+    "certified": 1.0
+   },
+   "residual_partition|0.01": {
+    "auto_rate": 0.5459688823480542,
+    "harm": 0.006226645484018194,
+    "real_errors_fixed": 0.552485,
+    "certified": 1.0
+   },
+   "residual_partition|0.02": {
+    "auto_rate": 0.6631548509514563,
+    "harm": 0.014396103335691704,
+    "real_errors_fixed": 0.58172,
+    "certified": 1.0
+   },
+   "residual_partition|0.05": {
+    "auto_rate": 0.7995305924366093,
+    "harm": 0.04054074554177989,
+    "real_errors_fixed": 0.6125900000000001,
+    "certified": 1.0
+   },
+   "invariants|0.01": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "invariants|0.02": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "invariants|0.05": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "monitors|0.01": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "monitors|0.02": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "monitors|0.05": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "learned_no_source|0.01": {
+    "auto_rate": 0.5129543513509577,
+    "harm": 0.002513391116269614,
+    "real_errors_fixed": 0.5408000000000001,
+    "certified": 1.0
+   },
+   "learned_no_source|0.02": {
+    "auto_rate": 0.5343284471101322,
+    "harm": 0.007240426651175443,
+    "real_errors_fixed": 0.540825,
+    "certified": 1.0
+   },
+   "learned_no_source|0.05": {
+    "auto_rate": 0.5357860845228257,
+    "harm": 0.007498549943006599,
+    "real_errors_fixed": 0.540825,
+    "certified": 1.0
+   },
+   "learned_with_source|0.01": {
+    "auto_rate": 0.07075281874559333,
+    "harm": 0.0006235283773457067,
+    "real_errors_fixed": 0.060675,
+    "certified": 1.0
+   },
+   "learned_with_source|0.02": {
+    "auto_rate": 0.7574060572371482,
+    "harm": 0.012617692467030423,
+    "real_errors_fixed": 0.612975,
+    "certified": 1.0
+   },
+   "learned_with_source|0.05": {
+    "auto_rate": 0.7906809039605027,
+    "harm": 0.024799456399342164,
+    "real_errors_fixed": 0.617275,
+    "certified": 1.0
+   }
+  }
+ },
+ "tpcds": {
+  "decomposition": {
+   "0.01": {
+    "incidents": 2147.86,
+    "automated": 0.7755873205670979,
+    "repairs_right": 0.18709743169058535,
+    "repairs_wrong": 0.005487429850701295,
+    "benign_right": 0.5825678200889323,
+    "benign_wrong": 0.0004346389368789674,
+    "escalated": 0.22441267943290222,
+    "harm": 0.005922068787580262,
+    "harm_among_automated": 0.007521568591426515,
+    "real_errors_repaired": 0.5580277777777778,
+    "real_errors_escalated": 0.42886111111111114,
+    "real_share": 0.33524882673061623
+   },
+   "0.02": {
+    "incidents": 2147.86,
+    "automated": 0.8779326660760389,
+    "repairs_right": 0.20517404331493908,
+    "repairs_wrong": 0.007454161350913283,
+    "benign_right": 0.6593821728483327,
+    "benign_wrong": 0.005922288561854085,
+    "escalated": 0.12206733392396098,
+    "harm": 0.013376449912767369,
+    "harm_among_automated": 0.01521440345997803,
+    "real_errors_repaired": 0.612,
+    "real_errors_escalated": 0.35380555555555554,
+    "real_share": 0.33524882673061623
+   },
+   "0.05": {
+    "incidents": 2147.86,
+    "automated": 0.9067561335624643,
+    "repairs_right": 0.20648199996975156,
+    "repairs_wrong": 0.007463489759856112,
+    "benign_right": 0.6628453122889439,
+    "benign_wrong": 0.029965331543912847,
+    "escalated": 0.09324386643753563,
+    "harm": 0.03742882130376896,
+    "harm_among_automated": 0.041248425067637234,
+    "real_errors_repaired": 0.6159027777777778,
+    "real_errors_escalated": 0.2781527777777778,
+    "real_share": 0.33524882673061623
+   }
+  },
+  "baselines": {
+   "rules": {
+    "repair_wrong": 0.6341009537101652,
+    "escalated": 0.17190044196324727,
+    "repair_right": 0.19399860432658758
+   },
+   "monitors": {
+    "repair_wrong": 0.31612002791346827,
+    "escalated": 0.5992091183996279,
+    "repair_right": 0.08467085368690393
+   }
+  },
+  "evidence_ablation": {
+   "residual|0.01": {
+    "auto_rate": 0.7755873205670979,
+    "harm": 0.005922068787580262,
+    "real_errors_fixed": 0.5580277777777778,
+    "certified": 1.0
+   },
+   "residual|0.02": {
+    "auto_rate": 0.8779326660760389,
+    "harm": 0.013376449912767369,
+    "real_errors_fixed": 0.612,
+    "certified": 1.0
+   },
+   "residual|0.05": {
+    "auto_rate": 0.9067561335624643,
+    "harm": 0.03742882130376896,
+    "real_errors_fixed": 0.6159027777777778,
+    "certified": 1.0
+   },
+   "residual_partition|0.01": {
+    "auto_rate": 0.7211817164031342,
+    "harm": 0.005309693087694924,
+    "real_errors_fixed": 0.5295555555555556,
+    "certified": 1.0
+   },
+   "residual_partition|0.02": {
+    "auto_rate": 0.7717788664022267,
+    "harm": 0.012998473547290477,
+    "real_errors_fixed": 0.5522777777777779,
+    "certified": 1.0
+   },
+   "residual_partition|0.05": {
+    "auto_rate": 0.8962048591176743,
+    "harm": 0.03943414392453119,
+    "real_errors_fixed": 0.6114722222222222,
+    "certified": 1.0
+   },
+   "invariants|0.01": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "invariants|0.02": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "invariants|0.05": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "monitors|0.01": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "monitors|0.02": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   },
+   "monitors|0.05": {
+    "auto_rate": 0.0,
+    "harm": 0.0,
+    "real_errors_fixed": 0.0,
+    "certified": 0.0
+   }
+  }
+ }
+}

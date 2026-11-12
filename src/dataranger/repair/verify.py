@@ -19,9 +19,17 @@ def residual(part: pd.DataFrame, manifest: pd.DataFrame, d, granularity: str = "
     tot = m[m["channel"] == "*"].iloc[0]
     gaps.append(abs(len(part) - tot["n"]) / max(tot["n"], 1))
     gaps.append(abs(part["amount"].sum() - tot["amount"]) / max(abs(tot["amount"]), 1.0))
-    if granularity == "channel":
+    if granularity in ("channel", "channel+category"):
         obs = part.groupby("channel").agg(n=("txn_id", "size"), amount=("amount", "sum"))
-        for _, r in m[m["channel"] != "*"].iterrows():
+        seg = m[(m["channel"] != "*") & ~m["channel"].astype(str).str.contains("/")]
+        for _, r in seg.iterrows():
+            o = obs.loc[r["channel"]] if r["channel"] in obs.index else pd.Series({"n": 0, "amount": 0.0})
+            gaps.append(abs(o["n"] - r["n"]) / max(r["n"], 1))
+            gaps.append(abs(o["amount"] - r["amount"]) / max(abs(r["amount"]), 1.0))
+    if granularity == "channel+category":  # a source that also publishes totals per channel and category
+        obs = part.groupby(["channel", "category"]).agg(n=("txn_id", "size"), amount=("amount", "sum"))
+        obs.index = [f"{a}/{b}" for a, b in obs.index]
+        for _, r in m[m["channel"].astype(str).str.contains("/")].iterrows():
             o = obs.loc[r["channel"]] if r["channel"] in obs.index else pd.Series({"n": 0, "amount": 0.0})
             gaps.append(abs(o["n"] - r["n"]) / max(r["n"], 1))
             gaps.append(abs(o["amount"] - r["amount"]) / max(abs(r["amount"]), 1.0))
