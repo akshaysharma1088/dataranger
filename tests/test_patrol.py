@@ -73,3 +73,40 @@ def test_cli_patrol_rejects_mixed_or_partial_sources(tmp_path):
         main(["patrol"])  # neither source given
     with pytest.raises(SystemExit):
         main(["patrol", "--facts-file", csv])  # file source but incomplete
+
+
+def test_patrol_rejects_missing_key_column():
+    case = inject(generate(5, "small", n_days=40))
+    facts = case.warehouse["transactions"]
+    man = case.manifest
+    with pytest.raises(SystemExit, match=r"facts table has no column 'wrong_id' \(--key\)"):
+        patrol(facts, case.warehouse["customers"], man, Mapping(key="wrong_id"))
+
+
+def test_patrol_rejects_missing_ref_key():
+    case = inject(generate(5, "small", n_days=40))
+    facts = case.warehouse["transactions"]
+    man = case.manifest
+    with pytest.raises(SystemExit, match=r"reference table has no column 'missing_cust' \(--ref-key\)"):
+        patrol(facts, case.warehouse["customers"], man, Mapping(ref_key="missing_cust"))
+
+
+def test_cli_patrol_wrong_key_exits_clearly(tmp_path, capsys):
+    case = inject(generate(8, "small", n_days=40))
+    db = str(tmp_path / "w.duckdb")
+    con = duckdb.connect(db)
+    con.register("t", case.warehouse["transactions"])
+    con.execute("create table transactions as select * from t")
+    con.register("c", case.warehouse["customers"])
+    con.execute("create table customers as select * from c")
+    con.register("m", case.manifest)
+    con.execute("create table control_totals as select * from m")
+    con.close()
+    with pytest.raises(SystemExit) as ei:
+        main(["patrol", "--db", db, "--table", "transactions", "--ref-table", "customers",
+              "--manifest-table", "control_totals", "--key", "wrong_id", "--out", str(tmp_path / "o")])
+    # SystemExit from our raise carries the message; argparse uses code too
+    msg = str(ei.value)
+    if msg in ("0", "1", "2"):
+        msg = capsys.readouterr().err or capsys.readouterr().out
+    assert "wrong_id" in msg and "--key" in msg

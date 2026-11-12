@@ -40,7 +40,44 @@ class Mapping:
     amount: str = "amount"
     ref_key: str = "customer_id"
 
+    def _require_columns(self, df: pd.DataFrame, required: list[tuple[str, str]], table_label: str) -> None:
+        """Raise SystemExit if any mapped column is missing from *df*."""
+        missing = [(name, flag) for name, flag in required if name not in df.columns]
+        if not missing:
+            return
+        names = ", ".join(repr(n) for n, _ in missing)
+        flags = ", ".join(f for _, f in missing)
+        available = ", ".join(map(str, df.columns.tolist()))
+        raise SystemExit(
+            f"{table_label} has no column {names} ({flags}); columns are: {available}"
+        )
+
+    def validate_facts(self, df: pd.DataFrame) -> None:
+        required = [
+            (self.key, "--key"),
+            (self.reference, "--reference"),
+            (self.date, "--date"),
+            (self.segment, "--segment"),
+            (self.amount, "--amount"),
+        ]
+        if self.category:
+            required.append((self.category, "--category"))
+        self._require_columns(df, required, "facts table")
+
+    def validate_refs(self, df: pd.DataFrame) -> None:
+        self._require_columns(df, [(self.ref_key, "--ref-key")], "reference table")
+
+    def validate_manifest(self, df: pd.DataFrame) -> None:
+        required = [
+            (self.date, "--date"),
+            (self.segment, "--segment"),
+            ("n", "n"),
+            ("amount", "--amount / amount"),
+        ]
+        self._require_columns(df, required, "control totals (manifest)")
+
     def to_internal(self, df: pd.DataFrame) -> pd.DataFrame:
+        self.validate_facts(df)
         m = {self.key: "txn_id", self.reference: "customer_id", self.date: "txn_date",
              self.segment: "channel", self.amount: "amount"}
         if self.category:
@@ -73,6 +110,9 @@ class PatrolResult:
 def patrol(facts: pd.DataFrame, refs: pd.DataFrame, manifest: pd.DataFrame, mapping: Mapping,
            lam: float = DEFAULT_LAMBDA, source_facts: pd.DataFrame | None = None, retention_days: int = 14) -> PatrolResult:
     """Detect, propose, verify and gate. `manifest` has columns date, segment ('*' for the total), n, amount."""
+    mapping.validate_facts(facts)
+    mapping.validate_refs(refs)
+    mapping.validate_manifest(manifest)
     t = mapping.to_internal(facts)
     cust = refs.rename(columns={mapping.ref_key: "customer_id"})[["customer_id"]]
     man = manifest.rename(columns={mapping.date: "txn_date", mapping.segment: "channel"}).copy()
