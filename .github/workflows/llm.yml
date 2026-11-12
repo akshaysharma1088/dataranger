@@ -43,7 +43,7 @@ jobs:
           ollama pull ${{ matrix.model }}
       - name: Propose fixes for this shard
         run: python benchmarks/run_llm.py --model ${{ matrix.model }} --shard ${{ matrix.shard }} --nshards ${{ matrix.nshards }} --seeds ${{ matrix.seeds }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: llm-${{ strategy.job-index }}
