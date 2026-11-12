@@ -21,7 +21,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7"]
+test = ["pytest>=7", "ipython>=8"]
 # run DataRanger as an MCP server: `dataranger mcp`
 mcp = ["mcp>=1.2"]
 # everything reproduce.sh needs beyond the core package

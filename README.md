@@ -48,6 +48,11 @@ Every patrol writes one self-contained page that answers a data team's morning q
 
 ## Try it
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/akshaysharma1088/dataranger/blob/main/examples/try_dataranger.ipynb)
+
+Run the [demo notebook](examples/try_dataranger.ipynb) in your browser to see the
+summary, audit rows and interactive dashboard without installing anything locally.
+
 ```bash
 pip install dataranger
 dataranger demo                 # patrol a sample table with planted problems; opens as dataranger-demo/dashboard.html
