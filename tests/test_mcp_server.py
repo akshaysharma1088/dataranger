@@ -57,3 +57,18 @@ def test_server_lists_tools():
     server = M.build_server()
     names = {t.name for t in asyncio.run(server.list_tools())}
     assert names == {"patrol_duckdb", "patrol_files", "get_incident", "run_demo"}
+
+
+def test_tool_definitions_are_documented():
+    pytest.importorskip("mcp")
+    import asyncio
+
+    tools = {t.name: t.model_dump(by_alias=True) for t in asyncio.run(M.build_server().list_tools())}
+    for name, tool in tools.items():
+        props = tool["inputSchema"]["properties"]
+        assert all(p.get("description") for p in props.values()), f"{name} has an undocumented parameter"
+        assert "Behavior:" in tool["description"] and "Returns" in tool["description"]
+        assert tool["annotations"]["destructiveHint"] is False
+    assert tools["get_incident"]["annotations"]["readOnlyHint"] is True
+    assert tools["patrol_files"]["annotations"]["readOnlyHint"] is False  # it writes report files
+    assert tools["patrol_duckdb"]["outputSchema"]["properties"]["needs_a_person"]

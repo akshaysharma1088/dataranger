@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.2 (2026-11-12)
+
+Clearer MCP tool definitions, so agents pick the right tool and use it correctly.
+
+- Every tool now says what a patrol checks, when to use it instead of its siblings, what it reads and writes, and what it returns.
+- Every parameter has its own description in the tool schema, and the patrol tools declare an output schema.
+- Tools carry MCP hints: `get_incident` is marked read-only, and none are destructive or reach the network.
+- Requires `mcp>=1.23`.
+
 ## 0.4.1 (2026-11-12)
 
 - Listed in the official [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.akshaysharma1088/dataranger`. Each release now publishes there automatically.

@@ -119,6 +119,8 @@ Claude Desktop, Cursor or VS Code (add to the client's MCP config):
 
 Or `pip install dataranger` and use `dataranger mcp` as the command. DataRanger is listed in the [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.akshaysharma1088/dataranger`.
 
+[![akshaysharma1088/dataranger MCP server](https://glama.ai/mcp/servers/akshaysharma1088/dataranger/badges/score.svg)](https://glama.ai/mcp/servers/akshaysharma1088/dataranger)
+
 The server exposes four tools:
 
 | Tool | What it does |
