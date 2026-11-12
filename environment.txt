@@ -6,7 +6,7 @@ duckdb_extension_tpcds==1.5.5
 matplotlib==3.11.2
 numpy==2.5.3
 pandas==3.0.5
-pytest==9.1.1
+pytest==9.2.0
 scikit-learn==1.9.1
 scipy==1.18.1
 # Only for benchmarks/run_baran.py (Baran's corrections are committed in results/baran/):
