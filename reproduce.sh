@@ -46,40 +46,40 @@ if [ "$MODE" = "full" ]; then
   python benchmarks/pushdown.py
 fi
 
-step "Guarantee, baselines and fixed thresholds (Q1-Q3, Table 2, Figure 3)"
+step "Incident-level calibration on the 250-instance benchmark: baselines, fixed thresholds, held-out error types (Q2, Q3, Q5)"
 python benchmarks/analyze_repair.py
-step "Dependence between incidents of one table; cluster-level calibration (Q1)"
+step "Dependence between incidents of one table: intraclass correlation and design effect (Q1)"
 python benchmarks/analyze_guarantee.py
-step "Independent calibration cohorts against the held-out population (Q1, Figure 2)"
+step "Calibration cohorts of 100, 200 and 400 tables against the held-out tables (Q1, Figure 2)"
 python benchmarks/analyze_cohorts.py
-step "Decomposition of automated decisions and the evidence ablation (Q1, Tables 2 and 3)"
+step "Evidence ablation at the incident level (supplementary; also provides helpers for the per-table analysis)"
 python benchmarks/analyze_evidence.py
-step "Controlled comparisons: fixed candidate with different accepting scores; a tolerance tuned on labels (Q1, Q3)"
+step "A tolerance tuned on labels; fixed candidate with different accepting scores at the incident level (Q3)"
 python benchmarks/analyze_controls.py
 step "Certification per table on 1,000 held-out tables: main comparison and what the evidence adds (Q1, Tables 1 and 2)"
 python benchmarks/analyze_cluster.py
 step "Escalation reasons, partition totals, and the harder mix certified per table (Q1, Q3, Q8, Table 6)"
 python benchmarks/analyze_cluster_extra.py
-step "Harder error families (Q8, Table 6)"
+step "Harder error families at the incident level on 150 instances (supplementary; Table 6 comes from the per-table analysis above)"
 python benchmarks/analyze_hard.py
 step "TPC-DS: in-domain calibration, transfer, fixed tolerances (Q4, Table 3)"
 python benchmarks/analyze_tpcds.py
-step "Transfer to large tables (Q3)"
+step "Transfer to large tables (supplementary)"
 python benchmarks/analyze_large.py
-step "Drift and repair memory (Q5, Figure 4)"
+step "Drift and repair memory (Q5)"
 python benchmarks/analyze_stream.py
-step "Reconciliation monitor ablation and sensitivity (Q8, detection, Figure 6)"
+step "Reconciliation monitor ablation, label budgets, invariant ablation, runtimes (Q8)"
 python benchmarks/ablation_reconcile.py
 python benchmarks/ablations.py
 step "Corrupt control totals (Q8)"
 python benchmarks/analyze_corrupt.py
-step "Real datasets against Baran and conformal cleaning (Q7)"
+step "Real datasets, earlier cell-level protocol (supplementary)"
 python benchmarks/run_cells.py results/baran
 step "Real datasets: matched budgets, other proposers through the gate, same proposals with different scores (Q7, Table 5)"
 # Baran corrections at budgets 20 (5 seeds), 50, 100 and 200 (3 seeds each) are committed in results/baran/ (benchmarks/run_baran.py).
 python benchmarks/run_cells2.py results/baran
 
-step "LLM proposers and the self-checking baseline (Q6)"
+step "LLM proposers and the self-checking baseline (Q6, Table 4)"
 # The model responses from the Actions run (llm-results branch, run 40882980162) are committed here.
 python benchmarks/eval_llm.py results/llm_responses
 
