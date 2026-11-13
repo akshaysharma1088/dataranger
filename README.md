@@ -110,7 +110,7 @@ DataRanger runs three `SELECT` statements and nothing else, so a read-only role 
 
 Credentials are read from where you already keep them; DataRanger stores nothing:
 
-- `--snowflake` uses `SNOWFLAKE_ACCOUNT` and `SNOWFLAKE_USER`, with `SNOWFLAKE_PASSWORD`, `SNOWFLAKE_PRIVATE_KEY_PATH` (and `SNOWFLAKE_PRIVATE_KEY_PASSPHRASE`) or `SNOWFLAKE_AUTHENTICATOR`, plus `SNOWFLAKE_ROLE`, `SNOWFLAKE_WAREHOUSE`, `SNOWFLAKE_DATABASE` and `SNOWFLAKE_SCHEMA`.
+- `--snowflake` uses `SNOWFLAKE_ACCOUNT` and `SNOWFLAKE_USER`, with `SNOWFLAKE_PASSWORD`, `SNOWFLAKE_PRIVATE_KEY_PATH` (and `SNOWFLAKE_PRIVATE_KEY_PASSPHRASE`) or `SNOWFLAKE_AUTHENTICATOR`, plus `SNOWFLAKE_ROLE`, `SNOWFLAKE_WAREHOUSE`, `SNOWFLAKE_DATABASE` and `SNOWFLAKE_SCHEMA`. With multi-factor login, set `SNOWFLAKE_AUTHENTICATOR=username_password_mfa` and put the current code from your authenticator app in `SNOWFLAKE_PASSCODE`. For scheduled jobs, use a key pair.
 - `--snowflake prod` uses the connection named `prod` in `~/.snowflake/connections.toml`, the file the Snowflake CLI uses.
 
 Column names are matched without regard to case, so `--key payment_id` finds `PAYMENT_ID`.

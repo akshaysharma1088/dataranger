@@ -19,6 +19,7 @@ ENV = {
     "SNOWFLAKE_USER": "user",
     "SNOWFLAKE_PASSWORD": "password",
     "SNOWFLAKE_AUTHENTICATOR": "authenticator",
+    "SNOWFLAKE_PASSCODE": "passcode",  # the current code from an authenticator app, with username_password_mfa
     "SNOWFLAKE_TOKEN": "token",
     "SNOWFLAKE_PRIVATE_KEY_PATH": "private_key_file",
     "SNOWFLAKE_PRIVATE_KEY_FILE": "private_key_file",

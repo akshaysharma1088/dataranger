@@ -129,6 +129,10 @@ def test_snowflake_connection_settings():
            "SNOWFLAKE_ROLE": "READER", "SNOWFLAKE_WAREHOUSE": "XS", "UNRELATED": "x"}
     assert sf.connection_params(env=env) == {"account": "ab12345", "user": "ranger", "private_key_file": "/k.p8",
                                              "role": "READER", "warehouse": "XS"}
+    mfa = {"SNOWFLAKE_ACCOUNT": "ab12345", "SNOWFLAKE_USER": "ranger", "SNOWFLAKE_PASSWORD": "pw",
+           "SNOWFLAKE_AUTHENTICATOR": "username_password_mfa", "SNOWFLAKE_PASSCODE": "123456"}
+    assert sf.connection_params(env=mfa) == {"account": "ab12345", "user": "ranger", "password": "pw",
+                                             "authenticator": "username_password_mfa", "passcode": "123456"}
     assert sf.connection_params(env={}) == {}  # the connector's default connection
     with pytest.raises(ValueError, match="SNOWFLAKE_ACCOUNT is not set"):
         sf.connection_params(env={"SNOWFLAKE_USER": "ranger"})
