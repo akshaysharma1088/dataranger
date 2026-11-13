@@ -1,0 +1,8 @@
+name: dataranger_demo
+version: "1.0.0"
+profile: dataranger_demo
+model-paths: ["models"]
+seed-paths: ["seeds"]
+models:
+  dataranger_demo:
+    +materialized: table

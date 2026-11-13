@@ -76,7 +76,7 @@ dataranger patrol --facts-file payments.csv --ref-file customers.csv \
     --date booking_date --segment channel --amount amount
 ```
 
-Use one source or the other, not both. With files, `--table` is optional and only sets the report title (it defaults to the facts file name).
+Use one source at a time. With files, `--table` is optional and only sets the report title (it defaults to the facts file name). Add `--days 45` to any source to patrol only the most recent days.
 
 The control-totals table has one row per date and segment, plus a row with segment `*` for the whole day, with columns `n` (rows) and `amount` (sum). DataRanger never modifies your tables: fixed partitions go to `fixed_version.csv`, every decision and its evidence to `audit.jsonl`, a one-row-per-incident summary for spreadsheets to `incidents.csv`, and the morning report to `dashboard.html`.
 
@@ -96,6 +96,83 @@ dataranger calibrate --audit report/audit.jsonl --labels reviewed.csv --alpha 0.
 ```
 
 `reviewed.csv` has columns `partition` and `verdict` (right or wrong). About 300 reviewed incidents certify a 1% target and about 60 certify 5%.
+
+## Snowflake
+
+```bash
+pip install "dataranger[snowflake]"
+dataranger patrol --snowflake --table ANALYTICS.GOLD.PAYMENTS --ref-table ANALYTICS.GOLD.CUSTOMERS \
+    --manifest-table ANALYTICS.OPS.CONTROL_TOTALS --key payment_id --reference customer_id \
+    --date booking_date --segment channel --amount amount --days 45
+```
+
+DataRanger runs three `SELECT` statements and nothing else, so a read-only role is enough and the warehouse is never modified. It selects only the mapped columns, and `--days` limits both the facts and the control totals, so a patrol costs a few seconds of a small warehouse. Use at least 30 days so the checks have a baseline. Queries carry the query tag `dataranger`, so they are easy to find in query history.
+
+Credentials are read from where you already keep them; DataRanger stores nothing:
+
+- `--snowflake` uses `SNOWFLAKE_ACCOUNT` and `SNOWFLAKE_USER`, with `SNOWFLAKE_PASSWORD`, `SNOWFLAKE_PRIVATE_KEY_PATH` (and `SNOWFLAKE_PRIVATE_KEY_PASSPHRASE`) or `SNOWFLAKE_AUTHENTICATOR`, plus `SNOWFLAKE_ROLE`, `SNOWFLAKE_WAREHOUSE`, `SNOWFLAKE_DATABASE` and `SNOWFLAKE_SCHEMA`.
+- `--snowflake prod` uses the connection named `prod` in `~/.snowflake/connections.toml`, the file the Snowflake CLI uses.
+
+Column names are matched without regard to case, so `--key payment_id` finds `PAYMENT_ID`.
+
+## dbt
+
+Patrol the table behind a dbt model. DataRanger reads dbt's `target/manifest.json` to find the table and `profiles.yml` to connect (DuckDB and Snowflake targets), then queries the warehouse itself; it does not run dbt.
+
+Keep the column mapping with the model:
+
+```yaml
+models:
+  - name: fct_payments
+    meta:
+      dataranger:
+        ref_model: dim_customers
+        manifest_model: control_totals
+        key: payment_id
+        date: paid_on
+        segment: channel
+        amount: amount
+```
+
+```bash
+pip install "dataranger[dbt]"        # add the snowflake extra for a Snowflake target
+dbt build
+dataranger patrol --dbt-model fct_payments --days 45
+```
+
+Flags such as `--key` or `--dbt-ref-model` override the `meta` block, and `--dbt-target prod` picks another target. There is a complete project you can run without a warehouse in [examples/dbt](examples/dbt/).
+
+## GitHub Action
+
+Run a patrol in CI, after a load or on a schedule. The action writes the result to the job summary, uploads the report, and fails the job when an incident needs a person.
+
+```yaml
+- uses: akshaysharma1088/dataranger@v0.5.0
+  with:
+    snowflake: "true"
+    table: ANALYTICS.GOLD.PAYMENTS
+    ref-table: ANALYTICS.GOLD.CUSTOMERS
+    manifest-table: ANALYTICS.OPS.CONTROL_TOTALS
+    key: payment_id
+    date: booking_date
+    days: "45"
+  env:
+    SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+    SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+    SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+    SNOWFLAKE_ROLE: READER
+    SNOWFLAKE_WAREHOUSE: XS
+```
+
+After `dbt build`, one line is enough when the mapping is in the model's `meta` block:
+
+```yaml
+- uses: akshaysharma1088/dataranger@v0.5.0
+  with:
+    dbt-model: fct_payments
+```
+
+The same inputs work for DuckDB (`db`, `table`, `ref-table`, `manifest-table`) and files (`facts-file`, `ref-file`, `manifest-file`). Set `fail-on-escalate: "false"` to report without failing. The outputs `incidents`, `auto-fixed`, `no-action`, `escalate` and `report` are available to later steps. All inputs are listed in [action.yml](action.yml).
 
 ## Use it from an AI agent (MCP)
 
@@ -121,12 +198,14 @@ Or `pip install dataranger` and use `dataranger mcp` as the command. DataRanger 
 
 [![akshaysharma1088/dataranger MCP server](https://glama.ai/mcp/servers/akshaysharma1088/dataranger/badges/score.svg)](https://glama.ai/mcp/servers/akshaysharma1088/dataranger)
 
-The server exposes four tools:
+The server exposes six tools:
 
 | Tool | What it does |
 |---|---|
 | `patrol_duckdb` | Patrol a fact table in a DuckDB file, with your column names |
 | `patrol_files` | Patrol exported CSV, TSV or Parquet files |
+| `patrol_snowflake` | Patrol a Snowflake table, reading only the last N days |
+| `patrol_dbt` | Patrol the table behind a dbt model, using the mapping in its `meta` block |
 | `get_incident` | Return the full evidence for one incident from a previous patrol |
 | `run_demo` | Patrol generated data with planted problems, to see the output |
 

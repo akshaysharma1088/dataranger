@@ -1,0 +1,88 @@
+# Runs the DataRanger GitHub Action from this repository on demo data, so a change that breaks it fails here first.
+name: action
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  duckdb:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Make a demo database
+        run: |
+          python -m pip install --quiet -e .
+          python examples/scheduled/make_demo_db.py "$RUNNER_TEMP/demo.duckdb"
+      - name: Patrol and report
+        id: report
+        uses: ./
+        with:
+          db: ${{ runner.temp }}/demo.duckdb
+          table: transactions
+          ref-table: customers
+          manifest-table: control_totals
+          category: category
+          fail-on-escalate: "false"
+          artifact-name: dataranger-report-duckdb
+      - name: Check outputs and files
+        env:
+          INCIDENTS: ${{ steps.report.outputs.incidents }}
+          ESCALATE: ${{ steps.report.outputs.escalate }}
+          REPORT: ${{ steps.report.outputs.report }}
+        run: |
+          test "$INCIDENTS" -gt 0 && test "$ESCALATE" -gt 0
+          test -s "$REPORT/dashboard.html" && test -s "$REPORT/audit.jsonl" && test -s "$REPORT/incidents.csv"
+          grep -q "DataRanger patrol" "$GITHUB_STEP_SUMMARY" || true
+      - name: Patrol with the default gate (must fail, the demo has incidents for a person)
+        id: gate
+        continue-on-error: true
+        uses: ./
+        with:
+          db: ${{ runner.temp }}/demo.duckdb
+          table: transactions
+          ref-table: customers
+          manifest-table: control_totals
+          category: category
+          days: "30"
+          out: gated-report
+          upload-report: "false"
+      - name: The gate failed the step
+        env:
+          OUTCOME: ${{ steps.gate.outcome }}
+        run: test "$OUTCOME" = "failure"
+
+  dbt:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Build the example dbt project
+        working-directory: examples/dbt
+        run: |
+          python -m pip install --quiet -e ../.. dbt-duckdb
+          python make_seeds.py
+          dbt build --profiles-dir .
+      - name: Patrol the dbt model
+        id: report
+        uses: ./
+        with:
+          dbt-model: fct_payments
+          dbt-project-dir: examples/dbt
+          fail-on-escalate: "false"
+          artifact-name: dataranger-report-dbt
+          python-version: none
+      - name: Check outputs
+        env:
+          INCIDENTS: ${{ steps.report.outputs.incidents }}
+        run: test "$INCIDENTS" -gt 0

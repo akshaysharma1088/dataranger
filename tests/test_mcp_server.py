@@ -56,7 +56,7 @@ def test_server_lists_tools():
 
     server = M.build_server()
     names = {t.name for t in asyncio.run(server.list_tools())}
-    assert names == {"patrol_duckdb", "patrol_files", "get_incident", "run_demo"}
+    assert names == {"patrol_duckdb", "patrol_files", "patrol_snowflake", "patrol_dbt", "get_incident", "run_demo"}
 
 
 def test_tool_definitions_are_documented():
@@ -72,3 +72,20 @@ def test_tool_definitions_are_documented():
     assert tools["get_incident"]["annotations"]["readOnlyHint"] is True
     assert tools["patrol_files"]["annotations"]["readOnlyHint"] is False  # it writes report files
     assert tools["patrol_duckdb"]["outputSchema"]["properties"]["needs_a_person"]
+    assert tools["patrol_snowflake"]["annotations"]["openWorldHint"] is True
+    assert tools["patrol_files"]["annotations"]["openWorldHint"] is False
+
+
+def test_patrol_dbt_tool(tmp_path):
+    from datetime import date, timedelta
+
+    from dataranger.bench import generate, inject
+    from test_connectors import _dbt_project
+
+    case = inject(generate(7, "small", start=date.today() - timedelta(days=60)))
+    project = _dbt_project(tmp_path, case)
+    s = M.patrol_dbt(str(project), "fct_payments", days=None, out_dir=str(tmp_path / "out"))
+    assert s["table"] == "fct_payments" and s["incidents"] > 0
+    assert (tmp_path / "out" / "dashboard.html").exists()
+    with pytest.raises(ValueError, match="not found in the manifest"):
+        M.patrol_dbt(str(project), "nope")

@@ -38,6 +38,10 @@ Threshold = Annotated[float | None, Field(description=(
     "Gate threshold: the largest relative gap to the control totals that a verified fix may leave and still be "
     "marked auto-fixed (0.01 = 1%). Lower is stricter. Omit for the benchmark-calibrated default, 0.0135."))]
 
+Days = Annotated[int | None, Field(description=(
+    "Read only the last N days of the fact table and control totals (today counts as day one). "
+    "Use at least 30 so the checks have a baseline. Pass null to read the whole table, which can be slow and costly."))]
+
 
 class Incident(TypedDict):
     partition: str  # YYYY-MM-DD, or "table-level"
@@ -69,7 +73,7 @@ class PatrolSummary(TypedDict):
     note: str
 
 INSTRUCTIONS = (
-    "DataRanger checks a date-partitioned fact table against its reference table and the source's "
+    "DataRanger checks a date-partitioned fact table (in DuckDB, CSV or Parquet files, Snowflake, or behind a dbt model) against its reference table and the source's "
     "control totals. It finds broken partitions, proposes fixes, verifies each fix on a copy, and only "
     "marks a fix 'auto-fixed' when it is proven and low risk; everything else is 'escalate', meaning a "
     "person must decide. Call a patrol tool before relying on a table, report escalations to the user "
@@ -212,15 +216,119 @@ def patrol_files(
                      category=category, amount=amount), threshold)
 
 
+def patrol_snowflake(
+        table: Annotated[str, Field(description="Fact table to check, for example ANALYTICS.GOLD.PAYMENTS. An unqualified name uses the connection's database and schema.")],
+        ref_table: Annotated[str, Field(description="Reference table that fact rows point to, for example ANALYTICS.GOLD.CUSTOMERS.")],
+        manifest_table: Annotated[str, Field(description=(
+            "Table of the source system's control totals, one row per date and segment, with columns: "
+            "the date column, the segment column ('*' = whole day), n (row count) and amount (sum)."))],
+        connection: Annotated[str | None, Field(description=(
+            "Name of a connection in ~/.snowflake/connections.toml. Omit to use the server's SNOWFLAKE_ACCOUNT, "
+            "SNOWFLAKE_USER, SNOWFLAKE_PASSWORD or SNOWFLAKE_PRIVATE_KEY_PATH, SNOWFLAKE_ROLE and SNOWFLAKE_WAREHOUSE "
+            "environment variables, or the Snowflake connector's default connection."))] = None,
+        days: Days = 30,
+        out_dir: OutDir = None, key: Key = "txn_id", reference: Reference = "customer_id",
+        ref_key: RefKey = "customer_id", date: DateCol = "txn_date", segment: Segment = "channel",
+        category: Category = None, amount: Amount = "amount", threshold: Threshold = None) -> PatrolSummary:
+    """Check a fact table in Snowflake for data-quality incidents and say which are safe to fix.
+
+    A patrol checks every daily partition of the fact table for duplicate keys, duplicate rows, missing
+    partitions, rows that point to no reference record, null spikes, and row counts or amounts that do not
+    match the source's control totals. For each problem it proposes a fix, tests that fix on a copy against
+    the control totals, and decides: "auto-fixed" (proven and low risk), "no action needed" (checked, the
+    data is right) or "escalate" (a person must decide).
+
+    Use this before trusting, querying or building on a date-partitioned Snowflake table, or after a load to
+    confirm the data is still right. Use patrol_dbt instead when the table is built by a dbt model,
+    patrol_duckdb for a DuckDB file and patrol_files for CSV or Parquet exports. Use run_demo to see the
+    output on sample data.
+
+    Behavior: connects to Snowflake with credentials already configured on this machine; none are passed
+    as arguments. It runs three SELECT statements and nothing else, so the warehouse is never modified,
+    and it selects only the mapped columns for the last `days` days, so it uses a little warehouse compute
+    (usually seconds for 30 days). The only side effect is writing four report files to out_dir:
+    dashboard.html, audit.jsonl, incidents.csv and fixed_version.csv (the proposed corrected table, for
+    review). Fails with a readable error if the login is refused, or a table or mapped column does not exist.
+
+    Returns the counts (incidents, auto_fixed, no_action_needed, escalate), needs_a_person (the escalated
+    incidents), all_incidents (partition, problems, decision, proposed_fix, residual for each) and
+    outputs (paths to the report files). Pass outputs.folder and a partition to get_incident for the
+    full evidence behind one decision. Tell the user about every escalated incident.
+    """
+    from .connectors.snowflake import from_snowflake
+    from .patrol import Mapping
+
+    columns = dict(key=key, reference=reference, ref_key=ref_key, date=date, segment=segment, category=category, amount=amount)
+    facts, refs, manifest = from_snowflake(table, ref_table, manifest_table, Mapping(**columns), days=days, connection=connection)
+    return _run(facts, refs, manifest, table, out_dir, columns, threshold)
+
+
+def patrol_dbt(
+        project_dir: Annotated[str, Field(description="Path to the dbt project folder, the one that holds dbt_project.yml. It must have been built or parsed, so target/manifest.json exists.")],
+        model: Annotated[str, Field(description="Name of the dbt fact model to check, for example fct_payments. A seed, snapshot, or a source written as source_name.table_name also works.")],
+        ref_model: Annotated[str | None, Field(description="dbt model of the reference table that fact rows point to, for example dim_customers. Omit if the fact model's meta.dataranger block sets ref_model.")] = None,
+        manifest_model: Annotated[str | None, Field(description=(
+            "dbt model holding the source system's control totals: one row per date and segment ('*' = whole day) "
+            "with n and amount. Omit if the fact model's meta.dataranger block sets manifest_model."))] = None,
+        target: Annotated[str | None, Field(description="dbt target to read from, for example prod. Omit for the profile's default target.")] = None,
+        profiles_dir: Annotated[str | None, Field(description="Folder that holds profiles.yml. Omit to look in DBT_PROFILES_DIR, the project folder, then ~/.dbt.")] = None,
+        days: Days = 30,
+        out_dir: OutDir = None,
+        key: Annotated[str | None, Field(description="Primary key column of the fact model. Omit to use meta.dataranger.key, or txn_id.")] = None,
+        reference: Annotated[str | None, Field(description="Fact column that points to the reference model. Omit to use meta.dataranger.reference, or customer_id.")] = None,
+        ref_key: Annotated[str | None, Field(description="Key column of the reference model. Omit to use meta.dataranger.ref_key, or customer_id.")] = None,
+        date: Annotated[str | None, Field(description="Date column the fact model is partitioned by; the control totals need the same column. Omit to use meta.dataranger.date, or txn_date.")] = None,
+        segment: Annotated[str | None, Field(description="Column that splits each day into segments, such as channel; the control totals need the same column. Omit to use meta.dataranger.segment, or channel.")] = None,
+        category: Annotated[str | None, Field(description="Optional categorical column of the fact model. Omit to use meta.dataranger.category, or none.")] = None,
+        amount: Annotated[str | None, Field(description="Numeric amount column of the fact model. Omit to use meta.dataranger.amount, or amount.")] = None,
+        threshold: Threshold = None) -> PatrolSummary:
+    """Check the table behind a dbt model for data-quality incidents and say which are safe to fix.
+
+    A patrol checks every daily partition of the fact table for duplicate keys, duplicate rows, missing
+    partitions, rows that point to no reference record, null spikes, and row counts or amounts that do not
+    match the source's control totals. For each problem it proposes a fix, tests that fix on a copy against
+    the control totals, and decides: "auto-fixed" (proven and low risk), "no action needed" (checked, the
+    data is right) or "escalate" (a person must decide).
+
+    Use this after `dbt build` or `dbt run`, before trusting or publishing a date-partitioned model. It
+    finds the model's table from dbt's manifest, connects the way the project's profile says (DuckDB and
+    Snowflake targets are supported), and takes the column mapping from the model's `meta: dataranger:`
+    block unless you pass columns here. Use patrol_snowflake or patrol_duckdb for tables that are not dbt
+    models, and patrol_files for CSV or Parquet exports.
+
+    Behavior: reads target/manifest.json, dbt_project.yml and profiles.yml; it does not run dbt. It then
+    runs three SELECT statements and nothing else, so neither the warehouse nor the dbt project is
+    modified. On Snowflake it selects only the mapped columns for the last `days` days. The only side
+    effect is writing four report files to out_dir: dashboard.html, audit.jsonl, incidents.csv and
+    fixed_version.csv (the proposed corrected table, for review). Fails with a readable error if the
+    manifest is missing (run dbt first), a model is unknown, the target type is not supported, or a
+    mapped column does not exist.
+
+    Returns the counts (incidents, auto_fixed, no_action_needed, escalate), needs_a_person (the escalated
+    incidents), all_incidents (partition, problems, decision, proposed_fix, residual for each) and
+    outputs (paths to the report files). Pass outputs.folder and a partition to get_incident for the
+    full evidence behind one decision. Tell the user about every escalated incident.
+    """
+    from .connectors.dbt import from_dbt
+
+    overrides = dict(key=key, reference=reference, ref_key=ref_key, date=date, segment=segment, category=category, amount=amount)
+    facts, refs, manifest, mapping, name = from_dbt(project_dir, model, mapping_overrides=overrides, ref_model=ref_model,
+                                                    manifest_model=manifest_model, target=target,
+                                                    profiles_dir=profiles_dir, days=days)
+    columns = dict(key=mapping.key, reference=mapping.reference, ref_key=mapping.ref_key, date=mapping.date,
+                   segment=mapping.segment, category=mapping.category, amount=mapping.amount)
+    return _run(facts, refs, manifest, name, out_dir, columns, threshold)
+
+
 def get_incident(
-        out_dir: Annotated[str, Field(description="The outputs.folder value returned by patrol_duckdb, patrol_files or run_demo.")],
+        out_dir: Annotated[str, Field(description="The outputs.folder value returned by a patrol tool or run_demo.")],
         partition: Annotated[str, Field(description=(
             "Which incident: the partition date as YYYY-MM-DD, copied from an incident's 'partition' field, "
             "or 'table-level' for a problem with the whole table such as a schema change."))],
 ) -> dict[str, Any]:
     """Return the full evidence behind one incident from a patrol that has already run.
 
-    Use this after patrol_duckdb, patrol_files or run_demo, when you need to explain why a partition was
+    Use this after a patrol tool (patrol_duckdb, patrol_files, patrol_snowflake, patrol_dbt) or run_demo, when you need to explain why a partition was
     auto-fixed or escalated, or to show the user what to review. A patrol records at most one incident per
     partition, so the folder plus the partition date identifies it. Do not call it before a patrol.
 
@@ -275,12 +383,15 @@ def run_demo(
     return _summary(res, out, "demo.payments_daily")
 
 
-TOOLS = (patrol_duckdb, patrol_files, get_incident, run_demo)
+TOOLS = (patrol_duckdb, patrol_files, patrol_snowflake, patrol_dbt, get_incident, run_demo)
+# title, read-only (writes nothing at all), open world (reaches a system outside this machine)
 TOOL_HINTS = {
-    "patrol_duckdb": ("Patrol a DuckDB table", False),
-    "patrol_files": ("Patrol CSV or Parquet files", False),
-    "get_incident": ("Get incident evidence", True),
-    "run_demo": ("Run the demo patrol", False),
+    "patrol_duckdb": ("Patrol a DuckDB table", False, False),
+    "patrol_files": ("Patrol CSV or Parquet files", False, False),
+    "patrol_snowflake": ("Patrol a Snowflake table", False, True),
+    "patrol_dbt": ("Patrol a dbt model", False, True),
+    "get_incident": ("Get incident evidence", True, False),
+    "run_demo": ("Run the demo patrol", False, False),
 }
 
 
@@ -312,16 +423,15 @@ def build_server():
 
     from mcp.types import ToolAnnotations
 
-    def hints(title: str, read_only: bool) -> ToolAnnotations:
+    def hints(title: str, read_only: bool, open_world: bool) -> ToolAnnotations:
         # Patrols write report files to a local folder, so only get_incident is strictly read-only.
         # A patrol without out_dir makes a new temporary folder each time, so it is not idempotent either.
         return ToolAnnotations.model_validate({"title": title, "readOnlyHint": read_only, "destructiveHint": False,
-                                               "idempotentHint": read_only, "openWorldHint": False})
+                                               "idempotentHint": read_only, "openWorldHint": open_world})
 
     server = Server(name="dataranger", instructions=INSTRUCTIONS)
     for fn in TOOLS:
-        title, read_only = TOOL_HINTS[fn.__name__]
-        server.tool(annotations=hints(title, read_only))(visible_errors(fn))
+        server.tool(annotations=hints(*TOOL_HINTS[fn.__name__]))(visible_errors(fn))
     return server
 
 

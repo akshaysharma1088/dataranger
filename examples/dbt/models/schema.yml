@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: fct_payments
+    description: One row per payment, partitioned by paid_on.
+    meta:
+      dataranger:
+        ref_model: dim_customers
+        manifest_model: control_totals
+        key: payment_id
+        reference: customer_id
+        ref_key: customer_id
+        date: paid_on
+        segment: channel
+        category: category
+        amount: amount
+  - name: dim_customers
+    description: One row per customer.
+  - name: control_totals
+    description: Row counts and amounts reported by the source system, per day and channel.
