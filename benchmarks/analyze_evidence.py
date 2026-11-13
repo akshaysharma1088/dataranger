@@ -60,10 +60,12 @@ def decompose(test, lam, res="residual"):
             c["escalated"] += 1
             if is_real(r):
                 c["escalated_real"] += 1
-        elif a["action"] == "none":
-            c["benign_right" if a["correct"] else "benign_wrong"] += 1
+        elif not a["correct"]:
+            c["repair_wrong" if a["action"] != "none" else "benign_wrong"] += 1
+        elif is_real(r):
+            c["repair_right"] += 1          # a correct repair of a real error
         else:
-            c["repair_right" if a["correct"] else "repair_wrong"] += 1
+            c["benign_right"] += 1          # a correct partition left as it is (none, or a no-op reload)
     auto = n - c["escalated"]
     real = sum(is_real(r) for r in recs)
     return {"incidents": n, "automated": auto / n, "repairs_right": c["repair_right"] / n, "repairs_wrong": c["repair_wrong"] / n,
@@ -177,6 +179,9 @@ def learned_split(cal, test, alpha, with_source, seed):
             tau_hat = tau
         else:
             break
+    # paired control: the raw residual certified on the same tune half, evaluated on the same test instances
+    lam_half = calibrate(tune, alpha, DELTA)
+    paired = evaluate(test, "verified", lam_half)
     test_r = [r for r in test if not r["table_level"]]
     test_b = bests(test_r)
     applied = [b if (tau_hat is not None and b is not None and p >= tau_hat) else None for r, (b, p) in test_b]
@@ -184,7 +189,8 @@ def learned_split(cal, test, alpha, with_source, seed):
     real = [is_real(r) for r in test_r]
     return {"auto_rate": float(np.mean([a is not None for a in applied])), "harm": float(np.mean(harm)),
             "real_errors_fixed": float(sum(a is not None and a["correct"] and a["action"] != "none" and x for a, x in zip(applied, real)) / max(sum(real), 1)),
-            "certified": float(tau_hat is not None)}
+            "certified": float(tau_hat is not None), "tau": tau_hat,
+            "paired_residual_auto": paired["auto_rate"], "paired_residual_harm": paired["harm"], "paired_residual_certified": float(lam_half >= 0)}
 
 
 if __name__ == "__main__":
@@ -202,7 +208,7 @@ if __name__ == "__main__":
             for with_source in (False, True):
                 for alpha in (0.01, 0.02, 0.05):
                     rows = [learned_split(cal, test, alpha, with_source, i) for i, (cal, test) in enumerate(splits[:20])]
-                    abl[f"learned_{'with' if with_source else 'no'}_source|{alpha}"] = {k: float(np.mean([x[k] for x in rows])) for k in rows[0]}
+                    abl[f"learned_{'with' if with_source else 'no'}_source|{alpha}"] = {k: float(np.mean([x[k] if x[k] is not None else 1.0 for x in rows])) for k in rows[0]}
                     print(name, with_source, alpha, abl[f"learned_{'with' if with_source else 'no'}_source|{alpha}"], flush=True)
             json.dump(out, open("results/evidence_summary.json", "w"), indent=1)
             continue
@@ -219,10 +225,12 @@ if __name__ == "__main__":
                 a = decide(r, pol)
                 if a is None:
                     c["escalated"] += 1
-                elif a["action"] == "none":
-                    c["benign_right" if a["correct"] else "benign_wrong"] += 1
+                elif not a["correct"]:
+                    c["repair_wrong" if a["action"] != "none" else "benign_wrong"] += 1
+                elif is_real(r):
+                    c["repair_right"] += 1
                 else:
-                    c["repair_right" if a["correct"] else "repair_wrong"] += 1
+                    c["benign_right"] += 1
             n = len(allinc)
             base[pol] = {k: v / n for k, v in c.items()}
         abl = {}
@@ -238,7 +246,7 @@ if __name__ == "__main__":
             for with_source in (False, True):
                 for alpha in (0.01, 0.02, 0.05):
                     rows = [learned_split(cal, test, alpha, with_source, i) for i, (cal, test) in enumerate(splits[:20])]
-                    abl[f"learned_{'with' if with_source else 'no'}_source|{alpha}"] = {k: float(np.mean([x[k] for x in rows])) for k in rows[0]}
+                    abl[f"learned_{'with' if with_source else 'no'}_source|{alpha}"] = {k: float(np.mean([x[k] if x[k] is not None else 1.0 for x in rows])) for k in rows[0]}
         out[name] = {"decomposition": dec, "baselines": base, "evidence_ablation": abl}
         print(f"\n== {name}")
         for a, d in dec.items():
