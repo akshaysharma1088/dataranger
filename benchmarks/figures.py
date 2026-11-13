@@ -123,7 +123,7 @@ if (R / "cohort_summary.json").exists():
                 jit = [x + (i - len(hs) / 2) * 0.02 for i in range(len(hs))]
                 ax.scatter(jit, hs, s=9, color=col, edgecolor=INK, lw=0.3, zorder=4)
                 if n_unc:
-                    ax.text(x, alpha * 100 * 0.05, "none\ncertified", ha="center", va="bottom", fontsize=5.5, color=col)
+                    ax.scatter([x], [alpha * 100 * 0.03], marker="x", s=16, color=col, lw=0.9, zorder=4)
                 ticks.append(x); labels.append(f"{m}")
                 x += 1
             x += 0.5
@@ -135,6 +135,7 @@ if (R / "cohort_summary.json").exists():
     axes[0].set_ylabel("harm on held-out\npopulation (%)", fontsize=7)
     axes[0].scatter([], [], s=9, color=BLUE, edgecolor=INK, lw=0.3, label="incident-level gate (Thm. 4.1)")
     axes[0].scatter([], [], s=9, color=ORANGE, edgecolor=INK, lw=0.3, label="cluster-level gate (Thm. 4.2)")
-    fig.legend(frameon=False, fontsize=6.5, loc="upper center", ncol=2, bbox_to_anchor=(0.5, 1.08), handletextpad=0.2)
+    axes[0].scatter([], [], marker="x", s=16, color=GREY, lw=0.9, label="nothing certified: all escalated")
+    fig.legend(frameon=False, fontsize=6.5, loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.08), handletextpad=0.2)
     fig.tight_layout(w_pad=1.0)
     fig.savefig(OUT / "fig_cohorts.pdf", bbox_inches="tight"); plt.close(fig)

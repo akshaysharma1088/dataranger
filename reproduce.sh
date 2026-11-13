@@ -40,6 +40,8 @@ if [ "$MODE" = "full" ]; then
   python benchmarks/run_cohorts.py 3000 0 results/cohort_records.jsonl && gz results/cohort_records.jsonl
   step "Harder error families on the 150 small instances, per-channel and per-channel-and-category totals (Q8)"
   python benchmarks/run_hard.py 150
+  step "Harder mix on 500 independent instances per evidence granularity, for certification per table (Q8, Table 6; about two hours on two cores)"
+  python benchmarks/run_hard_cohort.py 500 && gz results/hard_cohort_records.jsonl && rm results/hard_cohort_records.jsonl
   step "Verification pushed down into DuckDB on partitions of 1 to 50 million rows (Q8; needs about 6 GB of disk)"
   python benchmarks/pushdown.py
 fi
@@ -54,6 +56,10 @@ step "Decomposition of automated decisions and the evidence ablation (Q1, Tables
 python benchmarks/analyze_evidence.py
 step "Controlled comparisons: fixed candidate with different accepting scores; a tolerance tuned on labels (Q1, Q3)"
 python benchmarks/analyze_controls.py
+step "Certification per table on 1,000 held-out tables: main comparison and what the evidence adds (Q1, Tables 1 and 2)"
+python benchmarks/analyze_cluster.py
+step "Escalation reasons, partition totals, and the harder mix certified per table (Q1, Q3, Q8, Table 6)"
+python benchmarks/analyze_cluster_extra.py
 step "Harder error families (Q8, Table 6)"
 python benchmarks/analyze_hard.py
 step "TPC-DS: in-domain calibration, transfer, fixed tolerances (Q4, Table 3)"
@@ -70,7 +76,7 @@ python benchmarks/analyze_corrupt.py
 step "Real datasets against Baran and conformal cleaning (Q7)"
 python benchmarks/run_cells.py results/baran
 step "Real datasets: matched budgets, other proposers through the gate, same proposals with different scores (Q7, Table 5)"
-# Baran corrections at budgets 20 (5 seeds), 50, 100 and 200 (1 seed) are committed in results/baran/ (benchmarks/run_baran.py).
+# Baran corrections at budgets 20 (5 seeds), 50, 100 and 200 (3 seeds each) are committed in results/baran/ (benchmarks/run_baran.py).
 python benchmarks/run_cells2.py results/baran
 
 step "LLM proposers and the self-checking baseline (Q6)"
@@ -79,4 +85,6 @@ python benchmarks/eval_llm.py results/llm_responses
 
 step "Figures"
 python benchmarks/figures.py results figures
-echo; echo "Done. Numbers are in results/*.json, figures in figures/."
+step "Tables 1, 2, 5 and 6 of the paper as LaTeX rows"
+python benchmarks/paper_tables.py > results/paper_tables.tex
+echo; echo "Done. Numbers are in results/*.json, table rows in results/paper_tables.tex, figures in figures/."

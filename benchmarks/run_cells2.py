@@ -11,11 +11,11 @@ certification); for conformal cleaning in three. Tuples that Raha or Baran label
 removed from the certification and test rows of the Baran runs.
 
 Unit and loss. The unit is a row, and a row is harmed if at least one change applied to it is wrong. Rows
-with no proposal count, with loss 0, so the certified quantity is the share of all rows that end with a
-wrong change applied, the row-level analogue of silent harm per incident. The certification rows are a
-uniform random sample of the table's rows without replacement, to which Hoeffding-type bounds for
-independent draws apply (Hoeffding 1963, Theorem 4); dependence between cells of one row is inside the
-unit. Candidates are computed from the dirty table alone, without labels.
+with no proposal count, with loss 0. The population is finite: the certification and test rows of a split.
+The certification rows are a uniform random sample of it without replacement, and the proposals and the scorer
+are fixed without reference to which of those rows fall in the sample. The certificate is on the rows that were
+NOT sampled (the test rows, the ones nobody labeled): with probability at least 1 - delta over the sample, at most
+alpha of them are harmed. It is exact (hypergeometric; dataranger.repair.cells.certify_remainder) and needs no threshold grid.
 
 Three questions: labels versus budget for the gate; Baran's and conformal cleaning's proposals through the
 gate; and the same proposals certified on the proposer's own confidence versus the table's evidence.
@@ -31,12 +31,10 @@ import numpy as np
 from sklearn.ensemble import HistGradientBoostingClassifier as HGB
 
 from dataranger.bench import realdata
-from dataranger.repair.cells import candidates, score
-from dataranger.repair.gate import hb_pvalue
+from dataranger.repair.cells import candidates, certify_remainder, remainder_cutoff, score
 
 ENTITY = {"flights": "flight"}
 SPLITS, CDC_SPLITS, DELTA = 20, 5, 0.05
-TAUS = np.round(np.arange(1.0, -0.001, -0.01), 2)
 BUDGETS = (50, 100, 200, 500)
 ALPHAS = (0.01, 0.05)
 baran_dir = sys.argv[1] if len(sys.argv) > 1 else "results/baran"
@@ -67,28 +65,9 @@ def evidence_features(props, ours, columns):
     return np.array(X, dtype=float).reshape(len(props), -1)
 
 
-def certify_rows(p, wrong, rows, cert_rows, alpha):
-    """Learn-then-Test with the row as the unit. p: score per proposal (higher = more confident); wrong: is the
-    proposal wrong; rows: its row. The loss of a certification row is 1 if any proposal applied to it is wrong."""
-    cert = sorted(cert_rows)
-    pos = {r: i for i, r in enumerate(cert)}
-    n, tau = len(cert), None
-    idx = np.array([pos.get(r, -1) for r in rows])
-    keep = idx >= 0
-    for t in TAUS:
-        bad = np.zeros(n, bool)
-        hit = keep & (p >= t) & wrong
-        bad[idx[hit]] = True
-        if hb_pvalue(float(bad.mean()), n, alpha) <= DELTA:
-            tau = t
-        else:
-            break
-    return tau
-
-
-def gated(props, X, learn_rows, cert_rows, test_rows, clean, dirty, alpha, seed, own_score=None):
+def gated(props, X, learn_rows, cert_rows, test_rows, clean, dirty, alphas, seed, own_score=None):
     """Score proposals (a classifier fit on the learning rows, or the proposer's own score), certify a threshold on
-    the certification rows, apply it on the test rows. Returns the metrics on the test rows."""
+    the certification rows, apply it to the rows that were not sampled (the test rows). One result per alpha."""
     keys = list(props)
     rows = np.array([k[0] for k in keys])
     wrong = np.array([clean.at[r, c] != v for (r, c), v in props.items()])
@@ -100,11 +79,17 @@ def gated(props, X, learn_rows, cert_rows, test_rows, clean, dirty, alpha, seed,
             p = HGB(max_iter=200, random_state=seed).fit(X[li], ~wrong[li]).predict_proba(X)[:, 1]
         else:
             p = np.ones(len(keys))   # nothing to learn from: the only policy on offer is "apply every proposal"
-    tau = certify_rows(p, wrong, rows, cert_rows, alpha) if len(keys) else None
-    applied = {k: props[k] for k, pk in zip(keys, p) if tau is not None and pk >= tau and k[0] in test_rows}
-    m = metrics(applied, clean, dirty, test_rows)
-    m.update({"certified": float(tau is not None), "exceeds": float(m["rows_harmed"] > alpha), "cert_rows": len(cert_rows)})
-    return m
+    pop_n = len(set(cert_rows) | set(test_rows))
+    res = {}
+    for alpha in alphas:
+        tau = certify_remainder(p, wrong, rows, cert_rows, alpha, pop_n, DELTA) if len(keys) else None
+        passed = {k: props[k] for k, pk in zip(keys, p) if tau is not None and pk > tau}
+        m = metrics({k: v for k, v in passed.items() if k[0] in test_rows}, clean, dirty, test_rows)
+        allowed = int(np.floor(alpha * len(test_rows)))
+        m.update({"certified": float(any(k[0] in test_rows for k in passed)), "exceeds": float(round(m["rows_harmed"] * len(test_rows)) > allowed),
+                  "cert_rows": len(cert_rows), "population_rows": pop_n, "cutoff": remainder_cutoff(pop_n, len(set(cert_rows)), alpha, DELTA)})
+        res[alpha] = m
+    return res
 
 
 def cdc_with_scores(clean, dirty, train_rows, test_rows, conf=0.999, max_classes=50, seed=0):
@@ -167,8 +152,8 @@ for name in realdata.DATASETS:
         # 1. the gate on its own candidates, by labeling budget (half to learn the score, half to certify)
         for b in [x for x in BUDGETS if x < len(cal)] + [len(cal)]:
             learn, cert = set(cal[: b // 2]), set(cal[b // 2: b])
-            for alpha in ALPHAS:
-                res[f"dataranger|budget={b if b < len(cal) else 'half'}|{alpha}"].append(gated(own_props, own_X, learn, cert, test_rows, clean, dirty, alpha, s))
+            for alpha, m in gated(own_props, own_X, learn, cert, test_rows, clean, dirty, ALPHAS, s).items():
+                res[f"dataranger|budget={b if b < len(cal) else 'half'}|{alpha}"].append(m)
         # 2. Baran alone, and Baran's proposals through the gate. Tuples Baran or Raha labeled leave certification and test.
         for b, runs in sorted(baran.items()):
             props, labeled, has_det = runs[s % len(runs)]
@@ -176,8 +161,8 @@ for name in realdata.DATASETS:
             res[f"baran|budget={b}"].append(metrics(props, clean, dirty, t_rows))
             if has_det:
                 learn, cert = set(cal[: len(cal) // 2]) - labeled, set(cal[len(cal) // 2:]) - labeled
-                for alpha in ALPHAS:
-                    res[f"baran+gate|budget={b}|{alpha}"].append(gated(props, evidence_features(props, ours, cols), learn, cert, t_rows, clean, dirty, alpha, s))
+                for alpha, m in gated(props, evidence_features(props, ours, cols), learn, cert, t_rows, clean, dirty, ALPHAS, s).items():
+                    res[f"baran+gate|budget={b}|{alpha}"].append(m)
         # 3. conformal cleaning. Alone, trained on the whole calibration half (its best case); through the gate, trained on the
         #    first third only, so that the rows that certify the gate never trained the proposer.
         if s < CDC_SPLITS:
@@ -194,9 +179,10 @@ for name in realdata.DATASETS:
             conf = {(r, c): p for r, c, _, p in cdc_cache[key] if r not in train}
             res["cdc_third"].append(metrics(props, clean, dirty, test_rows))
             X = evidence_features(props, ours, cols)
-            for alpha in ALPHAS:
-                res[f"cdc+gate(confidence)|{alpha}"].append(gated(props, X, learn, cert, test_rows, clean, dirty, alpha, s, own_score=conf))
-                res[f"cdc+gate(evidence)|{alpha}"].append(gated(props, X, learn, cert, test_rows, clean, dirty, alpha, s))
+            for alpha, m in gated(props, X, learn, cert, test_rows, clean, dirty, ALPHAS, s, own_score=conf).items():
+                res[f"cdc+gate(confidence)|{alpha}"].append(m)
+            for alpha, m in gated(props, X, learn, cert, test_rows, clean, dirty, ALPHAS, s).items():
+                res[f"cdc+gate(evidence)|{alpha}"].append(m)
         print(name, "split", s, flush=True)
     out[name] = {k: {m: float(np.mean([x[m] for x in v])) for m in v[0]} for k, v in res.items()}
     out[name]["n_splits"] = {k: len(v) for k, v in res.items()}
@@ -205,5 +191,5 @@ for name in realdata.DATASETS:
     for k, v in out[name].items():
         if isinstance(v, dict) and "errors_fixed" in v:
             print(f"  {k:34s} fixed {v['errors_fixed']:.3f} prec {v['precision']:.3f} wrong/1k {v['wrong_per_1000_cells']:6.2f} rows harmed {v['rows_harmed']:.4f}"
-                  + (f" certified {v['certified']:.2f} exceeds {v['exceeds']:.2f} n={v['cert_rows']:.0f}" if "certified" in v else ""), flush=True)
+                  + (f" certified {v['certified']:.2f} exceeds {v['exceeds']:.2f} n={v['cert_rows']:.0f} c={v['cutoff']:.1f}" if "certified" in v else ""), flush=True)
     json.dump(out, open("results/cells2_summary.json", "w"), indent=1)

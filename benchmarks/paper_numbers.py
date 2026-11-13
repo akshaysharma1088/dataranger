@@ -1,4 +1,5 @@
-"""Print the Q7 table rows for numbers.tex from results/cells2_summary.json."""
+"""Print every cell-repair setting from results/cells2_summary.json (Section 6.7): the numbers quoted in the text.
+The table itself is written by benchmarks/paper_tables.py."""
 import json
 
 c = json.load(open("results/cells2_summary.json"))
@@ -31,4 +32,4 @@ for name in ("hospital", "flights", "beers"):
     r = c[name]
     for k, v in r.items():
         if isinstance(v, dict) and "certified" in v:
-            print(name, k, f"fixed {v['errors_fixed']:.3f} harmed {v['rows_harmed']:.4f} cert {v['certified']:.2f} exceeds {v['exceeds']:.2f} n={v['cert_rows']:.0f}")
+            print(name, k, f"fixed {v['errors_fixed']:.3f} harmed {v['rows_harmed']:.4f} cert {v['certified']:.2f} exceeds {v['exceeds']:.2f} c={v['cutoff']:.1f} n={v['cert_rows']:.0f}/{v['population_rows']:.0f}")
