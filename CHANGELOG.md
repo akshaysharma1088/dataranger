@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1 (2026-11-13)
+
+- First PyPI release of the 0.5 line. The `v0.5.0` tag works for the GitHub Action, but its PyPI publish stopped at the release tests, which ran without the test dependencies. The release workflow now installs them the same way CI does.
+- Snowflake: `SNOWFLAKE_PASSCODE` for multi-factor logins, a demo you can run on a trial account in `examples/snowflake`, and the connector's own `FutureWarning` no longer prints.
+
 ## 0.5.0 (2026-11-13)
 
 DataRanger now reads from where the data lives and runs in CI.

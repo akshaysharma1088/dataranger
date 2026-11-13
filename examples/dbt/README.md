@@ -30,7 +30,7 @@ DuckDB and Snowflake targets are supported. For other warehouses, export the thr
 
 ```yaml
 - run: dbt build
-- uses: akshaysharma1088/dataranger@v0.5.0
+- uses: akshaysharma1088/dataranger@v0.5.1
   with:
     dbt-model: fct_payments
 ```
