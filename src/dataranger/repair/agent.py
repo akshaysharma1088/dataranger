@@ -58,7 +58,17 @@ def propose(findings: list[Finding], reload_ok: bool, channels: tuple = CHANNELS
             if a == "rescale" and "channel" in e:
                 match = [x for x in c if x.action == "rescale" and x.p("channel") == e["channel"]] or match
             default = match[0] if match else None
-    return list(dict.fromkeys(c)), default
+    c = list(dict.fromkeys(c))
+    # Partitions with more than one kind of alert may carry more than one error: offer compositions of
+    # two auto-tier repairs with different actions (dedupe before rescale, rescale before reload is moot).
+    singles = [x for x in c if x.action not in ("none", "reload") and x.tier == "auto"]
+    if len({f.detector for f in findings}) >= 2:
+        order = {"dedupe": 0, "dedupe_business": 1, "rescale": 2}
+        for i, a in enumerate(singles):
+            for b in singles[i + 1:]:
+                if a.action != b.action:
+                    c.append(F.seq(*sorted((a, b), key=lambda x: order.get(x.action, 9))))
+    return c, default
 
 
 def invariants_hold(part: pd.DataFrame, customers: pd.DataFrame) -> bool:

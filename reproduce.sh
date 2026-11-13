@@ -36,12 +36,24 @@ if [ "$MODE" = "full" ]; then
   python benchmarks/run_corrupt.py
   step "Scale: TPC-DS at scale factors 1 and 10, single partitions to 20M rows (Q8; needs about 8 GB RAM)"
   python benchmarks/scale.py tpcds_sf1.duckdb:1 tpcds_sf10.duckdb:10
+  step "Independent population for the cohort experiment: 3,000 instances with fresh seeds (Q1; about 45 minutes on two cores)"
+  python benchmarks/run_cohorts.py 3000 0 results/cohort_records.jsonl && gz results/cohort_records.jsonl
+  step "Harder error families on the 150 small instances, per-channel and per-channel-and-category totals (Q8)"
+  python benchmarks/run_hard.py 150
+  step "Verification pushed down into DuckDB on partitions of 1 to 50 million rows (Q8; needs about 6 GB of disk)"
+  python benchmarks/pushdown.py
 fi
 
 step "Guarantee, baselines and fixed thresholds (Q1-Q3, Table 2, Figure 3)"
 python benchmarks/analyze_repair.py
 step "Dependence between incidents of one table; cluster-level calibration (Q1)"
 python benchmarks/analyze_guarantee.py
+step "Independent calibration cohorts against the held-out population (Q1, Figure 2)"
+python benchmarks/analyze_cohorts.py
+step "Decomposition of automated decisions and the evidence ablation (Q1, Tables 2 and 3)"
+python benchmarks/analyze_evidence.py
+step "Harder error families (Q8, Table 6)"
+python benchmarks/analyze_hard.py
 step "TPC-DS: in-domain calibration, transfer, fixed tolerances (Q4, Table 3)"
 python benchmarks/analyze_tpcds.py
 step "Transfer to large tables (Q3)"
@@ -53,8 +65,11 @@ python benchmarks/ablation_reconcile.py
 python benchmarks/ablations.py
 step "Corrupt control totals (Q8)"
 python benchmarks/analyze_corrupt.py
-step "Real datasets against Baran and conformal cleaning (Q7, Figure 5)"
+step "Real datasets against Baran and conformal cleaning (Q7)"
 python benchmarks/run_cells.py results/baran
+step "Real datasets: matched budgets, other proposers through the gate, same proposals with different scores (Q7, Table 5)"
+# Baran corrections at budgets 20 (5 seeds), 50, 100 and 200 (1 seed) are committed in results/baran/ (benchmarks/run_baran.py).
+python benchmarks/run_cells2.py results/baran
 
 step "LLM proposers and the self-checking baseline (Q6)"
 # The model responses from the Actions run (llm-results branch, run 40882980162) are committed here.

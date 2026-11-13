@@ -1,0 +1,4430 @@
+{
+ "instances": 3000,
+ "calibration_instances": 2000,
+ "test_instances": 1000,
+ "test_incidents": 26419,
+ "cohorts": {
+  "incident|100|0.01": {
+   "cohorts": 20,
+   "cohort_instances": 100,
+   "cohort_incidents_mean": 2640.2,
+   "certified_share": 1.0,
+   "lambda_median": 0.010144275125288338,
+   "auto_mean": 0.5697774329081342,
+   "auto_min": 0.5391195730345585,
+   "auto_max": 0.5904841212763542,
+   "harm_mean": 0.005268935236004391,
+   "harm_max": 0.006737575229948143,
+   "inst_harm_mean": 0.0053445894896132036,
+   "inst_harm_max": 0.006811804503288288,
+   "fixed_mean": 0.557490625,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0009099985054385838,
+   "per_cohort": [
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.00432340183838999,
+      0.00612710915392907
+     ],
+     "inst_harm_ci": [
+      0.004362568144365383,
+      0.006201506919963316
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.0057738749985941,
+      0.007794957151058504
+     ],
+     "inst_harm_ci": [
+      0.005820254807967896,
+      0.00787307110972416
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005682181030981896,
+      0.007788924105261005
+     ],
+     "inst_harm_ci": [
+      0.0057374148377041835,
+      0.007907059735171244
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005676359767690077,
+      0.00782534099790737
+     ],
+     "inst_harm_ci": [
+      0.005721378508700154,
+      0.007916190881373774
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.008780648910039301,
+     "certified": true,
+     "auto": 0.5592187440856959,
+     "harm": 0.004428630909572656,
+     "fixed": 0.555,
+     "inst_harm": 0.004502136391401286,
+     "harm_ci": [
+      0.0036356337736389455,
+      0.005299663254190964
+     ],
+     "inst_harm_ci": [
+      0.003685798158640688,
+      0.005393343648834035
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.008780648910039301,
+     "certified": true,
+     "auto": 0.5592187440856959,
+     "harm": 0.004428630909572656,
+     "fixed": 0.555,
+     "inst_harm": 0.004502136391401286,
+     "harm_ci": [
+      0.0036443945576303824,
+      0.005326720120821616
+     ],
+     "inst_harm_ci": [
+      0.0036866190305768387,
+      0.005439341918060659
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004458994034730871,
+      0.0062294945838032335
+     ],
+     "inst_harm_ci": [
+      0.004505359623395922,
+      0.006337790422687225
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.006578665409075977,
+     "certified": true,
+     "auto": 0.5391195730345585,
+     "harm": 0.003482342253681063,
+     "fixed": 0.549625,
+     "inst_harm": 0.00357113961944323,
+     "harm_ci": [
+      0.002726467277623518,
+      0.004251862173924365
+     ],
+     "inst_harm_ci": [
+      0.002786352337329486,
+      0.004367656911452718
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.008780648910039301,
+     "certified": true,
+     "auto": 0.5592187440856959,
+     "harm": 0.004428630909572656,
+     "fixed": 0.555,
+     "inst_harm": 0.004502136391401286,
+     "harm_ci": [
+      0.0036247685370164847,
+      0.005311747435159419
+     ],
+     "inst_harm_ci": [
+      0.003671786817101208,
+      0.005427268266384943
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004353179153155508,
+      0.006160609757623519
+     ],
+     "inst_harm_ci": [
+      0.004415811636441547,
+      0.006273790494260015
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.008780648910039301,
+     "certified": true,
+     "auto": 0.5592187440856959,
+     "harm": 0.004428630909572656,
+     "fixed": 0.555,
+     "inst_harm": 0.004502136391401286,
+     "harm_ci": [
+      0.003626674064835326,
+      0.005345622483000907
+     ],
+     "inst_harm_ci": [
+      0.0036796869896368795,
+      0.005457957712344892
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004347522181832088,
+      0.006125864005337689
+     ],
+     "inst_harm_ci": [
+      0.004385483977014229,
+      0.006242869591631795
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004377528040839013,
+      0.0061642493652120985
+     ],
+     "inst_harm_ci": [
+      0.004424863851856897,
+      0.006253006556842813
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.00436414448744101,
+      0.0061879485742947285
+     ],
+     "inst_harm_ci": [
+      0.004407275258946361,
+      0.006283691727057222
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005715096801298861,
+      0.00781345523540214
+     ],
+     "inst_harm_ci": [
+      0.005775274984320226,
+      0.007924623928606635
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004367630355469517,
+      0.00615732027357576
+     ],
+     "inst_harm_ci": [
+      0.00443267200052293,
+      0.006271551825950962
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004344057075914835,
+      0.006076282351797879
+     ],
+     "inst_harm_ci": [
+      0.004401194888424599,
+      0.006199379467707386
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005715341542889368,
+      0.007847169164863702
+     ],
+     "inst_harm_ci": [
+      0.005773005138025913,
+      0.007938187216849671
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.006578665409075977,
+     "certified": true,
+     "auto": 0.5391195730345585,
+     "harm": 0.003482342253681063,
+     "fixed": 0.549625,
+     "inst_harm": 0.00357113961944323,
+     "harm_ci": [
+      0.002804297017622951,
+      0.0042197724491591804
+     ],
+     "inst_harm_ci": [
+      0.0028806255034998186,
+      0.00433830807311057
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.0043180552020526865,
+      0.0062254293208676295
+     ],
+     "inst_harm_ci": [
+      0.004378255898275481,
+      0.006318017446616438
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "incident|100|0.02": {
+   "cohorts": 20,
+   "cohort_instances": 100,
+   "cohort_incidents_mean": 2640.2,
+   "certified_share": 1.0,
+   "lambda_median": 0.01807168494761547,
+   "auto_mean": 0.6797077860630606,
+   "auto_min": 0.6509708921609447,
+   "auto_max": 0.7125553578863697,
+   "harm_mean": 0.013210189636246641,
+   "harm_max": 0.016389719520042395,
+   "inst_harm_mean": 0.013316922771045184,
+   "inst_harm_max": 0.016527486328977027,
+   "fixed_mean": 0.584821875,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0013643615610517718,
+   "per_cohort": [
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013314773665342151,
+      0.016329255325376896
+     ],
+     "inst_harm_ci": [
+      0.013395940351369815,
+      0.016474048390400984
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.01489353227769349,
+      0.017880260589271287
+     ],
+     "inst_harm_ci": [
+      0.01501955304854572,
+      0.018049768914926535
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.014950000789920816,
+      0.017939731508314065
+     ],
+     "inst_harm_ci": [
+      0.015101646617991356,
+      0.018103629968783348
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.01348832955723122,
+      0.01622961075669648
+     ],
+     "inst_harm_ci": [
+      0.013610147862035384,
+      0.01635201006329841
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.01334884257292722,
+      0.016158388215539218
+     ],
+     "inst_harm_ci": [
+      0.01345264701701596,
+      0.016323819114449602
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.015642430708753388,
+     "certified": true,
+     "auto": 0.6509708921609447,
+     "harm": 0.010749839130928498,
+     "fixed": 0.5775625,
+     "inst_harm": 0.010852460044033492,
+     "harm_ci": [
+      0.009447459381921564,
+      0.012059613834277748
+     ],
+     "inst_harm_ci": [
+      0.009509323136256966,
+      0.012131315101476754
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.015642430708753388,
+     "certified": true,
+     "auto": 0.6509708921609447,
+     "harm": 0.010749839130928498,
+     "fixed": 0.5775625,
+     "inst_harm": 0.010852460044033492,
+     "harm_ci": [
+      0.00943403545713717,
+      0.011931081031541375
+     ],
+     "inst_harm_ci": [
+      0.00949887404497243,
+      0.01204367497488606
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.015642430708753388,
+     "certified": true,
+     "auto": 0.6509708921609447,
+     "harm": 0.010749839130928498,
+     "fixed": 0.5775625,
+     "inst_harm": 0.010852460044033492,
+     "harm_ci": [
+      0.00959828048409631,
+      0.011981717429773686
+     ],
+     "inst_harm_ci": [
+      0.009650321357946282,
+      0.012089831507396837
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.01807168494761547,
+     "certified": true,
+     "auto": 0.6761043188614255,
+     "harm": 0.012718119535183012,
+     "fixed": 0.5838125,
+     "inst_harm": 0.012804796298517242,
+     "harm_ci": [
+      0.011445954664893686,
+      0.014111282441510975
+     ],
+     "inst_harm_ci": [
+      0.01148336458264284,
+      0.014220424857364973
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.01807168494761547,
+     "certified": true,
+     "auto": 0.6761043188614255,
+     "harm": 0.012718119535183012,
+     "fixed": 0.5838125,
+     "inst_harm": 0.012804796298517242,
+     "harm_ci": [
+      0.011413036344128274,
+      0.01406086714336406
+     ],
+     "inst_harm_ci": [
+      0.011488690603481596,
+      0.014200358135497132
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.01807168494761547,
+     "certified": true,
+     "auto": 0.6761043188614255,
+     "harm": 0.012718119535183012,
+     "fixed": 0.5838125,
+     "inst_harm": 0.012804796298517242,
+     "harm_ci": [
+      0.011388465907432243,
+      0.014042846101069201
+     ],
+     "inst_harm_ci": [
+      0.01145099763123188,
+      0.014149885103298657
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.015642430708753388,
+     "certified": true,
+     "auto": 0.6509708921609447,
+     "harm": 0.010749839130928498,
+     "fixed": 0.5775625,
+     "inst_harm": 0.010852460044033492,
+     "harm_ci": [
+      0.009562869205695821,
+      0.012054631866242135
+     ],
+     "inst_harm_ci": [
+      0.009615251011059778,
+      0.012163535095894459
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.01807168494761547,
+     "certified": true,
+     "auto": 0.6761043188614255,
+     "harm": 0.012718119535183012,
+     "fixed": 0.5838125,
+     "inst_harm": 0.012804796298517242,
+     "harm_ci": [
+      0.01133153011703107,
+      0.01400845707459564
+     ],
+     "inst_harm_ci": [
+      0.01143673017590926,
+      0.014109456505121944
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013332651641352326,
+      0.016299233262179528
+     ],
+     "inst_harm_ci": [
+      0.013455053910396449,
+      0.01640473715237952
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013325516345975131,
+      0.016346970000877273
+     ],
+     "inst_harm_ci": [
+      0.013425963758090886,
+      0.01642959235583765
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.015642430708753388,
+     "certified": true,
+     "auto": 0.6509708921609447,
+     "harm": 0.010749839130928498,
+     "fixed": 0.5775625,
+     "inst_harm": 0.010852460044033492,
+     "harm_ci": [
+      0.009533637087584607,
+      0.012025464091032355
+     ],
+     "inst_harm_ci": [
+      0.009587695382269317,
+      0.012171898563987142
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.01807168494761547,
+     "certified": true,
+     "auto": 0.6761043188614255,
+     "harm": 0.012718119535183012,
+     "fixed": 0.5838125,
+     "inst_harm": 0.012804796298517242,
+     "harm_ci": [
+      0.01137599296540829,
+      0.014059451084124314
+     ],
+     "inst_harm_ci": [
+      0.011453317998610222,
+      0.014185064452044769
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.01331959715036713,
+      0.01618536988643579
+     ],
+     "inst_harm_ci": [
+      0.013437198851412882,
+      0.016368502863571686
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.015642430708753388,
+     "certified": true,
+     "auto": 0.6509708921609447,
+     "harm": 0.010749839130928498,
+     "fixed": 0.5775625,
+     "inst_harm": 0.010852460044033492,
+     "harm_ci": [
+      0.009556540569752678,
+      0.011966806371586572
+     ],
+     "inst_harm_ci": [
+      0.009626232067300773,
+      0.012089798947275231
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013389017418787716,
+      0.016353488032941194
+     ],
+     "inst_harm_ci": [
+      0.013466069372947675,
+      0.016466195937031282
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "incident|100|0.05": {
+   "cohorts": 20,
+   "cohort_instances": 100,
+   "cohort_incidents_mean": 2640.2,
+   "certified_share": 1.0,
+   "lambda_median": 0.05735270442218037,
+   "auto_mean": 0.7841704833642453,
+   "auto_min": 0.7807259926568,
+   "auto_max": 0.7905673946780726,
+   "harm_mean": 0.039079828911011014,
+   "harm_max": 0.042204474052765055,
+   "inst_harm_mean": 0.03951334101737479,
+   "inst_harm_max": 0.04265741480928542,
+   "fixed_mean": 0.606371875,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.002007003593732208,
+   "per_cohort": [
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.04014241270811644,
+      0.044336010534727396
+     ],
+     "inst_harm_ci": [
+      0.04054505071345613,
+      0.0449012610517974
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.04011076584344698,
+      0.044275716464934
+     ],
+     "inst_harm_ci": [
+      0.04059225052457991,
+      0.04467734824006474
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.04017488191790568,
+      0.044216711050530294
+     ],
+     "inst_harm_ci": [
+      0.040579359671164585,
+      0.044722010244689726
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03518387243937366,
+      0.039282700861008914
+     ],
+     "inst_harm_ci": [
+      0.035560187000038594,
+      0.03977200871114456
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.0353576368352188,
+      0.03936763178602577
+     ],
+     "inst_harm_ci": [
+      0.03575010940102543,
+      0.0398317904426234
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03546468267749258,
+      0.03933866367994414
+     ],
+     "inst_harm_ci": [
+      0.035882766628572815,
+      0.039754862219778
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03538318567282036,
+      0.039425562047799796
+     ],
+     "inst_harm_ci": [
+      0.03575660015343894,
+      0.039821736274136585
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.035484039423853,
+      0.03944361645435349
+     ],
+     "inst_harm_ci": [
+      0.03583138471379079,
+      0.039890400958164186
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03553149572770922,
+      0.03928218684908297
+     ],
+     "inst_harm_ci": [
+      0.03591097621595483,
+      0.03973319104334553
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03535294394189468,
+      0.03934927692788123
+     ],
+     "inst_harm_ci": [
+      0.03577997979674311,
+      0.039830964883759146
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03541191042481463,
+      0.03936731086785784
+     ],
+     "inst_harm_ci": [
+      0.035783341349324115,
+      0.039836098401908666
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03545980556598162,
+      0.03925479476143857
+     ],
+     "inst_harm_ci": [
+      0.03587256154586895,
+      0.039707170986320005
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.04025529313960077,
+      0.0442491599540271
+     ],
+     "inst_harm_ci": [
+      0.04072466288105348,
+      0.04472004764621269
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.04001057119164013,
+      0.04415848932225801
+     ],
+     "inst_harm_ci": [
+      0.04046385191837208,
+      0.0446126245088584
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03546565396495905,
+      0.03934321007387754
+     ],
+     "inst_harm_ci": [
+      0.035896791854308524,
+      0.03982481783453961
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03532542169708634,
+      0.039269452991957485
+     ],
+     "inst_harm_ci": [
+      0.03567141337347489,
+      0.039754777837314625
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.0354635487848682,
+      0.03936973522900225
+     ],
+     "inst_harm_ci": [
+      0.03581612818433587,
+      0.03982240503553515
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03527882539123859,
+      0.03938053336081641
+     ],
+     "inst_harm_ci": [
+      0.035704846883845995,
+      0.0397891008428745
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.040171312023588285,
+      0.04436189778217014
+     ],
+     "inst_harm_ci": [
+      0.04058027664804955,
+      0.04482568106846843
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.0399870820889029,
+      0.04422282421010691
+     ],
+     "inst_harm_ci": [
+      0.040490009933621174,
+      0.04469235412208344
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "cluster|100|0.01": {
+   "cohorts": 20,
+   "cohort_instances": 100,
+   "cohort_incidents_mean": 2640.2,
+   "certified_share": 0.0,
+   "lambda_median": -1.0,
+   "auto_mean": 0.0,
+   "auto_min": 0.0,
+   "auto_max": 0.0,
+   "harm_mean": 0.0,
+   "harm_max": 0.0,
+   "inst_harm_mean": 0.0,
+   "inst_harm_max": 0.0,
+   "fixed_mean": 0.0,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0,
+   "per_cohort": [
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "cluster|100|0.02": {
+   "cohorts": 20,
+   "cohort_instances": 100,
+   "cohort_incidents_mean": 2640.2,
+   "certified_share": 0.0,
+   "lambda_median": -1.0,
+   "auto_mean": 0.0,
+   "auto_min": 0.0,
+   "auto_max": 0.0,
+   "harm_mean": 0.0,
+   "harm_max": 0.0,
+   "inst_harm_mean": 0.0,
+   "inst_harm_max": 0.0,
+   "fixed_mean": 0.0,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0,
+   "per_cohort": [
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "cluster|100|0.05": {
+   "cohorts": 20,
+   "cohort_instances": 100,
+   "cohort_incidents_mean": 2640.2,
+   "certified_share": 1.0,
+   "lambda_median": 0.011719671162331342,
+   "auto_mean": 0.5873859722169652,
+   "auto_min": 0.5456300389870926,
+   "auto_max": 0.6208789129035921,
+   "harm_mean": 0.00643287028275105,
+   "harm_max": 0.008516597903024338,
+   "inst_harm_mean": 0.006516839585848091,
+   "inst_harm_max": 0.008622092597852883,
+   "fixed_mean": 0.5619281249999999,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0009823539750742614,
+   "per_cohort": [
+    {
+     "lam": 0.013539724668033078,
+     "certified": true,
+     "auto": 0.6208789129035921,
+     "harm": 0.008516597903024338,
+     "fixed": 0.5705625,
+     "inst_harm": 0.008622092597852883,
+     "harm_ci": [
+      0.007487122890580826,
+      0.009712263473122729
+     ],
+     "inst_harm_ci": [
+      0.007563688133356196,
+      0.009798990389374202
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005754709309232038,
+      0.007809634519349945
+     ],
+     "inst_harm_ci": [
+      0.005798842914898918,
+      0.007872299642481742
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.013539724668033078,
+     "certified": true,
+     "auto": 0.6208789129035921,
+     "harm": 0.008516597903024338,
+     "fixed": 0.5705625,
+     "inst_harm": 0.008622092597852883,
+     "harm_ci": [
+      0.007377051549477957,
+      0.009772967237723711
+     ],
+     "inst_harm_ci": [
+      0.007474533857456387,
+      0.009907405469902424
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005745628616791761,
+      0.0078141011396178
+     ],
+     "inst_harm_ci": [
+      0.005803966042645517,
+      0.007916332555177723
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004312036443611363,
+      0.006095355397598735
+     ],
+     "inst_harm_ci": [
+      0.0043501436371408365,
+      0.006209059489792966
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.00573995786405206,
+      0.007749893911783209
+     ],
+     "inst_harm_ci": [
+      0.005783742343425459,
+      0.007833342405488134
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004365280188650022,
+      0.006049285176840897
+     ],
+     "inst_harm_ci": [
+      0.00441574333060247,
+      0.0061825678237963306
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.007600325733395653,
+     "certified": true,
+     "auto": 0.5456300389870926,
+     "harm": 0.003785154623566373,
+     "fixed": 0.5514375,
+     "inst_harm": 0.003877867778562693,
+     "harm_ci": [
+      0.003063578226586699,
+      0.004569460704274584
+     ],
+     "inst_harm_ci": [
+      0.0031236481399632967,
+      0.0046910167174325735
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.00432762958350363,
+      0.006133746713279293
+     ],
+     "inst_harm_ci": [
+      0.004371834762842056,
+      0.0062330933661423225
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004320784111031229,
+      0.006164167821463606
+     ],
+     "inst_harm_ci": [
+      0.004387132978921854,
+      0.006293122872624814
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.0043402654935091895,
+      0.00611798748853253
+     ],
+     "inst_harm_ci": [
+      0.00437514968788029,
+      0.006233894134916514
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005822328513333582,
+      0.007708812947138503
+     ],
+     "inst_harm_ci": [
+      0.005882836870804428,
+      0.007815367730807514
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005741439294046043,
+      0.007765686178419637
+     ],
+     "inst_harm_ci": [
+      0.0058018336267441,
+      0.007900268922297556
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.013539724668033078,
+     "certified": true,
+     "auto": 0.6208789129035921,
+     "harm": 0.008516597903024338,
+     "fixed": 0.5705625,
+     "inst_harm": 0.008622092597852883,
+     "harm_ci": [
+      0.007413449043651963,
+      0.009629309516701457
+     ],
+     "inst_harm_ci": [
+      0.007472722846475817,
+      0.009758845414508334
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.013539724668033078,
+     "certified": true,
+     "auto": 0.6208789129035921,
+     "harm": 0.008516597903024338,
+     "fixed": 0.5705625,
+     "inst_harm": 0.008622092597852883,
+     "harm_ci": [
+      0.0074316953470093955,
+      0.009673243736157867
+     ],
+     "inst_harm_ci": [
+      0.007503948450551399,
+      0.009794025107845356
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004331722009573546,
+      0.006175078747177308
+     ],
+     "inst_harm_ci": [
+      0.004378254051818655,
+      0.006276790476150653
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005676571704172111,
+      0.007768699772642823
+     ],
+     "inst_harm_ci": [
+      0.0056980998885378395,
+      0.007858193630783529
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.013539724668033078,
+     "certified": true,
+     "auto": 0.6208789129035921,
+     "harm": 0.008516597903024338,
+     "fixed": 0.5705625,
+     "inst_harm": 0.008622092597852883,
+     "harm_ci": [
+      0.0074252496944758,
+      0.009591007964577737
+     ],
+     "inst_harm_ci": [
+      0.007502500774917324,
+      0.009723969820089193
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.007600325733395653,
+     "certified": true,
+     "auto": 0.5456300389870926,
+     "harm": 0.003785154623566373,
+     "fixed": 0.5514375,
+     "inst_harm": 0.003877867778562693,
+     "harm_ci": [
+      0.0029938393338479015,
+      0.004554620439280899
+     ],
+     "inst_harm_ci": [
+      0.003056849470832278,
+      0.00466687230168972
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005701066443716555,
+      0.0078102417781408555
+     ],
+     "inst_harm_ci": [
+      0.0057686921715092735,
+      0.007910834680979776
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "incident|200|0.01": {
+   "cohorts": 10,
+   "cohort_instances": 200,
+   "cohort_incidents_mean": 5280.4,
+   "certified_share": 1.0,
+   "lambda_median": 0.011719671162331342,
+   "auto_mean": 0.5841856239827398,
+   "auto_min": 0.5592187440856959,
+   "auto_max": 0.6208789129035921,
+   "harm_mean": 0.0062303645103902495,
+   "harm_max": 0.008516597903024338,
+   "inst_harm_mean": 0.0063077232329472625,
+   "inst_harm_max": 0.008622092597852883,
+   "fixed_mean": 0.561075,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.00097714078137158,
+   "per_cohort": [
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005714311766906885,
+      0.007736629970554502
+     ],
+     "inst_harm_ci": [
+      0.005760755714272453,
+      0.007857255142160647
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.013539724668033078,
+     "certified": true,
+     "auto": 0.6208789129035921,
+     "harm": 0.008516597903024338,
+     "fixed": 0.5705625,
+     "inst_harm": 0.008622092597852883,
+     "harm_ci": [
+      0.007379096344509195,
+      0.009661199033767661
+     ],
+     "inst_harm_ci": [
+      0.00747659842813865,
+      0.009777126712728613
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004385816547476847,
+      0.006118086241031298
+     ],
+     "inst_harm_ci": [
+      0.004433745549694559,
+      0.006207949905413134
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.008780648910039301,
+     "certified": true,
+     "auto": 0.5592187440856959,
+     "harm": 0.004428630909572656,
+     "fixed": 0.555,
+     "inst_harm": 0.004502136391401286,
+     "harm_ci": [
+      0.003595044039132511,
+      0.00522520502552983
+     ],
+     "inst_harm_ci": [
+      0.0036175607504981703,
+      0.0053361973280888625
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004354213373762318,
+      0.006215705855565286
+     ],
+     "inst_harm_ci": [
+      0.0044020633499047895,
+      0.006329300094899362
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005781794007440463,
+      0.007738722220582593
+     ],
+     "inst_harm_ci": [
+      0.00585560212340444,
+      0.007820917722587596
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005739590787511654,
+      0.007749876785159626
+     ],
+     "inst_harm_ci": [
+      0.005786507602970775,
+      0.007836293333087633
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005707034591960556,
+      0.007777715902481315
+     ],
+     "inst_harm_ci": [
+      0.0057745824368457205,
+      0.007874300691927152
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.0057016389477544055,
+      0.007783640092697462
+     ],
+     "inst_harm_ci": [
+      0.005773407247350497,
+      0.007908990145429819
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004242544784097368,
+      0.006137119690614227
+     ],
+     "inst_harm_ci": [
+      0.004304387977894277,
+      0.0062510252031366415
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "incident|200|0.02": {
+   "cohorts": 10,
+   "cohort_instances": 200,
+   "cohort_incidents_mean": 5280.4,
+   "certified_share": 1.0,
+   "lambda_median": 0.0208782000014305,
+   "auto_mean": 0.6983913092849844,
+   "auto_min": 0.6761043188614255,
+   "auto_max": 0.7125553578863697,
+   "harm_mean": 0.014883227979862978,
+   "harm_max": 0.016389719520042395,
+   "inst_harm_mean": 0.01500045099626337,
+   "inst_harm_max": 0.016527486328977027,
+   "fixed_mean": 0.58958125,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0014281528046482283,
+   "per_cohort": [
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.014934628468399996,
+      0.01783900941928193
+     ],
+     "inst_harm_ci": [
+      0.015079838034496452,
+      0.018015562829525277
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.014982659510524205,
+      0.01787138440865198
+     ],
+     "inst_harm_ci": [
+      0.015107023687069123,
+      0.018026672820933322
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013396144612581658,
+      0.016139457554353132
+     ],
+     "inst_harm_ci": [
+      0.013447413247228765,
+      0.016258531585663406
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.01807168494761547,
+     "certified": true,
+     "auto": 0.6761043188614255,
+     "harm": 0.012718119535183012,
+     "fixed": 0.5838125,
+     "inst_harm": 0.012804796298517242,
+     "harm_ci": [
+      0.011413351703317845,
+      0.013991866514783312
+     ],
+     "inst_harm_ci": [
+      0.011468476151402757,
+      0.0141017316816318
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013393680671489818,
+      0.016268540295714905
+     ],
+     "inst_harm_ci": [
+      0.013474860094852607,
+      0.0163501732007993
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.0133392116964353,
+      0.016208041089619714
+     ],
+     "inst_harm_ci": [
+      0.013455005460945376,
+      0.016366469384035
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013286148394979578,
+      0.01618967679320072
+     ],
+     "inst_harm_ci": [
+      0.013395911883182449,
+      0.01629542443175083
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013397121144880354,
+      0.016289997847941454
+     ],
+     "inst_harm_ci": [
+      0.013475331871532424,
+      0.01642296549298206
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013287389000133832,
+      0.016262318027467332
+     ],
+     "inst_harm_ci": [
+      0.013381075733040223,
+      0.016401012734085472
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013328362512121744,
+      0.01626146185681442
+     ],
+     "inst_harm_ci": [
+      0.013398907866528049,
+      0.016432864532280725
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "incident|200|0.05": {
+   "cohorts": 10,
+   "cohort_instances": 200,
+   "cohort_incidents_mean": 5280.4,
+   "certified_share": 1.0,
+   "lambda_median": 0.0662595235043209,
+   "auto_mean": 0.7883492940686626,
+   "auto_min": 0.7807259926568,
+   "auto_max": 0.7991596956735683,
+   "harm_mean": 0.041182482304402135,
+   "harm_max": 0.04670880805480904,
+   "inst_harm_mean": 0.041624487143431664,
+   "inst_harm_max": 0.04716684968589553,
+   "fixed_mean": 0.6068749999999999,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0020245148975920543,
+   "per_cohort": [
+    {
+     "lam": 0.07654956290643118,
+     "certified": true,
+     "auto": 0.7991596956735683,
+     "harm": 0.04670880805480904,
+     "fixed": 0.60825,
+     "inst_harm": 0.04716684968589553,
+     "harm_ci": [
+      0.04461225513583011,
+      0.04862140037512331
+     ],
+     "inst_harm_ci": [
+      0.04503626784747705,
+      0.04907542190606349
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.04008735690677545,
+      0.04434938300164815
+     ],
+     "inst_harm_ci": [
+      0.040549275364857064,
+      0.044826423148059506
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.04011492266700522,
+      0.04422668964861769
+     ],
+     "inst_harm_ci": [
+      0.040558308465749995,
+      0.04466181502721122
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.035499853182523605,
+      0.03933660920880073
+     ],
+     "inst_harm_ci": [
+      0.035846009547449875,
+      0.03976865874554239
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03539861779544919,
+      0.03924159333039328
+     ],
+     "inst_harm_ci": [
+      0.03583183946856956,
+      0.039653039665419804
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.03540911191362784,
+      0.03949769692773732
+     ],
+     "inst_harm_ci": [
+      0.0358369525239655,
+      0.03994341796073529
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.040090634216216954,
+      0.04426236643681099
+     ],
+     "inst_harm_ci": [
+      0.04056856253057782,
+      0.04468013405516761
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.05735270442218037,
+     "certified": true,
+     "auto": 0.7807259926568,
+     "harm": 0.037397327680835764,
+     "fixed": 0.606,
+     "inst_harm": 0.03782037820634599,
+     "harm_ci": [
+      0.035408966470624935,
+      0.039448395805159804
+     ],
+     "inst_harm_ci": [
+      0.03579612845434876,
+      0.039952972241150485
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.04020625686763554,
+      0.04417805005620616
+     ],
+     "inst_harm_ci": [
+      0.04061211092348081,
+      0.04466308053674582
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.07654956290643118,
+     "certified": true,
+     "auto": 0.7991596956735683,
+     "harm": 0.04670880805480904,
+     "fixed": 0.60825,
+     "inst_harm": 0.04716684968589553,
+     "harm_ci": [
+      0.044601565033148445,
+      0.048757653350180945
+     ],
+     "inst_harm_ci": [
+      0.04505885644237487,
+      0.049275248340915206
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "cluster|200|0.01": {
+   "cohorts": 10,
+   "cohort_instances": 200,
+   "cohort_incidents_mean": 5280.4,
+   "certified_share": 0.0,
+   "lambda_median": -1.0,
+   "auto_mean": 0.0,
+   "auto_min": 0.0,
+   "auto_max": 0.0,
+   "harm_mean": 0.0,
+   "harm_max": 0.0,
+   "inst_harm_mean": 0.0,
+   "inst_harm_max": 0.0,
+   "fixed_mean": 0.0,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0,
+   "per_cohort": [
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": -1.0,
+     "certified": false,
+     "auto": 0.0,
+     "harm": 0.0,
+     "fixed": 0.0,
+     "inst_harm": 0.0,
+     "harm_ci": [
+      0.0,
+      0.0
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "cluster|200|0.02": {
+   "cohorts": 10,
+   "cohort_instances": 200,
+   "cohort_incidents_mean": 5280.4,
+   "certified_share": 1.0,
+   "lambda_median": 0.0036928372788885937,
+   "auto_mean": 0.47491578030962567,
+   "auto_min": 0.47004050115447216,
+   "auto_max": 0.4944168969302396,
+   "harm_mean": 0.0006964684507362126,
+   "harm_max": 0.001665468034369204,
+   "inst_harm_mean": 0.0007059405414254763,
+   "inst_harm_max": 0.0016860262303474568,
+   "fixed_mean": 0.5317125,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.00029925058603695115,
+   "per_cohort": [
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022694198797322258,
+      0.000755493145556667
+     ],
+     "inst_harm_ci": [
+      0.000227184774676154,
+      0.0007639337501578879
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.004266331308058115,
+     "certified": true,
+     "auto": 0.4944168969302396,
+     "harm": 0.001665468034369204,
+     "fixed": 0.5370625,
+     "inst_harm": 0.0016860262303474568,
+     "harm_ci": [
+      0.0011757979072611158,
+      0.002191199151814268
+     ],
+     "inst_harm_ci": [
+      0.001186689397364586,
+      0.002214513938187452
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022674772917707965,
+      0.0007205512632763757
+     ],
+     "inst_harm_ci": [
+      0.00022759585385878487,
+      0.0007464851778170743
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022668754739238543,
+      0.0007202473872597031
+     ],
+     "inst_harm_ci": [
+      0.0002301381590950556,
+      0.0007362552471474885
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022639865914222493,
+      0.0007213692363637577
+     ],
+     "inst_harm_ci": [
+      0.00022553321789959722,
+      0.0007361902481299032
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022680408856186327,
+      0.0007173404820682627
+     ],
+     "inst_harm_ci": [
+      0.00022778172322568873,
+      0.0007244565316548075
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022661862402265917,
+      0.0007171536604951556
+     ],
+     "inst_harm_ci": [
+      0.00022733755245393176,
+      0.0007273670424403182
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.004266331308058115,
+     "certified": true,
+     "auto": 0.4944168969302396,
+     "harm": 0.001665468034369204,
+     "fixed": 0.5370625,
+     "inst_harm": 0.0016860262303474568,
+     "harm_ci": [
+      0.0011758804200940746,
+      0.0021668922231831197
+     ],
+     "inst_harm_ci": [
+      0.001198028823569007,
+      0.0022019084459865643
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022710669965365454,
+      0.0007199611085805282
+     ],
+     "inst_harm_ci": [
+      0.00022933588761174967,
+      0.000744797780444332
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022643987467807413,
+      0.0007202276000975397
+     ],
+     "inst_harm_ci": [
+      0.0002191890166028097,
+      0.000738601395730706
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "cluster|200|0.05": {
+   "cohorts": 10,
+   "cohort_instances": 200,
+   "cohort_incidents_mean": 5280.4,
+   "certified_share": 1.0,
+   "lambda_median": 0.022499382054194952,
+   "auto_mean": 0.7050418259585903,
+   "auto_min": 0.6975282940308112,
+   "auto_max": 0.7125553578863697,
+   "harm_mean": 0.015575911275975624,
+   "harm_max": 0.016389719520042395,
+   "inst_harm_mean": 0.015702653236357257,
+   "inst_harm_max": 0.016527486328977027,
+   "fixed_mean": 0.5911249999999999,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0014546911969419915,
+   "per_cohort": [
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.01485806583782907,
+      0.017982789729713875
+     ],
+     "inst_harm_ci": [
+      0.014978483132422619,
+      0.01811932705056538
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.014981627761667974,
+      0.01788935609777271
+     ],
+     "inst_harm_ci": [
+      0.01511128308228891,
+      0.018090383298243865
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.01494373531388268,
+      0.01772024195770049
+     ],
+     "inst_harm_ci": [
+      0.015070481273451003,
+      0.017885187218084325
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013307150248325229,
+      0.016303476102508197
+     ],
+     "inst_harm_ci": [
+      0.013422748491391155,
+      0.016433276119119836
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013297518017143975,
+      0.016197147486846565
+     ],
+     "inst_harm_ci": [
+      0.013405468024898356,
+      0.016351266231858046
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013384767820866809,
+      0.016095515169834134
+     ],
+     "inst_harm_ci": [
+      0.013483130988622824,
+      0.016247740886955363
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013313017835835553,
+      0.016150375312085755
+     ],
+     "inst_harm_ci": [
+      0.013430780820262651,
+      0.016301409355658346
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013411618288385208,
+      0.016182244580105625
+     ],
+     "inst_harm_ci": [
+      0.013548174492245928,
+      0.016352019732218444
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.014916164905704441,
+      0.017936399237616134
+     ],
+     "inst_harm_ci": [
+      0.015070366979667025,
+      0.018059951036023907
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.014860358042982592,
+      0.017910302337279877
+     ],
+     "inst_harm_ci": [
+      0.014928140599455084,
+      0.018112112843632226
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "incident|400|0.01": {
+   "cohorts": 5,
+   "cohort_instances": 400,
+   "cohort_incidents_mean": 10560.8,
+   "certified_share": 1.0,
+   "lambda_median": 0.011719671162331342,
+   "auto_mean": 0.5924221204436202,
+   "auto_min": 0.5697793254854461,
+   "auto_max": 0.6208789129035921,
+   "harm_mean": 0.006790567394678072,
+   "harm_max": 0.008516597903024338,
+   "inst_harm_mean": 0.006871099943128683,
+   "inst_harm_max": 0.008622092597852883,
+   "fixed_mean": 0.563125,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0010038620460366796,
+   "per_cohort": [
+    {
+     "lam": 0.013539724668033078,
+     "certified": true,
+     "auto": 0.6208789129035921,
+     "harm": 0.008516597903024338,
+     "fixed": 0.5705625,
+     "inst_harm": 0.008622092597852883,
+     "harm_ci": [
+      0.007405266603036858,
+      0.009608228073300478
+     ],
+     "inst_harm_ci": [
+      0.007474185558366329,
+      0.009719381934342968
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004345645067896473,
+      0.0061331173944087465
+     ],
+     "inst_harm_ci": [
+      0.004391886656921036,
+      0.006241778584282256
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005770296846126851,
+      0.007691513797132651
+     ],
+     "inst_harm_ci": [
+      0.005837966975131217,
+      0.007793584661356333
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005748451134072974,
+      0.0077717626107972745
+     ],
+     "inst_harm_ci": [
+      0.005801580545613474,
+      0.007886266118490394
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005761666244840344,
+      0.007865324480701145
+     ],
+     "inst_harm_ci": [
+      0.005826148319277912,
+      0.007970840820969223
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "incident|400|0.02": {
+   "cohorts": 5,
+   "cohort_instances": 400,
+   "cohort_incidents_mean": 10560.8,
+   "certified_share": 1.0,
+   "lambda_median": 0.0208782000014305,
+   "auto_mean": 0.7035391195730346,
+   "auto_min": 0.6975282940308112,
+   "auto_max": 0.7125553578863697,
+   "harm_mean": 0.015413149627162271,
+   "harm_max": 0.016389719520042395,
+   "inst_harm_mean": 0.015537686617833302,
+   "inst_harm_max": 0.016527486328977027,
+   "fixed_mean": 0.5908,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0014528781123717056,
+   "per_cohort": [
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.014853995998480416,
+      0.01785524322325217
+     ],
+     "inst_harm_ci": [
+      0.014975024303700029,
+      0.018022950915378373
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.01339150887110657,
+      0.016235988553540266
+     ],
+     "inst_harm_ci": [
+      0.01350386479168084,
+      0.016386028830289404
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013368922997148246,
+      0.01622297242826631
+     ],
+     "inst_harm_ci": [
+      0.013448777277528962,
+      0.01638581999154985
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0208782000014305,
+     "certified": true,
+     "auto": 0.6975282940308112,
+     "harm": 0.014762103031908853,
+     "fixed": 0.5895,
+     "inst_harm": 0.014877820143737487,
+     "harm_ci": [
+      0.013370438089191845,
+      0.01625352473237324
+     ],
+     "inst_harm_ci": [
+      0.013477137691087682,
+      0.016382972395860396
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.024120564106959404,
+     "certified": true,
+     "auto": 0.7125553578863697,
+     "harm": 0.016389719520042395,
+     "fixed": 0.59275,
+     "inst_harm": 0.016527486328977027,
+     "harm_ci": [
+      0.014888439051218028,
+      0.017834357193430177
+     ],
+     "inst_harm_ci": [
+      0.014986725265891728,
+      0.01801019164564281
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "incident|400|0.05": {
+   "cohorts": 5,
+   "cohort_instances": 400,
+   "cohort_incidents_mean": 10560.8,
+   "certified_share": 1.0,
+   "lambda_median": 0.0662595235043209,
+   "auto_mean": 0.7940043150762708,
+   "auto_min": 0.7905673946780726,
+   "auto_max": 0.7991596956735683,
+   "harm_mean": 0.04400620765358265,
+   "harm_max": 0.04670880805480904,
+   "inst_harm_mean": 0.04446118875992946,
+   "inst_harm_max": 0.04716684968589553,
+   "fixed_mean": 0.6075375000000001,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.00204173854446787,
+   "per_cohort": [
+    {
+     "lam": 0.07654956290643118,
+     "certified": true,
+     "auto": 0.7991596956735683,
+     "harm": 0.04670880805480904,
+     "fixed": 0.60825,
+     "inst_harm": 0.04716684968589553,
+     "harm_ci": [
+      0.04473323034102005,
+      0.04887425792434292
+     ],
+     "inst_harm_ci": [
+      0.045093420946363996,
+      0.04937180018360706
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.040068447109882666,
+      0.04417524592583301
+     ],
+     "inst_harm_ci": [
+      0.04052008006279117,
+      0.04469696588233366
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.04018467903209832,
+      0.04424824798448322
+     ],
+     "inst_harm_ci": [
+      0.040602042990924056,
+      0.044755128292525724
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0662595235043209,
+     "certified": true,
+     "auto": 0.7905673946780726,
+     "harm": 0.042204474052765055,
+     "fixed": 0.6070625,
+     "inst_harm": 0.04265741480928542,
+     "harm_ci": [
+      0.040302127339831094,
+      0.04420170631025818
+     ],
+     "inst_harm_ci": [
+      0.04070231021321551,
+      0.04468249039224392
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.07654956290643118,
+     "certified": true,
+     "auto": 0.7991596956735683,
+     "harm": 0.04670880805480904,
+     "fixed": 0.60825,
+     "inst_harm": 0.04716684968589553,
+     "harm_ci": [
+      0.04453462844454555,
+      0.04874103956713905
+     ],
+     "inst_harm_ci": [
+      0.04508558796203614,
+      0.04921728377874459
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "cluster|400|0.01": {
+   "cohorts": 5,
+   "cohort_instances": 400,
+   "cohort_incidents_mean": 10560.8,
+   "certified_share": 1.0,
+   "lambda_median": 0.0036928372788885937,
+   "auto_mean": 0.4674211741549642,
+   "auto_min": 0.46303796510087436,
+   "auto_max": 0.47004050115447216,
+   "harm_mean": 0.00034066391612097357,
+   "harm_max": 0.0004542185548279647,
+   "inst_harm_mean": 0.00034731866728418456,
+   "inst_harm_max": 0.0004609191191949813,
+   "fixed_mean": 0.5296375000000001,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.00021600976181078419,
+   "per_cohort": [
+    {
+     "lam": 0.003196434168765112,
+     "certified": true,
+     "auto": 0.4639464022105303,
+     "harm": 0.00022710927741398235,
+     "fixed": 0.5285625,
+     "inst_harm": 0.00023478835978835977,
+     "harm_ci": [
+      7.553647452054232e-05,
+      0.00045227679791730855
+     ],
+     "inst_harm_ci": [
+      7.407407407407407e-05,
+      0.0004577050264550264
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022467044604677986,
+      0.0007191079333442521
+     ],
+     "inst_harm_ci": [
+      0.00021874855269251824,
+      0.0007339006936550038
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022685982523612335,
+      0.0007532290161836505
+     ],
+     "inst_harm_ci": [
+      0.00022293797980435913,
+      0.0007558494028321614
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.0036928372788885937,
+     "certified": true,
+     "auto": 0.47004050115447216,
+     "harm": 0.0004542185548279647,
+     "fixed": 0.530375,
+     "inst_harm": 0.0004609191191949813,
+     "harm_ci": [
+      0.00022667127568081144,
+      0.0007239827096428462
+     ],
+     "inst_harm_ci": [
+      0.0002229404305783616,
+      0.0007494666592985558
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.001794271409767141,
+     "certified": true,
+     "auto": 0.46303796510087436,
+     "harm": 0.00011355463870699118,
+     "fixed": 0.5285,
+     "inst_harm": 0.00011904761904761905,
+     "harm_ci": [
+      0.0,
+      0.0002652391825040415
+     ],
+     "inst_harm_ci": [
+      0.0,
+      0.0002797619047619048
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "cluster|400|0.02": {
+   "cohorts": 5,
+   "cohort_instances": 400,
+   "cohort_incidents_mean": 10560.8,
+   "certified_share": 1.0,
+   "lambda_median": 0.008780648910039301,
+   "auto_mean": 0.564866194784057,
+   "auto_min": 0.5456300389870926,
+   "auto_max": 0.5904841212763542,
+   "harm_mean": 0.004920701010636285,
+   "harm_max": 0.006737575229948143,
+   "inst_harm_mean": 0.004998387734515845,
+   "inst_harm_max": 0.006811804503288288,
+   "fixed_mean": 0.5563,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0008690139445764446,
+   "per_cohort": [
+    {
+     "lam": 0.011719671162331342,
+     "certified": true,
+     "auto": 0.5904841212763542,
+     "harm": 0.006737575229948143,
+     "fixed": 0.5625,
+     "inst_harm": 0.006811804503288288,
+     "harm_ci": [
+      0.005708873897064183,
+      0.00777990829441747
+     ],
+     "inst_harm_ci": [
+      0.005765379617421933,
+      0.007858440429226577
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.007600325733395653,
+     "certified": true,
+     "auto": 0.5456300389870926,
+     "harm": 0.003785154623566373,
+     "fixed": 0.5514375,
+     "inst_harm": 0.003877867778562693,
+     "harm_ci": [
+      0.003030394867231684,
+      0.004580770680098184
+     ],
+     "inst_harm_ci": [
+      0.0030835131070276853,
+      0.004707845548909383
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.008780648910039301,
+     "certified": true,
+     "auto": 0.5592187440856959,
+     "harm": 0.004428630909572656,
+     "fixed": 0.555,
+     "inst_harm": 0.004502136391401286,
+     "harm_ci": [
+      0.0036351140670467606,
+      0.005292415402422344
+     ],
+     "inst_harm_ci": [
+      0.0036788555758626123,
+      0.005390770421604365
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.010144275125288338,
+     "certified": true,
+     "auto": 0.5697793254854461,
+     "harm": 0.005223513380521594,
+     "fixed": 0.5575625,
+     "inst_harm": 0.005297993607925669,
+     "harm_ci": [
+      0.004322225740558371,
+      0.0060865028322066314
+     ],
+     "inst_harm_ci": [
+      0.0043764927239186005,
+      0.006208569424936141
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.008780648910039301,
+     "certified": true,
+     "auto": 0.5592187440856959,
+     "harm": 0.004428630909572656,
+     "fixed": 0.555,
+     "inst_harm": 0.004502136391401286,
+     "harm_ci": [
+      0.0036014008341236966,
+      0.005248551642644513
+     ],
+     "inst_harm_ci": [
+      0.0036453925320689114,
+      0.005378269731884858
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  },
+  "cluster|400|0.05": {
+   "cohorts": 5,
+   "cohort_instances": 400,
+   "cohort_incidents_mean": 10560.8,
+   "certified_share": 1.0,
+   "lambda_median": 0.03719381109435677,
+   "auto_mean": 0.7451076876490405,
+   "auto_min": 0.7451076876490405,
+   "auto_max": 0.7451076876490405,
+   "harm_mean": 0.023127294749990538,
+   "harm_max": 0.023127294749990538,
+   "inst_harm_mean": 0.023288978403381032,
+   "inst_harm_max": 0.023288978403381032,
+   "fixed_mean": 0.599625,
+   "exceed_share": 0.0,
+   "inst_exceed_share": 0.0,
+   "ci_above_share": 0.0,
+   "harm_ci_halfwidth_mean": 0.0017218761120125423,
+   "per_cohort": [
+    {
+     "lam": 0.03719381109435677,
+     "certified": true,
+     "auto": 0.7451076876490405,
+     "harm": 0.023127294749990538,
+     "fixed": 0.599625,
+     "inst_harm": 0.023288978403381032,
+     "harm_ci": [
+      0.021421649827454627,
+      0.024825469222294
+     ],
+     "inst_harm_ci": [
+      0.021555443849347204,
+      0.025019005754384496
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.03719381109435677,
+     "certified": true,
+     "auto": 0.7451076876490405,
+     "harm": 0.023127294749990538,
+     "fixed": 0.599625,
+     "inst_harm": 0.023288978403381032,
+     "harm_ci": [
+      0.021296502889361718,
+      0.024844604115744115
+     ],
+     "inst_harm_ci": [
+      0.021448394015626333,
+      0.025044039267339942
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.03719381109435677,
+     "certified": true,
+     "auto": 0.7451076876490405,
+     "harm": 0.023127294749990538,
+     "fixed": 0.599625,
+     "inst_harm": 0.023288978403381032,
+     "harm_ci": [
+      0.021364260016292293,
+      0.024932153240018056
+     ],
+     "inst_harm_ci": [
+      0.021488210420905728,
+      0.025086216258989963
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.03719381109435677,
+     "certified": true,
+     "auto": 0.7451076876490405,
+     "harm": 0.023127294749990538,
+     "fixed": 0.599625,
+     "inst_harm": 0.023288978403381032,
+     "harm_ci": [
+      0.02148831987453655,
+      0.024848783214672758
+     ],
+     "inst_harm_ci": [
+      0.021659948092195725,
+      0.025059488629783883
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    },
+    {
+     "lam": 0.03719381109435677,
+     "certified": true,
+     "auto": 0.7451076876490405,
+     "harm": 0.023127294749990538,
+     "fixed": 0.599625,
+     "inst_harm": 0.023288978403381032,
+     "harm_ci": [
+      0.021425913325457426,
+      0.02476439726049911
+     ],
+     "inst_harm_ci": [
+      0.021551999727475832,
+      0.02498338139655674
+     ],
+     "exceeds": false,
+     "inst_exceeds": false,
+     "ci_above": false
+    }
+   ]
+  }
+ },
+ "dependence_test_population": {
+  "0.01": {
+   "icc": 0.0034577129838229085,
+   "design_effect": 1.0878916063357944,
+   "incidents_per_instance": 26.419
+  },
+  "0.02": {
+   "icc": -0.0006974918732214391,
+   "design_effect": 1.0,
+   "incidents_per_instance": 26.419
+  },
+  "0.05": {
+   "icc": -0.011027365748955782,
+   "design_effect": 1.0,
+   "incidents_per_instance": 26.419
+  }
+ },
+ "baselines_test": {
+  "rules": {
+   "incidents": 26419,
+   "auto_rate": 0.6667171353949809,
+   "harm": 0.31163178015821946,
+   "harm_count": 8233,
+   "real_errors_fixed": 0.494875
+  },
+  "monitors": {
+   "incidents": 26419,
+   "auto_rate": 0.5918846284870737,
+   "harm": 0.24119005261364926,
+   "harm_count": 6372,
+   "real_errors_fixed": 0.4956875
+  },
+  "fixed_0.0": {
+   "incidents": 26419,
+   "auto_rate": 0.30485635338203565,
+   "harm": 0.0,
+   "harm_count": 0,
+   "real_errors_fixed": 0.3455625
+  },
+  "fixed_0.01": {
+   "incidents": 26419,
+   "auto_rate": 0.5688330368295544,
+   "harm": 0.005109958741814603,
+   "harm_count": 135,
+   "real_errors_fixed": 0.55725
+  },
+  "fixed_0.02": {
+   "incidents": 26419,
+   "auto_rate": 0.6929104053900602,
+   "harm": 0.014232181384609561,
+   "harm_count": 376,
+   "real_errors_fixed": 0.588
+  }
+ }
+}
