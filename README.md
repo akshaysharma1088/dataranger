@@ -97,6 +97,14 @@ dataranger calibrate --audit report/audit.jsonl --labels reviewed.csv --alpha 0.
 
 `reviewed.csv` has columns `partition` and `verdict` (right or wrong). About 300 reviewed incidents certify a 1% target and about 60 certify 5%.
 
+## Where it runs
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/akshaysharma1088/dataranger/main/docs/assets/runs-where-your-data-lives.jpg" alt="DataRanger reads from Snowflake, dbt models, DuckDB and files, and runs from the command line, a GitHub Action or an AI agent" width="820">
+</p>
+
+DataRanger reads from Snowflake, dbt models, DuckDB and files, and runs from the command line, a GitHub Action or an AI agent. Whatever the source, a patrol is three `SELECT` statements: nothing is written back.
+
 ## Snowflake
 
 ```bash
