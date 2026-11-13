@@ -52,7 +52,11 @@ def connect(connection: str | None = None, params: dict | None = None):
     params = dict(params if params is not None else connection_params(connection))
     params.setdefault("session_parameters", {"QUERY_TAG": "dataranger"})
     params.setdefault("application", "dataranger")
-    return snowflake.connector.connect(**params)
+    import warnings
+
+    with warnings.catch_warnings():  # the connector's notices about its own future defaults are not for our users
+        warnings.simplefilter("ignore", FutureWarning)
+        return snowflake.connector.connect(**params)
 
 
 def _frame(conn, query: str) -> pd.DataFrame:
