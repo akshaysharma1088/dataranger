@@ -52,6 +52,8 @@ step "Independent calibration cohorts against the held-out population (Q1, Figur
 python benchmarks/analyze_cohorts.py
 step "Decomposition of automated decisions and the evidence ablation (Q1, Tables 2 and 3)"
 python benchmarks/analyze_evidence.py
+step "Controlled comparisons: fixed candidate with different accepting scores; a tolerance tuned on labels (Q1, Q3)"
+python benchmarks/analyze_controls.py
 step "Harder error families (Q8, Table 6)"
 python benchmarks/analyze_hard.py
 step "TPC-DS: in-domain calibration, transfer, fixed tolerances (Q4, Table 3)"
