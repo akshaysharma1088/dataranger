@@ -1,0 +1,185 @@
+name: DataRanger Patrol
+description: Patrol a table for data-quality incidents, prove which fixes are safe, and fail the job when a person needs to look.
+author: Akshay Sharma
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  # Source: choose one of db, snowflake, the three files, or dbt-model.
+  db:
+    description: DuckDB database file to read (with table, ref-table and manifest-table).
+  snowflake:
+    description: >-
+      Read from Snowflake (with table, ref-table and manifest-table). Set to "true" to use the SNOWFLAKE_* environment
+      variables of the step, or to the name of a connection in connections.toml.
+  table:
+    description: Fact table to patrol, optionally qualified (schema.table or database.schema.table).
+  ref-table:
+    description: Reference table that fact rows point to, such as customers.
+  manifest-table:
+    description: "Control totals from the source system: date, segment ('*' = whole day), n, amount."
+  facts-file:
+    description: Fact table as a .csv, .tsv or .parquet file.
+  ref-file:
+    description: Reference table as a .csv, .tsv or .parquet file.
+  manifest-file:
+    description: Control totals as a .csv, .tsv or .parquet file.
+  dbt-model:
+    description: dbt fact model to patrol. Run dbt build first. Column mapping can live in the model's meta.dataranger block.
+  dbt-project-dir:
+    description: Folder that holds dbt_project.yml.
+    default: "."
+  dbt-ref-model:
+    description: dbt model of the reference table (or set meta.dataranger.ref_model on the fact model).
+  dbt-manifest-model:
+    description: dbt model of the control totals (or set meta.dataranger.manifest_model on the fact model).
+  dbt-target:
+    description: dbt target to read from. Defaults to the profile's default target.
+  dbt-profiles-dir:
+    description: Folder that holds profiles.yml. Defaults to DBT_PROFILES_DIR, the project folder, then ~/.dbt.
+  # Column mapping. Leave empty for the defaults, or for the values in the dbt model's meta block.
+  key:
+    description: Primary key column of the fact table (default txn_id).
+  reference:
+    description: Fact column that points to the reference table (default customer_id).
+  ref-key:
+    description: Key column of the reference table (default customer_id).
+  date:
+    description: Partition date column (default txn_date).
+  segment:
+    description: Segment column, such as channel (default channel).
+  category:
+    description: Optional categorical column.
+  amount:
+    description: Amount column (default amount).
+  # Behavior
+  days:
+    description: Patrol only the last N days. Recommended for warehouses; use at least 30.
+  threshold:
+    description: Gate threshold. Leave empty for the benchmark-calibrated default.
+  out:
+    description: Folder for the report files.
+    default: dataranger-report
+  fail-on-escalate:
+    description: Fail the job when at least one incident needs a person.
+    default: "true"
+  upload-report:
+    description: Upload the report folder as a workflow artifact.
+    default: "true"
+  artifact-name:
+    description: Name of the uploaded artifact.
+    default: dataranger-report
+  extras:
+    description: Extra pip extras to install with DataRanger, comma separated (for example "snowflake" for a dbt project on Snowflake).
+  python-version:
+    description: Python version to set up. Set to "none" to use the Python already on the runner.
+    default: "3.12"
+
+outputs:
+  incidents:
+    description: Number of incidents found.
+    value: ${{ steps.patrol.outputs.incidents }}
+  auto-fixed:
+    description: Incidents with a fix that was proven safe.
+    value: ${{ steps.patrol.outputs.auto-fixed }}
+  no-action:
+    description: Incidents that were checked and need no change.
+    value: ${{ steps.patrol.outputs.no-action }}
+  escalate:
+    description: Incidents that need a person.
+    value: ${{ steps.patrol.outputs.escalate }}
+  report:
+    description: Folder with dashboard.html, audit.jsonl, incidents.csv and fixed_version.csv.
+    value: ${{ steps.patrol.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      if: ${{ inputs.python-version != 'none' }}
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install DataRanger
+      shell: bash
+      env:
+        IN_SNOWFLAKE: ${{ inputs.snowflake }}
+        IN_DBT_MODEL: ${{ inputs.dbt-model }}
+        IN_EXTRAS: ${{ inputs.extras }}
+      run: |
+        extras="$IN_EXTRAS"
+        if [ -n "$IN_SNOWFLAKE" ]; then extras="$extras,snowflake"; fi
+        if [ -n "$IN_DBT_MODEL" ]; then extras="$extras,dbt"; fi
+        extras="$(echo "$extras" | tr -d ' ' | sed 's/^,*//; s/,*$//; s/,,*/,/g')"
+        case "$extras" in *[!A-Za-z0-9_,-]*) echo "::error::extras may only contain names and commas"; exit 1;; esac
+        python -m pip install --quiet "${GITHUB_ACTION_PATH}${extras:+[$extras]}"
+
+    - name: Patrol
+      id: patrol
+      shell: bash
+      env:
+        IN_DB: ${{ inputs.db }}
+        IN_SNOWFLAKE: ${{ inputs.snowflake }}
+        IN_TABLE: ${{ inputs.table }}
+        IN_REF_TABLE: ${{ inputs.ref-table }}
+        IN_MANIFEST_TABLE: ${{ inputs.manifest-table }}
+        IN_FACTS_FILE: ${{ inputs.facts-file }}
+        IN_REF_FILE: ${{ inputs.ref-file }}
+        IN_MANIFEST_FILE: ${{ inputs.manifest-file }}
+        IN_DBT_MODEL: ${{ inputs.dbt-model }}
+        IN_DBT_PROJECT_DIR: ${{ inputs.dbt-project-dir }}
+        IN_DBT_REF_MODEL: ${{ inputs.dbt-ref-model }}
+        IN_DBT_MANIFEST_MODEL: ${{ inputs.dbt-manifest-model }}
+        IN_DBT_TARGET: ${{ inputs.dbt-target }}
+        IN_DBT_PROFILES_DIR: ${{ inputs.dbt-profiles-dir }}
+        IN_KEY: ${{ inputs.key }}
+        IN_REFERENCE: ${{ inputs.reference }}
+        IN_REF_KEY: ${{ inputs.ref-key }}
+        IN_DATE: ${{ inputs.date }}
+        IN_SEGMENT: ${{ inputs.segment }}
+        IN_CATEGORY: ${{ inputs.category }}
+        IN_AMOUNT: ${{ inputs.amount }}
+        IN_DAYS: ${{ inputs.days }}
+        IN_THRESHOLD: ${{ inputs.threshold }}
+        IN_OUT: ${{ inputs.out }}
+      run: |
+        args=()
+        add() { if [ -n "$2" ]; then args+=("$1" "$2"); fi; }
+        add --db "$IN_DB"
+        if [ "$IN_SNOWFLAKE" = "true" ]; then args+=(--snowflake); elif [ -n "$IN_SNOWFLAKE" ] && [ "$IN_SNOWFLAKE" != "false" ]; then args+=(--snowflake "$IN_SNOWFLAKE"); fi
+        add --table "$IN_TABLE"; add --ref-table "$IN_REF_TABLE"; add --manifest-table "$IN_MANIFEST_TABLE"
+        add --facts-file "$IN_FACTS_FILE"; add --ref-file "$IN_REF_FILE"; add --manifest-file "$IN_MANIFEST_FILE"
+        if [ -n "$IN_DBT_MODEL" ]; then
+          add --dbt-model "$IN_DBT_MODEL"; add --dbt-project-dir "$IN_DBT_PROJECT_DIR"
+          add --dbt-ref-model "$IN_DBT_REF_MODEL"; add --dbt-manifest-model "$IN_DBT_MANIFEST_MODEL"
+          add --dbt-target "$IN_DBT_TARGET"; add --dbt-profiles-dir "$IN_DBT_PROFILES_DIR"
+        fi
+        add --key "$IN_KEY"; add --reference "$IN_REFERENCE"; add --ref-key "$IN_REF_KEY"; add --date "$IN_DATE"
+        add --segment "$IN_SEGMENT"; add --category "$IN_CATEGORY"; add --amount "$IN_AMOUNT"
+        add --days "$IN_DAYS"; add --threshold "$IN_THRESHOLD"; add --out "$IN_OUT"
+        dataranger patrol "${args[@]}" --json --summary-md "$GITHUB_STEP_SUMMARY" > "$RUNNER_TEMP/dataranger-summary.json"
+        cat "$RUNNER_TEMP/dataranger-summary.json"
+        python - "$RUNNER_TEMP/dataranger-summary.json" "$IN_OUT" >> "$GITHUB_OUTPUT" <<'PY'
+        import json, sys
+        s = json.load(open(sys.argv[1]))
+        print(f"incidents={s['incidents']}\nauto-fixed={s['auto_fixed']}\nno-action={s['no_action']}\nescalate={s['escalate']}\nreport={sys.argv[2]}")
+        PY
+
+    - name: Upload the report
+      if: ${{ always() && inputs.upload-report == 'true' && steps.patrol.outputs.report != '' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.patrol.outputs.report }}
+        if-no-files-found: warn
+
+    - name: Fail when a person needs to look
+      if: ${{ inputs.fail-on-escalate == 'true' && steps.patrol.outputs.escalate != '0' }}
+      shell: bash
+      env:
+        ESCALATED: ${{ steps.patrol.outputs.escalate }}
+      run: |
+        echo "::error title=DataRanger::${ESCALATED} incident(s) need a person. See the job summary and the uploaded report."
+        exit 2

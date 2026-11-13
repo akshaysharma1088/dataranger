@@ -11,7 +11,7 @@ license = "MIT"
 requires-python = ">=3.10"
 dependencies = ["duckdb>=1.0", "pandas>=2.0", "numpy>=1.24", "scipy>=1.10", "mcp>=1.23", "typing_extensions>=4.6"]
 authors = [{ name = "Akshay Sharma", email = "akshay.sharma1088@gmail.com" }]
-keywords = ["data quality", "data engineering", "agents", "llm", "verification", "data observability", "mcp", "ai agents"]
+keywords = ["data quality", "data engineering", "agents", "llm", "verification", "data observability", "mcp", "ai agents", "snowflake", "dbt", "github-actions"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -21,7 +21,11 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "ipython>=8"]
+test = ["pytest>=7", "ipython>=8", "pyyaml>=6"]
+# read from Snowflake: `dataranger patrol --snowflake ...`
+snowflake = ["snowflake-connector-python[pandas]>=3.12"]
+# patrol dbt models: `dataranger patrol --dbt-model ...` (add the snowflake extra for Snowflake targets)
+dbt = ["pyyaml>=6"]
 # kept so `pip install "dataranger[mcp]"` from 0.4.0 still works; mcp is now a core dependency
 mcp = []
 # everything reproduce.sh needs beyond the core package

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0 (2026-11-13)
+
+DataRanger now reads from where the data lives and runs in CI.
+
+- **Snowflake source.** `dataranger patrol --snowflake` reads a fact table, its reference table and control totals with three read-only queries. Credentials come from `SNOWFLAKE_*` environment variables or a named connection. Install with `pip install "dataranger[snowflake]"`.
+- **dbt source.** `dataranger patrol --dbt-model fct_payments` patrols the table behind a dbt model, on DuckDB or Snowflake targets. The column mapping can live in the model's `meta: dataranger:` block. Install with `pip install "dataranger[dbt]"`. A runnable project is in `examples/dbt/`.
+- **GitHub Action.** `uses: akshaysharma1088/dataranger@v0.5.0` runs a patrol in CI, writes a job summary, uploads the report and fails the job when an incident needs a person.
+- `--days N` patrols only the most recent days, for every source.
+- `--summary-md PATH` appends a Markdown summary of the patrol to a file.
+- Two new MCP tools, `patrol_snowflake` and `patrol_dbt`.
+
 ## 0.4.2 (2026-11-12)
 
 Clearer MCP tool definitions, so agents pick the right tool and use it correctly.
