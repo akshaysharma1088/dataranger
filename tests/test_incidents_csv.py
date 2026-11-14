@@ -22,3 +22,5 @@ def test_demo_writes_incidents_csv_matching_audit_and_summary(tmp_path, capsys):
     assert counts.get("auto-fixed", 0) == fixed
     assert counts.get("no action needed", 0) == left_alone
     assert counts.get("escalate", 0) == escalate
+    assert (incidents["partition"] == "(whole table)").sum() == sum(r["table_level"] for r in audit)
+    assert incidents["partition"].ne("").all()
