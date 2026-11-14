@@ -40,6 +40,14 @@ if [ "$MODE" = "full" ]; then
   python benchmarks/run_cohorts.py 3000 0 results/cohort_records.jsonl && gz results/cohort_records.jsonl
   step "Harder error families on the 150 small instances, per-channel and per-channel-and-category totals (Q8)"
   python benchmarks/run_hard.py 150
+  step "Real revisions of the Johns Hopkins feed (Q9, Table 7; clones two public repositories, see benchmarks/real_feed/README.md)"
+  (mkdir -p real_feed_work/work && cd real_feed_work \
+    && { [ -d jhu ] || git clone -q --filter=blob:none --no-checkout --single-branch --branch master https://github.com/CSSEGISandData/COVID-19 jhu; } \
+    && { [ -d nyt ] || git clone -q --filter=blob:none --no-checkout --single-branch https://github.com/nytimes/covid-19-data nyt; } \
+    && python ../benchmarks/real_feed/01_fetch.py && python ../benchmarks/real_feed/02_build.py \
+    && for m in 0.01 0.005 0.02; do python ../benchmarks/real_feed/03_gate.py $m; done \
+    && python ../benchmarks/real_feed/05_adjudicated.py ../results/real_feed/adjudication_labels.csv \
+    && cp work/gate_summary_*.json work/adjudicated_summary.json ../results/real_feed/)
   step "Harder mix on 500 independent instances per evidence granularity, for certification per table (Q8, Table 6; about two hours on two cores)"
   python benchmarks/run_hard_cohort.py 500 && gz results/hard_cohort_records.jsonl && rm results/hard_cohort_records.jsonl
   step "Verification pushed down into DuckDB on partitions of 1 to 50 million rows (Q8; needs about 6 GB of disk)"
@@ -50,7 +58,7 @@ step "Incident-level calibration on the 250-instance benchmark: baselines, fixed
 python benchmarks/analyze_repair.py
 step "Dependence between incidents of one table: intraclass correlation and design effect (Q1)"
 python benchmarks/analyze_guarantee.py
-step "Calibration cohorts of 100, 200 and 400 tables against the held-out tables (Q1, Figure 2)"
+step "Calibration cohorts of 100, 200 and 400 tables against the held-out tables (Q1)"
 python benchmarks/analyze_cohorts.py
 step "Evidence ablation at the incident level (supplementary; also provides helpers for the per-table analysis)"
 python benchmarks/analyze_evidence.py

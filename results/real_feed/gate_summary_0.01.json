@@ -1,0 +1,98 @@
+{
+ "material": 0.01,
+ "state_days": 61614,
+ "incidents": 33041,
+ "cal_incidents": 20243,
+ "test_incidents": 12798,
+ "real_errors_cal": 677,
+ "real_errors_test": 232,
+ "alerts": {
+  "source_revised": 2402,
+  "count_fell": 513,
+  "jump": 4519,
+  "gap_to_totals": 30142
+ },
+ "errors_never_alerted": 212,
+ "test": {
+  "keep_everything": {
+   "automated": 1.0,
+   "harm": 0.018127832473824036,
+   "errors_fixed": 0.0
+  },
+  "always_reload": {
+   "automated": 1.0,
+   "harm": 0.011876855758712298,
+   "errors_fixed": 0.34913793103448276
+  },
+  "tolerance_0.0": {
+   "automated": 0.03359899984372558,
+   "harm": 0.005704016252539459,
+   "errors_fixed": 0.1336206896551724,
+   "reloads_applied": 0.004531958118456009
+  },
+  "tolerance_0.005": {
+   "automated": 0.3009063916236912,
+   "harm": 0.007266760431317393,
+   "errors_fixed": 0.2025862068965517,
+   "reloads_applied": 0.018518518518518517
+  },
+  "tolerance_0.01": {
+   "automated": 0.4540553211439287,
+   "harm": 0.008673230192217534,
+   "errors_fixed": 0.23275862068965517,
+   "reloads_applied": 0.0213314580403188
+  },
+  "tolerance_0.02": {
+   "automated": 0.6031411157993436,
+   "harm": 0.009298327863728707,
+   "errors_fixed": 0.2543103448275862,
+   "reloads_applied": 0.023519299890607907
+  },
+  "gate_incident|0.01": {
+   "automated": 0.0,
+   "harm": 0.0,
+   "errors_fixed": 0.0,
+   "reloads_applied": 0.0,
+   "lambda": null
+  },
+  "gate_state_month|0.01": {
+   "automated": 0.0,
+   "harm": 0.0,
+   "errors_fixed": 0.0,
+   "reloads_applied": 0.0,
+   "lambda": null,
+   "harm_per_cluster": 0.0
+  },
+  "gate_incident|0.02": {
+   "automated": 0.5485232067510548,
+   "harm": 0.008907641819034223,
+   "errors_fixed": 0.2543103448275862,
+   "reloads_applied": 0.023284888263791218,
+   "lambda": 0.015642430708753388
+  },
+  "gate_state_month|0.02": {
+   "automated": 0.037037037037037035,
+   "harm": 0.005782153461478356,
+   "errors_fixed": 0.15086206896551724,
+   "reloads_applied": 0.0067197999687451165,
+   "lambda": 0.00011552990250743249,
+   "harm_per_cluster": 0.0046439628482972135
+  },
+  "gate_incident|0.05": {
+   "automated": 0.9254571026722925,
+   "harm": 0.01351773714642913,
+   "errors_fixed": 0.2543103448275862,
+   "reloads_applied": 0.024535083606813564,
+   "lambda": 0.5
+  },
+  "gate_state_month|0.05": {
+   "automated": 0.9254571026722925,
+   "harm": 0.01351773714642913,
+   "errors_fixed": 0.2543103448275862,
+   "reloads_applied": 0.024535083606813564,
+   "lambda": 0.5,
+   "harm_per_cluster": 0.010650228776664411
+  }
+ },
+ "clusters_cal": 996
+}
