@@ -168,7 +168,8 @@ def write_outputs(res: PatrolResult, out: Path, title: str = "DataRanger patrol 
     rows = []
     for r in res.incidents:
         chosen = r.get("chosen") or {}
-        rows.append({"partition": r.get("partition"), "problems": "; ".join(r.get("detectors") or []),
+        partition = "(whole table)" if r.get("table_level") else r.get("partition")
+        rows.append({"partition": partition, "problems": "; ".join(r.get("detectors") or []),
                      "decision": r["decision"], "action": chosen.get("action"),
                      "tier": chosen.get("tier"), "residual": chosen.get("residual")})
     pd.DataFrame(rows, columns=["partition", "problems", "decision", "action", "tier", "residual"]).to_csv(
