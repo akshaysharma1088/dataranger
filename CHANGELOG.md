@@ -3,6 +3,7 @@
 ## Unreleased
 
 - `dataranger.repair.cells.certify_remainder` and `remainder_cutoff`: an exact certificate for cell repair on a finite table. Label a random sample of rows; with probability at least 1 - delta, at most a share alpha of the rows nobody labeled end with a wrong change. Checked by simulation in `tests/test_finite_population.py`.
+- Real revisions of a public feed (`benchmarks/real_feed/`, `results/real_feed/`): the gate on three years of the Johns Hopkins COVID-19 US state reports, with 150 state-days adjudicated by hand.
 - Benchmarks for the paper revision: certification per table on 1,000 held-out tables (`benchmarks/analyze_cluster.py`), escalation reasons and the harder mix certified per table (`benchmarks/analyze_cluster_extra.py`, `benchmarks/run_hard_cohort.py`), cell repair with the exact certificate (`benchmarks/run_cells2.py`), and the paper's table rows generated from the result files (`benchmarks/paper_tables.py`).
 
 ## 0.5.1 (2026-11-13)
