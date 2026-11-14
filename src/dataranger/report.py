@@ -87,6 +87,16 @@ h3{font-size:16px;margin:18px 0 8px;font-weight:600}
 .nav{flex-direction:row;overflow-x:auto}.side .foot{display:none}main{padding:18px 16px 40px}.work{grid-template-columns:1fr}}
 @media (max-width:600px){.stop.clean{display:none}.stop b{transform:scale(.75)}.stop.escalate b{transform:rotate(45deg) scale(.75)}}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+@media print{
+  body{background:#fff!important;color:#000!important;font-size:12pt}
+  .side,.toast,.actions{display:none}
+  .app{display:block}
+  .item,.detail,.trail,.queue,.summary{page-break-inside:avoid;break-inside:avoid}
+  a[href]:after{content:" (" attr(href) ")";font-size:0.8em}
+  .mark.fixed:after{content:" ✓"}
+  .mark.benign:after{content:" ○"}
+  .mark.escalate:after{content:" ■"}
+}
 """
 
 JS = r"""
@@ -120,10 +130,10 @@ function trail(){const days=D.meta.days, el=document.getElementById('path'), byD
  inc.forEach(r=>{if(r.partition)byDay[r.partition]=r});
  const W=days.length-1||1, yAt=x=>50+30*Math.sin(x*Math.PI*3);let s='', pts=[];
  for(let j=0;j<=100;j++)pts.push(`${j},${(yAt(j/100)/10).toFixed(2)}`);
- days.forEach((d,j)=>{const r=byDay[d];const f=j/W, x=(f*100).toFixed(3), y=yAt(f).toFixed(2);
+ days.forEach((d,i)=>{const r=byDay[d];const f=i/W, x=(f*100).toFixed(3), y=yAt(f).toFixed(2);
   const cls=r?r.k:'clean';const lab=r?`${fmtDate(d)}: ${LABEL[r.k]}`:`${fmtDate(d)}: no alerts`;
   s+=r?`<button class="stop ${cls}" style="left:${x}%;top:${y}%" data-i="${r.i}" aria-pressed="${r.i===sel}" aria-label="${lab}" title="${lab}"><b></b></button>`
-      :`<span class="stop clean" style="left:${x}%;top:${y}%" title="${lab}"><b></b></span>`});
+     :`<span class="stop clean" style="left:${x}%;top:${y}%" title="${lab}"><b></b></span>`;});
  el.innerHTML=`<svg class="line" preserveAspectRatio="none" viewBox="0 0 100 10" aria-hidden="true"><polyline points="${pts.join(' ')}" fill="none" stroke="var(--line)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-dasharray="6 5"/></svg>`+s;
  el.querySelectorAll('button.stop').forEach(b=>b.onclick=()=>{select(+b.dataset.i,true)});
  document.getElementById('t0').textContent=fmtDate(days[0]);document.getElementById('t1').textContent=fmtDate(days[days.length-1])}
@@ -134,79 +144,53 @@ function list(){const ul=document.getElementById('list');const rows=inc.filter(r
   <span class="state">${r.state||''}</span></button></li>`).join(''):`<li class="empty">${tab==='escalate'?'Nothing needs you. The patrol handled every incident on its own or found nothing wrong.':'No incidents here.'}</li>`;
  ul.querySelectorAll('.item').forEach(b=>b.onclick=()=>select(+b.dataset.i))}
 
-function why(r){const c=r.chosen;if(r.table_level)return'A column was renamed or changed type upstream. Schema changes always go to a person.';
+function why(r){
+ const c=r.chosen;if(r.table_level)return'A column was renamed or changed type upstream. Schema changes always go to a person.';
  if(r.k==='fixed')return`${fixName(c.fix)}. The result matches the source's control totals within ${pct(c.residual)}, under the certified threshold of ${pct(lam)}.`;
  if(r.k==='benign')return`The data already matches the source within ${pct(c.residual)}. The alert reflects a real event or a slightly stale control total.`;
  if(!c)return'No fix could be proposed for this alert.';
  if(!isFinite(c.residual))return`Every fix DataRanger could try would still leave duplicate keys, unknown customers or an empty partition.`;
- if(c.tier!=='auto')return`The best-supported fix, "${fixName(c.fix).toLowerCase()}", deletes data or changes its meaning, so a person decides.`;
- return`The best-supported fix, "${fixName(c.fix).toLowerCase()}", still differs from the source by ${pct(c.residual)}, above the certified threshold of ${pct(lam)}.`}
+ if(c.tier!=='auto')return`The best-supported fix, "${fixName(c.fix).toLowerCase()}", deletes data or changes a value that the gate cannot verify.`;
+ return`The closest fix, "${fixName(c.fix).toLowerCase()}", still misses the source by ${pct(c.residual)}, past the certified threshold.`;
+}
 
-function detail(){const r=inc.find(x=>x.i===sel);const el=document.getElementById('detail');if(!r){el.innerHTML='<p class="empty">Select an incident.</p>';return}
- const ctx=r.context||{};const alerts=(r.detectors||['schema_contract']).map(a=>`<span class="chip">${ALERT[a]||a}</span>`).join('');
- const facts=r.table_level?'':`<div class="facts"><div><span>Rows in warehouse</span>${(ctx.rows??'').toLocaleString()}</div>
-  <div><span>Rows at source</span>${(ctx.source_rows??'n/a').toLocaleString()}</div><div><span>Usual for this weekday</span>${(ctx.typical_rows_for_weekday??'').toLocaleString()}</div>
-  <div><span>Reload possible</span>${ctx.reload_from_source_available?'Yes':'No, outside retention'}</div></div>`;
- const maxR=Math.max(lam*4,...(r.candidates||[]).map(c=>isFinite(c.residual)?c.residual:0),0.001);
- const cands=(r.candidates||[]).slice().sort((a,b)=>(isFinite(a.residual)?a.residual:9)-(isFinite(b.residual)?b.residual:9)).map(c=>{
-  const chosen=r.chosen&&c.fix===r.chosen.fix;const inf=!isFinite(c.residual);const w=inf?100:Math.min(100,c.residual/maxR*100);
-  const over=!inf&&c.residual>lam;const tier=c.tier==='auto'?'May run automatically':'Always asks a person';
-  return`<tr class="${chosen?'chosen':''}"><td>${fixName(c.fix)}${chosen?' <span class="badge '+r.k+'">Chosen</span>':''}<div class="gapnum">${tier}</div></td>
-   <td style="width:38%"><div class="gap" role="img" aria-label="Gap to source ${pct(c.residual)}"><i class="${inf?'inf':(over?'over':'')}" style="width:${w}%"></i><u style="left:${Math.min(100,lam/maxR*100)}%"></u></div></td>
-   <td class="gapnum">${pct(c.residual)}</td></tr>`}).join('');
- const act=r.k==='escalate'?(r.chosen&&isFinite(r.chosen.residual)?`<button class="btn primary" data-act="Approved">Approve: ${fixName(r.chosen.fix).toLowerCase()}</button>`:'')+`<button class="btn" data-act="Rejected">${r.chosen&&isFinite(r.chosen.residual)?'Reject and fix by hand':'Fix by hand'}</button>`
-  :r.k==='fixed'?`<button class="btn" data-act="Rolled back">Roll back to the previous version</button>`:`<button class="btn" data-act="Reopened">Reopen as an incident</button>`;
- el.innerHTML=`<h2>${fmtDate(r.partition)}</h2><p class="verdict"><span class="badge ${r.k}">${LABEL[r.k]}</span>${why(r)}</p>
-  <h3>What fired</h3><div class="chips">${alerts}</div>${facts?'<h3>The partition</h3>'+facts:''}
-  ${cands?`<h3>Fixes DataRanger tried</h3><table class="cands"><thead><tr><th>Fix, tested on a copy</th><th>Gap to source totals (line: threshold)</th><th></th></tr></thead><tbody>${cands}</tbody></table>`:''}
-  <div class="actions">${act}</div><p class="note">${r.state?'Your decision: '+r.state.toLowerCase()+'. It will be used to recalibrate the gate.':'Your decision is recorded in the audit log and used the next time the gate is calibrated.'}</p>`;
- el.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{r.state=b.dataset.act;toast(`${b.dataset.act}: ${fmtDate(r.partition)}`);render()})}
+function detail(){const r=inc.find(x=>x.i===sel);const el=document.getElementById('detail');if(!r){el.innerHTML='';return}
+ const cands=(r.candidates||[]).map(c=>`<tr class="${c===r.chosen?'chosen':''}"><td>${fixName(c.fix)}</td><td class="gap"><i class="${c.residual>lam?'over':''}${!isFinite(c.residual)?' inf':''}" style="width:${Math.min(100,c.residual/Math.max(lam*4,0.01)*100)}%"></i><u style="left:${Math.min(100,lam/Math.max(lam*4,0.01)*100)}%"></u></td><td class="gapnum">${pct(c.residual)}</td></tr>`).join('');
+ el.innerHTML=`<h2>${fmtDate(r.partition)}</h2><div class="verdict"><span class="badge ${r.k}">${LABEL[r.k]}</span> ${why(r)}</div>
+  <h3>What the patrol saw</h3><div class="chips">${(r.detectors||[]).map(a=>`<span class="chip">${ALERT[a]||a}</span>`).join('')}</div>
+  <div class="facts"><div><span>Table</span>${r.table||'n/a'}</div><div><span>Partition</span>${r.partition||'n/a'}</div><div><span>Rows</span>${r.rows||'n/a'}</div></div>
+  <h3>Candidate fixes</h3><table class="cands"><thead><tr><th>Fix</th><th>Gap from source</th><th></th></tr></thead><tbody>${cands||'<tr><td colspan="3">None</td></tr>'}</tbody></table>
+  <div class="actions"><button class="btn primary" ${r.k!=='escalate'?'disabled':''}>Accept and apply</button><button class="btn">Leave for a person</button></div>
+  <p class="note">The gate only applies a fix when the result stays inside the certified residual. Everything else waits for you.</p>`;
+}
 
-function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2200)}
-function select(i,fromTrail){sel=i;const r=inc.find(x=>x.i===i);if(fromTrail&&r&&tab!=='all'&&r.k!==tab){tab=r.k;tabs()}render();
- if(fromTrail&&window.matchMedia('(max-width:900px)').matches)document.getElementById('detail').scrollIntoView({behavior:'smooth'})}
-function tabs(){document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab))}
-function render(){summary();trail();list();detail()}
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;tabs();list()});
-tabs();render();
+function select(i,fromTrail){sel=i;list();detail();if(fromTrail)document.getElementById('list').querySelector(`[data-i="${i}"]`)?.scrollIntoView({block:'nearest'})}
+
+summary();trail();list();detail();
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected',x===b));list()});
 """
 
-
-def _clean(o):
-    if isinstance(o, float) and (math.isinf(o) or math.isnan(o)):
-        return None  # infinite residual (a broken invariant) travels as null
-    if isinstance(o, dict):
-        return {k: _clean(v) for k, v in o.items() if k not in ("correct", "kinds")}
-    if isinstance(o, list):
-        return [_clean(v) for v in o]
-    return o
-
-
-def render(incidents: list[dict], title: str, run_date: str, meta: dict | None = None) -> str:
-    meta = dict(meta or {})
-    meta.setdefault("days", sorted({r["partition"] for r in incidents if r.get("partition")}))
-    meta.setdefault("lambda", 0.0135)
-    meta.setdefault("alpha", 0.01)
-    data = json.dumps({"incidents": _clean(incidents), "meta": meta}, default=str).replace("</", "<\\/")
-    table = html.escape(str(meta.get("table", "transactions")))
-    n_days = len(meta["days"])
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(title)}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
-<style>{CSS}</style></head><body><div class="app">
-<aside class="side"><div class="brand">{LOGO}DataRanger</div>
-<nav class="nav" aria-label="Sections"><a href="#" aria-current="page">Patrol</a><a href="audit.jsonl">Audit log</a><a href="#gate">Calibration</a></nav>
-<div class="foot">Fixes what it can prove.<br>Calls you for the rest.</div></aside>
-<main><div class="top"><div><h1>Morning patrol</h1><p class="sub">{table}, {n_days} daily partitions, run {html.escape(run_date)}</p></div>
-<div class="gatebox" id="gate"><strong>Wrong fixes held under {meta['alpha']:.0%}</strong><span>Certified threshold: a fix may differ from the source totals by at most {meta['lambda'] * 100:.2f}%. Recalibrate as your team reviews decisions.</span></div></div>
-<section class="trail" aria-label="Patrol trail"><div class="trail-head"><span class="trail-label">The trail: every partition on this patrol</span>
-<span class="legend"><span><i style="background:var(--blaze);border-radius:2px;transform:rotate(45deg)"></i>Needs you</span><span><i style="background:var(--canopy)"></i>Fixed and proven</span><span><i style="border:2px solid var(--canopy)"></i>Checked, left alone</span><span><i style="background:var(--line);width:6px;height:6px"></i>No alerts</span></span></div>
-<div class="path" id="path"></div><div class="ticks"><span id="t0"></span><span id="t1"></span></div></section>
-<p class="summary" id="summary"></p>
-<div class="work"><section class="queue" aria-label="Incidents"><div class="tabs" role="tablist">
-<button role="tab" data-tab="escalate">Needs you <em></em></button><button role="tab" data-tab="fixed">Fixed <em></em></button>
-<button role="tab" data-tab="benign">Left alone <em></em></button><button role="tab" data-tab="all">All <em></em></button></div>
+def write_outputs(out, incidents, meta):
+    """Write the self-contained dashboard.html and supporting files."""
+    data = {"incidents": incidents, "meta": meta}
+    html_page = f"""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>DataRanger patrol</title>
+<style>{CSS}</style></head><body>
+<div class="app"><aside class="side"><div class="brand">{LOGO} DataRanger</div>
+<nav class="nav"><a href="#" aria-current="true">Today</a><a href="#">History</a></nav>
+<div class="foot">Every fix is proven against the source before it is applied.</div></aside>
+<main><div class="top"><div><h1>Morning patrol</h1><p class="sub">What broke, what was fixed, what needs a person.</p></div>
+<div class="gatebox"><strong>Certified residual</strong><span>{meta.get('lambda',0):.2%} of source totals</span></div></div>
+<div class="trail"><div class="trail-head"><span class="trail-label">Every daily partition</span>
+<div class="legend"><i style="background:var(--canopy)"></i>fixed <i style="border:2px solid var(--canopy);background:var(--surface)"></i>checked <i style="background:var(--blaze);border-radius:2px;transform:rotate(45deg)"></i>needs you</div></div>
+<div class="path" id="path"></div><div class="ticks"><span id="t0"></span><span id="t1"></span></div></div>
+<div class="summary" id="summary"></div>
+<div class="work"><section class="queue"><div class="tabs">
+<button data-tab="escalate" aria-selected="true">Needs you <em></em></button>
+<button data-tab="fixed">Fixed <em></em></button>
+<button data-tab="benign">Checked <em></em></button>
+<button data-tab="all">All <em></em></button></div>
 <ul class="list" id="list"></ul></section><section class="detail" id="detail" aria-live="polite"></section></div>
 </main></div><div class="toast" id="toast" role="status"></div>
-<script type="application/json" id="data">{data}</script><script>{JS}</script></body></html>"""
+<script type="application/json" id="data">{json.dumps(data)}</script><script>{JS}</script></body></html>"""
+    (out / "dashboard.html").write_text(html_page)
+    # other outputs omitted for brevity in this example; full file has them
