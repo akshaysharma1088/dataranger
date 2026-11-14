@@ -1,0 +1,49 @@
+{
+ "labels": {
+  "restatement": 130,
+  "error": 19,
+  "unclear": 1
+ },
+ "random_sample": {
+  "errors": 12,
+  "n": 50,
+  "ci95": [
+   0.13060991619745735,
+   0.3816907481040382
+  ]
+ },
+ "actions|0.02": {
+  "error": {
+   "reloaded right": 9,
+   "escalated": 8,
+   "no alert": 1,
+   "kept wrong": 1
+  },
+  "restatement": {
+   "no alert": 49,
+   "escalated": 47,
+   "kept wrong": 28,
+   "reloaded right": 5,
+   "reloaded wrong": 1
+  },
+  "unclear": {
+   "escalated": 1
+  }
+ },
+ "actions|0.05": {
+  "error": {
+   "reloaded right": 11,
+   "kept wrong": 7,
+   "no alert": 1
+  },
+  "restatement": {
+   "kept wrong": 74,
+   "no alert": 49,
+   "reloaded right": 5,
+   "reloaded wrong": 2
+  },
+  "unclear": {
+   "kept wrong": 1
+  }
+ }
+}

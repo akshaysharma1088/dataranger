@@ -118,14 +118,6 @@ def table6():
     out += ["\\midrule", f"\\multicolumn{{5}}{{l}}{{\\emph{{Channel and category totals ({num(fine['incidents'])} incidents)}}}}" + end,
             row("Exact match", "--", fine["exact"]), row("Tolerance 1\\%", "--", fine["tolerance_0.01"])]
     out += gate_rows("In domain", fine, "gate_cluster", (0.01, 0.05))
-    out += ["\\midrule", "Family, $\\alpha=1\\%$ & \\multicolumn{1}{r}{Shift} & \\multicolumn{3}{c}{Finer totals, in domain}" + end,
-            " & harm & escalated & repaired & harm" + end, "\\midrule"]
-    fam, sh = x["hard_families|channel+category"], x["shift|0.01"]["families"]
-    p0 = lambda v: f"{100 * v:.0f}\\%"
-    for k, label in (("compound", "Two errors, one partition"), ("multi_version", "Out-of-order adjustments"),
-                     ("category_relabel", "Relabel, totals preserved"), ("missing_manifest", "Totals never published")):
-        f = fam[f"gate_cluster|0.01|{k}"]
-        out.append(f"{label} & {100 * sh[k]['harm']:.1f}\\% & {p0(f['escalated'])} & {p0(f['repaired'])} & {100 * f['harm']:.1f}\\%" + end)
     return out
 
 
