@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- `dataranger.repair.cells.certify_remainder` and `remainder_cutoff`: an exact certificate for cell repair on a finite table. Label a random sample of rows; with probability at least 1 - delta, at most a share alpha of the rows nobody labeled end with a wrong change. Checked by simulation in `tests/test_finite_population.py`.
+- Benchmarks for the paper revision: certification per table on 1,000 held-out tables (`benchmarks/analyze_cluster.py`), escalation reasons and the harder mix certified per table (`benchmarks/analyze_cluster_extra.py`, `benchmarks/run_hard_cohort.py`), cell repair with the exact certificate (`benchmarks/run_cells2.py`), and the paper's table rows generated from the result files (`benchmarks/paper_tables.py`).
+
 ## 0.5.1 (2026-11-13)
 
 - First PyPI release of the 0.5 line. The `v0.5.0` tag works for the GitHub Action, but its PyPI publish stopped at the release tests, which ran without the test dependencies. The release workflow now installs them the same way CI does.

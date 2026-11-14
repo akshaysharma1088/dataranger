@@ -1,15 +1,17 @@
 """Cell-level repair for tables without a source of record (Hospital, Flights, Beers).
 
 With no control totals to reconcile against, the evidence for a candidate value is internal:
-how strongly the table's own dependencies or a deterministic normalization support it. The
-same Learn-then-Test gate then bounds the share of applied changes that are wrong, using a
-labeled calibration half.
+how strongly the table's own dependencies or a deterministic normalization support it. A
+score over that evidence is then certified on a labeled random sample of rows: with the row
+as the unit, certify_remainder bounds the share of unlabeled rows that end with a wrong change,
+exactly, for a finite table.
 """
 from __future__ import annotations
 
 import re
 from collections import Counter
 
+import numpy as np
 import pandas as pd
 
 from ..bench.detect_cells import NULL_TOKENS, NUM_PREFIX, unit_noise
@@ -127,3 +129,44 @@ def featurize(cands: list[dict], columns: list[str]) -> "pd.DataFrame":
         X[f"src_{s}"] = [float(c["source"] == s) for c in cands]
     X["col"] = [columns.index(c["col"]) for c in cands]
     return X
+
+
+# ---- Exact certificate for a finite table (paper, Proposition 6.1) ------------------------------------------------
+def remainder_cutoff(pop_n, n, alpha, delta=0.05):
+    """Largest number c of harmed rows in the labeled sample that still certifies; -1 if even zero does not.
+
+    A population of pop_n rows, n of them sampled uniformly without replacement and labeled. k = floor(alpha * (pop_n - n))
+    is the number of harmed rows the certificate allows among the rows that were not sampled. c is the largest integer with
+    P(Hypergeom(pop_n, c + k + 1, n) <= c) <= delta: the chance that at most c sampled rows precede the (k+1)-th unsampled
+    row when rows are revealed in the order in which a falling threshold harms them.
+    """
+    from scipy.stats import hypergeom
+    k = int(np.floor(alpha * (pop_n - n)))
+    if pop_n - n <= k:
+        return n
+    c = -1
+    while c + 1 + k + 1 <= pop_n and c + 1 <= n and hypergeom.cdf(c + 1, pop_n, c + 1 + k + 1, n) <= delta:
+        c += 1
+    return c
+
+
+def certify_remainder(scores, wrong, rows, sample_rows, alpha, pop_n, delta=0.05):
+    """Threshold for "apply every proposal whose score is above t", certified on a labeled sample of rows.
+
+    scores, wrong, rows: one entry per proposal (its score, whether it is wrong, the row it changes). sample_rows: the
+    labeled rows, a uniform sample without replacement from a population of pop_n rows; proposals and scores must not
+    depend on which rows were sampled. A row is harmed under t if a wrong proposal on it scores above t, so the harmed
+    sets are nested in t. Returns the lowest t that leaves at most remainder_cutoff(...) harmed sampled rows
+    (-inf: apply everything), or None if nothing certifies. With probability at least 1 - delta over the sample, at most
+    alpha * (pop_n - n) of the unsampled rows are harmed at the returned t. No grid and no multiplicity correction.
+    """
+    sample = set(sample_rows)
+    c = remainder_cutoff(pop_n, len(sample), alpha, delta)
+    if c < 0:
+        return None
+    crit = {}
+    for s, w, r in zip(scores, wrong, rows):
+        if w and r in sample:
+            crit[r] = max(crit.get(r, -np.inf), s)
+    vals = sorted(crit.values(), reverse=True)
+    return -np.inf if len(vals) <= c else vals[c]

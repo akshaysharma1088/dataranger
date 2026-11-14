@@ -27,10 +27,10 @@ for (name, sub), x in zip(stages, xs):
     ax.text(x + 0.875, 2.5, sub, ha="center", va="center", fontsize=7, color="#444")
 for x in xs[:-1]:
     ax.annotate("", xy=(x + 2.0, 2.8), xytext=(x + 1.78, 2.8), arrowprops=dict(arrowstyle="-|>", lw=0.6, color=INK))
-ax.annotate("", xy=(6.2, 0.75), xytext=(6.98, 1.98), arrowprops=dict(arrowstyle="-|>", lw=0.6, color=ORANGE))
-ax.text(4.0, 0.45, "escalate to a person", fontsize=7.5, color=ORANGE, ha="center")
-ax.annotate("", xy=(7.9, 0.75), xytext=(7.0, 1.98), arrowprops=dict(arrowstyle="-|>", lw=0.6, color=GREEN))
-ax.text(8.8, 0.45, "apply as new version", fontsize=7.5, color=GREEN, ha="center")
+ax.annotate("", xy=(6.2, 0.75), xytext=(6.95, 1.98), arrowprops=dict(arrowstyle="-|>", lw=0.6, color=ORANGE))
+ax.text(6.1, 0.5, "escalate to a person", fontsize=7.5, color=ORANGE, ha="right", va="center")
+ax.annotate("", xy=(7.75, 0.75), xytext=(7.0, 1.98), arrowprops=dict(arrowstyle="-|>", lw=0.6, color=GREEN))
+ax.text(7.85, 0.5, "apply as new version", fontsize=7.5, color=GREEN, ha="left", va="center")
 ax.text(1.0, 4.15, "Source of record: control totals per day and channel", fontsize=7, color="#555")
 ax.annotate("", xy=(4.98, 3.62), xytext=(4.98, 4.0), arrowprops=dict(arrowstyle="-|>", lw=0.5, color=GREY))
 ax.annotate("", xy=(0.98, 3.62), xytext=(0.98, 4.0), arrowprops=dict(arrowstyle="-|>", lw=0.5, color=GREY))
@@ -123,7 +123,7 @@ if (R / "cohort_summary.json").exists():
                 jit = [x + (i - len(hs) / 2) * 0.02 for i in range(len(hs))]
                 ax.scatter(jit, hs, s=9, color=col, edgecolor=INK, lw=0.3, zorder=4)
                 if n_unc:
-                    ax.text(x, alpha * 100 * 0.05, "none\ncertified", ha="center", va="bottom", fontsize=5.5, color=col)
+                    ax.scatter([x], [alpha * 100 * 0.03], marker="x", s=16, color=col, lw=0.9, zorder=4)
                 ticks.append(x); labels.append(f"{m}")
                 x += 1
             x += 0.5
@@ -135,6 +135,7 @@ if (R / "cohort_summary.json").exists():
     axes[0].set_ylabel("harm on held-out\npopulation (%)", fontsize=7)
     axes[0].scatter([], [], s=9, color=BLUE, edgecolor=INK, lw=0.3, label="incident-level gate (Thm. 4.1)")
     axes[0].scatter([], [], s=9, color=ORANGE, edgecolor=INK, lw=0.3, label="cluster-level gate (Thm. 4.2)")
-    fig.legend(frameon=False, fontsize=6.5, loc="upper center", ncol=2, bbox_to_anchor=(0.5, 1.08), handletextpad=0.2)
+    axes[0].scatter([], [], marker="x", s=16, color=GREY, lw=0.9, label="nothing certified: all escalated")
+    fig.legend(frameon=False, fontsize=6.5, loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.08), handletextpad=0.2)
     fig.tight_layout(w_pad=1.0)
     fig.savefig(OUT / "fig_cohorts.pdf", bbox_inches="tight"); plt.close(fig)
