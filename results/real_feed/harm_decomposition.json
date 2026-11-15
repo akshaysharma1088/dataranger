@@ -1,0 +1,38 @@
+{
+ "keep_every_load": {
+  "automated": 1.0,
+  "harm_wrong_change": 0.0,
+  "harm_revised_after_patrol": 0.011798718549773402,
+  "harm_avoidable_kept": 0.006329113924050633,
+  "cal_harm": 0.03344365953662995,
+  "certified": {
+   "0.01": false,
+   "0.02": false,
+   "0.05": true
+  }
+ },
+ "reload_every_alert": {
+  "automated": 1.0,
+  "harm_wrong_change": 7.81372089388967e-05,
+  "harm_revised_after_patrol": 0.011798718549773402,
+  "harm_avoidable_kept": 0.0,
+  "cal_harm": 0.025243293978165292,
+  "certified": {
+   "0.01": false,
+   "0.02": false,
+   "0.05": true
+  }
+ },
+ "gate|0.02": {
+  "automated": 0.5485232067510548,
+  "harm_wrong_change": 0.0,
+  "harm_revised_after_patrol": 0.007188623222378497,
+  "harm_avoidable_kept": 0.0017190185966557275
+ },
+ "gate|0.05": {
+  "automated": 0.9254571026722925,
+  "harm_wrong_change": 0.0,
+  "harm_revised_after_patrol": 0.011798718549773402,
+  "harm_avoidable_kept": 0.0017190185966557275
+ }
+}
