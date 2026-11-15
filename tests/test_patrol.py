@@ -33,14 +33,17 @@ def test_cli_demo_and_patrol(tmp_path, capsys):
     case = inject(generate(6, "small", n_days=40))
     db = str(tmp_path / "w.duckdb")
     con = duckdb.connect(db)
-    con.register("t", case.warehouse["transactions"]); con.execute("create table facts as select * from t")
-    con.register("c", case.warehouse["customers"]); con.execute("create table customers as select * from c")
-    con.register("m", case.manifest); con.execute("create table manifest as select * from m")
+    con.register("t", case.warehouse["transactions"])
+    con.execute("create table facts as select * from t")
+    con.register("c", case.warehouse["customers"])
+    con.execute("create table customers as select * from c")
+    con.register("m", case.manifest)
+    con.execute("create table manifest as select * from m")
     con.close()
     assert main(["patrol", "--db", db, "--table", "facts", "--ref-table", "customers", "--manifest-table", "manifest",
                  "--category", "category", "--out", str(tmp_path / "rep")]) == 0
     assert "fixed" in capsys.readouterr().out
-    audit = [json.loads(l) for l in open(tmp_path / "rep" / "audit.jsonl")]
+    audit = [json.loads(line) for line in open(tmp_path / "rep" / "audit.jsonl")]
     labels = pd.DataFrame({"partition": [a["partition"] for a in audit if not a["table_level"]], "verdict": "right"})
     labels.to_csv(tmp_path / "labels.csv", index=False)
     assert main(["calibrate", "--audit", str(tmp_path / "rep" / "audit.jsonl"), "--labels", str(tmp_path / "labels.csv")]) == 0

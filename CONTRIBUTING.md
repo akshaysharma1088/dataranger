@@ -7,7 +7,8 @@ Thanks for helping. DataRanger aims to stay small, honest about risk and easy to
 ```bash
 git clone https://github.com/akshaysharma1088/dataranger && cd dataranger
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[test]"
+pip install -e ".[test]" ruff
+ruff check .
 pytest -q
 dataranger demo --out demo-report   # open demo-report/dashboard.html
 ```
@@ -32,6 +33,7 @@ Other welcome contributions:
   Anything else is escalated to a person. Please keep it that way.
 - LLM features stay optional. Results must not depend on a paid API.
 - Every change needs a test, ideally on a small DataFrame that shows the problem.
+- Code must pass `ruff check .` (the rules are in `pyproject.toml`); CI fails on new warnings.
 - Keep messages and reports in plain language: what broke, what was done, and why.
 
 ## Reporting a problem
