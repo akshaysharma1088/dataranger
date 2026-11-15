@@ -18,6 +18,7 @@ wrong fixes under a rate you choose. Everything else goes to a person, with the 
   <a href="https://pepy.tech/projects/dataranger"><img src="https://static.pepy.tech/personalized-badge/dataranger?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads" alt="PyPI Downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-e8b53a" alt="License"></a>
   <a href="https://github.com/akshaysharma1088/dataranger/actions/workflows/ci.yml"><img src="https://github.com/akshaysharma1088/dataranger/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.bestpractices.dev/projects/16714"><img src="https://www.bestpractices.dev/projects/16714/badge" alt="OpenSSF Best Practices"></a>
   <a href="https://doi.org/10.5281/zenodo.23787418"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.23787418.svg" alt="DOI"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-5fb98a" alt="Python 3.10+">
 </p>

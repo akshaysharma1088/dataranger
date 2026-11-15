@@ -78,7 +78,7 @@ def detect(warehouse: dict[str, pd.DataFrame], expected_days: list[date],
     # Volume against same-weekday partitions (robust z on log counts).
     vol = con.execute("select txn_date, count(*) n, isodow(txn_date) w from txn group by 1, 3").df()
     vol["ln"] = np.log(vol["n"])
-    for w, g in vol.groupby("w"):
+    for _, g in vol.groupby("w"):
         med = g["ln"].median()
         mad = 1.4826 * (g["ln"] - med).abs().median() or 0.02
         for _, r in g.iterrows():

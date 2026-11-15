@@ -8,7 +8,6 @@ exactly, for a finite table.
 """
 from __future__ import annotations
 
-import re
 from collections import Counter
 
 import numpy as np
