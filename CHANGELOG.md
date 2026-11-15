@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.4 (2026-11-15)
+
+- `python -m dataranger` now works, for when pip installs the `dataranger` command into a folder that is not on PATH (common on Windows).
+- README: how DataRanger compares with tests, observability platforms and AI agents, and what data leaves your machine (none, in normal use).
+- OpenSSF Best Practices passing badge. Added a security policy with private reporting and a 7-day first response, a code of conduct, and issue and pull request templates.
+- `ruff` runs in CI on every change, and the CI and release workflows run with a read-only token by default.
+
 ## 0.5.3 (2026-11-15)
 
 - Version number brought in line with the release tag. The `v0.5.2` tag (Zenodo 10.5281/zenodo.24240657) holds the same code but still reported 0.5.1, so its PyPI publish was refused; the release workflow now stops at once if the tag and the package version differ.

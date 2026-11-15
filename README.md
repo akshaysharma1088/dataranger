@@ -174,7 +174,7 @@ Flags such as `--key` or `--dbt-ref-model` override the `meta` block, and `--dbt
 Run a patrol in CI, after a load or on a schedule. The action writes the result to the job summary, uploads the report, and fails the job when an incident needs a person.
 
 ```yaml
-- uses: akshaysharma1088/dataranger@v0.5.3
+- uses: akshaysharma1088/dataranger@v0.5.4
   with:
     snowflake: "true"
     table: ANALYTICS.GOLD.PAYMENTS
@@ -194,7 +194,7 @@ Run a patrol in CI, after a load or on a schedule. The action writes the result 
 After `dbt build`, one line is enough when the mapping is in the model's `meta` block:
 
 ```yaml
-- uses: akshaysharma1088/dataranger@v0.5.3
+- uses: akshaysharma1088/dataranger@v0.5.4
   with:
     dbt-model: fct_payments
 ```
