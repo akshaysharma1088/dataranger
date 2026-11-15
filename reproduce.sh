@@ -46,8 +46,8 @@ if [ "$MODE" = "full" ]; then
     && { [ -d nyt ] || git clone -q --filter=blob:none --no-checkout --single-branch https://github.com/nytimes/covid-19-data nyt; } \
     && python ../benchmarks/real_feed/01_fetch.py && python ../benchmarks/real_feed/02_build.py \
     && for m in 0.01 0.005 0.02; do python ../benchmarks/real_feed/03_gate.py $m; done \
-    && python ../benchmarks/real_feed/05_adjudicated.py ../results/real_feed/adjudication_labels.csv \
-    && cp work/gate_summary_*.json work/adjudicated_summary.json ../results/real_feed/)
+    && python ../benchmarks/real_feed/05_adjudicated.py ../results/real_feed/adjudication_labels.csv && python ../benchmarks/real_feed/06_decompose.py \
+    && cp work/gate_summary_*.json work/adjudicated_summary.json work/harm_decomposition.json ../results/real_feed/)
   step "Harder mix on 500 independent instances per evidence granularity, for certification per table (Q8, Table 6; about two hours on two cores)"
   python benchmarks/run_hard_cohort.py 500 && gz results/hard_cohort_records.jsonl && rm results/hard_cohort_records.jsonl
   step "Verification pushed down into DuckDB on partitions of 1 to 50 million rows (Q8; needs about 6 GB of disk)"
@@ -66,6 +66,8 @@ step "A tolerance tuned on labels; fixed candidate with different accepting scor
 python benchmarks/analyze_controls.py
 step "Certification per table on 1,000 held-out tables: main comparison and what the evidence adds (Q1, Tables 1 and 2)"
 python benchmarks/analyze_cluster.py
+step "Matched comparison: same candidates, selection, evidence and tiers, with and without the gate (Q2)"
+PYTHONPATH=benchmarks python benchmarks/analyze_matched.py
 step "Escalation reasons, partition totals, and the harder mix certified per table (Q1, Q3, Q8, Table 6)"
 python benchmarks/analyze_cluster_extra.py
 step "Harder error families at the incident level on 150 instances (supplementary; Table 6 comes from the per-table analysis above)"
