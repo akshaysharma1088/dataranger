@@ -12,6 +12,10 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - name: Check that the tag matches the package version
+        run: |
+          v=$(python -c "import re; print(re.search(r'__version__ = \"(.+?)\"', open('src/dataranger/__init__.py').read()).group(1))")
+          test "v$v" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} does not match package version $v"; exit 1; }
       - run: python -m pip install build
       # the same install as the ci workflow, so a release is tested the way every push is
       - run: pip install -e ".[test]" && pytest -q

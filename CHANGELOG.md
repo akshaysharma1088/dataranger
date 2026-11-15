@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.5.3 (2026-11-15)
+
+- Version number brought in line with the release tag. The `v0.5.2` tag (Zenodo 10.5281/zenodo.24240657) holds the same code but still reported 0.5.1, so its PyPI publish was refused; the release workflow now stops at once if the tag and the package version differ.
 
 - `dataranger.repair.cells.certify_remainder` and `remainder_cutoff`: an exact certificate for cell repair on a finite table. Label a random sample of rows; with probability at least 1 - delta, at most a share alpha of the rows nobody labeled end with a wrong change. Checked by simulation in `tests/test_finite_population.py`.
 - Real revisions of a public feed (`benchmarks/real_feed/`, `results/real_feed/`): the gate on three years of the Johns Hopkins COVID-19 US state reports, with 150 state-days adjudicated by hand.
