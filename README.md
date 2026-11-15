@@ -61,6 +61,8 @@ pip install dataranger
 dataranger demo                 # patrol a sample table with planted problems; opens as dataranger-demo/dashboard.html
 ```
 
+On Windows, if `dataranger` is "not recognized" after installing, run it as `python -m dataranger` instead.
+
 On your own DuckDB tables (a fact table partitioned by date, a reference table, and the source's control totals):
 
 ```bash
