@@ -61,6 +61,7 @@ def table2():
 def table5():
     """Cell repair (Section 6.7) from results/cells2_summary.json. A star marks a gate certified in only some splits."""
     cells = json.load(open("results/cells2_summary.json"))
+    ref = json.load(open("results/cells2_summary_cdcref.json"))   # conformal cleaning rows: the authors' code
     p0 = lambda x: f"{100 * x:.0f}"
     end = " \\\\"
 
@@ -73,6 +74,8 @@ def table5():
     out = []
     for name, title in (("hospital", "Hospital"), ("flights", "Flights"), ("beers", "Beers")):
         r = cells[name]
+        for k in ("cdc", "cdc_third", "cdc+gate(confidence)|0.05", "cdc+gate(evidence)|0.05"):
+            r = {**r, k: ref[name][k]}
         a, b = r["cdc"], r["cdc_third"]
         block = [row("Baran, 20 tuples", r["baran|budget=20"]), row("Baran, 200 tuples", r["baran|budget=200"]),
                  row("\\quad + gate, 5\\%", r["baran+gate|budget=200|0.05"], True),

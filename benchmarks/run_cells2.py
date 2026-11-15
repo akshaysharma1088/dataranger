@@ -128,8 +128,12 @@ def cdc_with_scores(clean, dirty, train_rows, test_rows, conf=0.999, max_classes
 
 
 out = {}
-cache_full = json.load(open("results/cdc_changes_scored.json")) if Path("results/cdc_changes_scored.json").exists() else {}
-cache_p = Path("results/cdc_changes_third.json")
+# CDC_IMPL=reference reads proposals made by the authors' own cleaner (benchmarks/cdc_reference/run_reference.py) instead of ours.
+import os
+REF = os.environ.get("CDC_IMPL") == "reference"
+full_p = Path("results/cdc_ref_half.json" if REF else "results/cdc_changes_scored.json")
+cache_full = json.load(open(full_p)) if full_p.exists() else {}
+cache_p = Path("results/cdc_ref_third.json" if REF else "results/cdc_changes_third.json")
 cdc_cache = json.load(open(cache_p)) if cache_p.exists() else {}
 for name in realdata.DATASETS:
     case = realdata.load(name)
@@ -171,6 +175,8 @@ for name in realdata.DATASETS:
             third = len(cal) // 3
             train, learn, cert = set(cal[:third]), set(cal[third: 2 * third]), set(cal[2 * third:])
             key = f"{name}|{s}"
+            if key not in cdc_cache and REF:
+                raise SystemExit(f"no reference proposals for {key}: run benchmarks/cdc_reference/run_reference.py first")
             if key not in cdc_cache:
                 ch, cf = cdc_with_scores(clean, dirty, train, (set(perm) - train), seed=s)
                 cdc_cache[key] = [[r, c, v, cf[(r, c)]] for (r, c), v in ch.items()]
@@ -192,4 +198,4 @@ for name in realdata.DATASETS:
         if isinstance(v, dict) and "errors_fixed" in v:
             print(f"  {k:34s} fixed {v['errors_fixed']:.3f} prec {v['precision']:.3f} wrong/1k {v['wrong_per_1000_cells']:6.2f} rows harmed {v['rows_harmed']:.4f}"
                   + (f" certified {v['certified']:.2f} exceeds {v['exceeds']:.2f} n={v['cert_rows']:.0f} c={v['cutoff']:.1f}" if "certified" in v else ""), flush=True)
-    json.dump(out, open("results/cells2_summary.json", "w"), indent=1)
+    json.dump(out, open("results/cells2_summary_cdcref.json" if REF else "results/cells2_summary.json", "w"), indent=1)
