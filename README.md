@@ -98,6 +98,22 @@ dataranger calibrate --audit report/audit.jsonl --labels reviewed.csv --alpha 0.
 
 `reviewed.csv` has columns `partition` and `verdict` (right or wrong). About 300 reviewed incidents certify a 1% target and about 60 certify 5%.
 
+## How DataRanger compares
+
+DataRanger does not replace your tests or monitoring. It picks up where they stop: at the fix.
+
+| | Tests (dbt tests, Great Expectations, Soda) | Observability platforms (for example Monte Carlo) | AI coding agents | DataRanger |
+|---|---|---|---|---|
+| Finds problems | Rules you write | Learned patterns and anomalies | When asked | Rules and statistics, against the source's control totals |
+| Fixes data | No | No, it alerts and helps find the cause | Yes, without independent proof | Yes, only fixes proven against the source |
+| Says how often a fix is wrong | No | No | No | Yes: a wrong-fix rate you choose, with a statistical guarantee |
+| When unsure | Fails the run | Sends an alert | Often guesses | Escalates to a person, with the evidence |
+| Where it runs | Your pipeline | Vendor service | Your editor or CI | Your machine or CI, open source |
+
+Keep your tests: they catch problems DataRanger is not designed for, such as a new column breaking a
+contract. Use DataRanger for the night-shift part, where something has to decide whether a fix is
+safe to apply without waking anyone up.
+
 ## Where it runs
 
 <p align="center">
@@ -223,6 +239,23 @@ Each patrol returns the counts (auto-fixed, no action needed, escalate), the inc
 The tools are read-only towards your data. Inputs are opened read-only, nothing is written back, and fixes exist only in the proposed fixed version for review. An agent can learn what is wrong and what DataRanger could prove; it cannot change your warehouse through this server.
 
 Try asking your agent: *"Use DataRanger to run the demo and tell me which partitions need a person, and why."*
+
+## What data leaves your machine
+
+None of your data, in normal use.
+
+- **Patrols** run three read-only `SELECT` statements against your warehouse (or read your files),
+  do all the work locally, and write the report to a folder you choose. Input tables are never
+  modified; fixes are written to a new version.
+- **The MCP server** runs on your machine over stdio and exposes read-only tools. Warehouse
+  credentials stay in your environment and are never tool arguments.
+- **No telemetry.** DataRanger does not report usage anywhere.
+- **The dashboard** is a single HTML file. When you open it, your browser fetches two web fonts from
+  Google Fonts; no data is sent with that request.
+- **Language models are optional** and used only by the benchmark scripts, never by a patrol. They
+  call the endpoint you configure, such as a local Ollama server, and receive incident summaries
+  (row counts, totals, medians and alert names per day and segment), never raw rows.
+- **The real-data benchmarks** download public research datasets the first time you run them.
 
 ## DQ-Repair benchmark
 
