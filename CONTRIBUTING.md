@@ -37,3 +37,6 @@ Other welcome contributions:
 ## Reporting a problem
 
 Open an issue with the command you ran, the output, and if possible small CSV files that reproduce it.
+Security problems go through the private process in [SECURITY.md](SECURITY.md), not a public issue.
+
+By taking part you agree to the [code of conduct](CODE_OF_CONDUCT.md).
