@@ -1,0 +1,20 @@
+name: Feature request
+description: A new detector, fix, connector or option.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What kind of data incident gets through today, or what is hard to set up?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+  - type: dropdown
+    id: help
+    attributes:
+      label: Would you like to work on it?
+      options: ["Yes", "Maybe, with some guidance", "No"]

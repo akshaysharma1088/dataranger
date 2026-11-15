@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/akshaysharma1088/dataranger/discussions
+    about: Ask how to set something up, or discuss an idea before opening an issue.
+  - name: Report a security problem
+    url: https://github.com/akshaysharma1088/dataranger/security/advisories/new
+    about: Please report vulnerabilities privately, not in a public issue.
