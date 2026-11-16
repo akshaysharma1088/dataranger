@@ -13,6 +13,28 @@ STAGES = [
 ]
 
 
+def _bounded_float(name, low, high, *, include_low):
+    """argparse type: a float in (low, high) or [low, high], with a short message saying what is allowed."""
+    allowed = f"{'from' if include_low else 'strictly between'} {low:g} {'to' if include_low else 'and'} {high:g}"
+
+    def parse(text):
+        try:
+            value = float(text)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"{name} must be a number {allowed}, got {text!r}") from None
+        ok = (low <= value <= high) if include_low else (low < value < high)
+        if not ok:  # also rejects nan
+            raise argparse.ArgumentTypeError(f"{name} must be {allowed}, got {text}")
+        return value
+
+    return parse
+
+
+# The calibration grid in repair/gate.py ends at 0.5, so a larger threshold was never certified.
+gate_threshold = _bounded_float("threshold", 0.0, 0.5, include_low=True)
+probability = {name: _bounded_float(name, 0.0, 1.0, include_low=False) for name in ("alpha", "delta")}
+
+
 def print_summary(res, out, json_output=False):
     n = {d: sum(r["decision"] == d for r in res.incidents) for d in ("auto-fixed", "no action needed", "escalate")}
     if json_output:
@@ -67,7 +89,8 @@ def main(argv=None):
     pt.add_argument("--category", default=None, help="optional categorical column")
     pt.add_argument("--amount", default=None, help="amount column (default: amount)")
     pt.add_argument("--days", type=int, default=None, help="patrol only the last N days (recommended for warehouses)")
-    pt.add_argument("--threshold", type=float, default=None, help="gate threshold (default: benchmark-calibrated)")
+    pt.add_argument("--threshold", type=gate_threshold, default=None,
+                    help="gate threshold, from 0 to 0.5 (default: benchmark-calibrated)")
     pt.add_argument("--out", default="dataranger-report")
     pt.add_argument("--json", action="store_true", help="print only a machine-readable JSON summary")
     pt.add_argument("--summary-md", metavar="PATH", help="also append a Markdown summary to this file (for CI job summaries)")
@@ -75,14 +98,21 @@ def main(argv=None):
     cb = sub.add_parser("calibrate", help="choose the gate threshold from your own reviewed incidents")
     cb.add_argument("--audit", nargs="+", required=True, help="audit.jsonl files from past patrols")
     cb.add_argument("--labels", required=True, help="CSV with partition, verdict (right or wrong): was the chosen fix right?")
-    cb.add_argument("--alpha", type=float, default=0.01)
-    cb.add_argument("--delta", type=float, default=0.05)
+    cb.add_argument("--alpha", type=probability["alpha"], default=0.01,
+                    help="highest share of wrong auto-fixes to allow, between 0 and 1 (default: 0.01)")
+    cb.add_argument("--delta", type=probability["delta"], default=0.05,
+                    help="chance the guarantee fails, between 0 and 1 (default: 0.05)")
     args = parser.parse_args(argv)
     if args.command == "calibrate":
         import json
         import pandas as pd
         from .repair.gate import calibrate
-        lab = pd.read_csv(args.labels, dtype=str, keep_default_na=False)
+        try:
+            lab = pd.read_csv(args.labels, dtype=str, keep_default_na=False)
+        except pd.errors.EmptyDataError:
+            lab = pd.DataFrame()
+        if lab.empty:
+            cb.error(f"{args.labels} has no reviewed incidents; add rows with partition and verdict (right or wrong).")
         missing = [col for col in ("partition", "verdict") if col not in lab.columns]
         if missing:
             raise SystemExit(f"{args.labels}: missing column(s) {', '.join(missing)}; "
