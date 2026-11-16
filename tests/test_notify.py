@@ -7,7 +7,7 @@ import pytest
 
 from dataranger.bench import generate, inject
 from dataranger.cli import main
-from dataranger.notify import post
+from dataranger.notify import payload, post
 
 
 @pytest.fixture
@@ -110,3 +110,30 @@ def test_post_never_names_the_url():
     reason = post("http://127.0.0.1:9/hooks/secret-token", "hi", timeout=2)
     assert reason and "secret-token" not in reason and "127.0.0.1" not in reason
     assert post("ftp://example.com/hook", "hi") == "the webhook URL must start with https:// (or http://)"
+
+
+@pytest.mark.parametrize("url", ["http://[", "https://[::1/hooks/x"])
+def test_malformed_url_is_a_short_failure_not_a_traceback(url):
+    reason = post(url, "hi")
+    assert reason == "ValueError"
+    assert "hooks" not in reason
+
+
+@pytest.mark.parametrize("url", ["https://hooks.slack.com/services/T/B/x",
+                                 "https://example.webhook.office.com/webhookb2/x"])
+def test_slack_and_classic_teams_get_bare_text(url):
+    assert payload(url, "3 need a person") == {"text": "3 need a person"}
+
+
+@pytest.mark.parametrize("url", [
+    "https://prod-12.westus.logic.azure.com:443/workflows/abc/triggers/manual/paths/invoke?sig=x",
+    "https://default1234.56.environment.api.powerplatform.com/powerautomate/automations/direct/x",
+])
+def test_teams_workflows_get_an_adaptive_card_with_the_same_text(url):
+    body = payload(url, "| table |\n3 need a person")
+    assert body["type"] == "message"
+    (attachment,) = body["attachments"]
+    assert attachment["contentType"] == "application/vnd.microsoft.card.adaptive"
+    card = attachment["content"]
+    assert card["type"] == "AdaptiveCard"
+    assert card["body"] == [{"type": "TextBlock", "text": "| table |\n3 need a person", "wrap": True}]

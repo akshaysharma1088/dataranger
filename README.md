@@ -91,7 +91,9 @@ The flags work independently: `--fail-on-escalate` also works with the normal te
 To hear about escalations without opening the report, add `--notify-webhook URL` (or set
 `DATARANGER_WEBHOOK`) with a Slack or Microsoft Teams incoming webhook. When at least one
 incident needs a person, the patrol posts `{"text": ...}` with the table, the counts and the
-partitions to look at (the same text as `--summary-md`). `--notify-always` also posts when
+partitions to look at (the same text as `--summary-md`). A Teams webhook made with the
+Workflows app (a `logic.azure.com` or `powerplatform.com` URL) gets the same text in an
+Adaptive Card instead, which is the shape it expects. `--notify-always` also posts when
 nothing needs a person. A failed post prints a note and leaves the exit code alone, and the
 webhook URL is never printed.
 
