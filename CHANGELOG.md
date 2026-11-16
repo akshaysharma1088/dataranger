@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `patrol --threshold` must be from 0 to 0.5 (the calibration grid's range), and `calibrate --alpha` and `--delta` must be strictly between 0 and 1. Other values now stop with a short usage error (exit 2) instead of being accepted. An empty or header-only `--labels` file also gets a one-line error instead of a pandas traceback.
+
 ## 0.5.4 (2026-11-15)
 
 - `python -m dataranger` now works, for when pip installs the `dataranger` command into a folder that is not on PATH (common on Windows).
