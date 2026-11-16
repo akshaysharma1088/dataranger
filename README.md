@@ -88,6 +88,13 @@ For scheduled jobs, add `--json` to either `patrol` command to print one JSON ob
 `--fail-on-escalate` to return exit code 2 when any incident needs review, or 0 otherwise.
 The flags work independently: `--fail-on-escalate` also works with the normal text summary.
 
+To hear about escalations without opening the report, add `--notify-webhook URL` (or set
+`DATARANGER_WEBHOOK`) with a Slack or Microsoft Teams incoming webhook. When at least one
+incident needs a person, the patrol posts `{"text": ...}` with the table, the counts and the
+partitions to look at (the same text as `--summary-md`). `--notify-always` also posts when
+nothing needs a person. A failed post prints a note and leaves the exit code alone, and the
+webhook URL is never printed.
+
 To run a daily patrol and download the morning report, copy the
 [GitHub Actions example](examples/scheduled/). It runs on demo data without credentials
 and includes instructions for your own tables.

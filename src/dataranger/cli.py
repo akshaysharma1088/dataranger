@@ -1,5 +1,7 @@
 """DataRanger command line: demo, patrol, calibrate, bench, plan and mcp."""
 import argparse
+import os
+import sys
 
 from . import __version__
 
@@ -72,6 +74,11 @@ def main(argv=None):
     pt.add_argument("--json", action="store_true", help="print only a machine-readable JSON summary")
     pt.add_argument("--summary-md", metavar="PATH", help="also append a Markdown summary to this file (for CI job summaries)")
     pt.add_argument("--fail-on-escalate", action="store_true", help="exit with code 2 if any incident needs review")
+    pt.add_argument("--notify-webhook", metavar="URL", default=None,
+                    help="post a summary to this Slack or Teams incoming webhook when an incident needs a person "
+                         "(default: DATARANGER_WEBHOOK)")
+    pt.add_argument("--notify-always", action="store_true",
+                    help="with a webhook, also post when nothing needs a person")
     cb = sub.add_parser("calibrate", help="choose the gate threshold from your own reviewed incidents")
     cb.add_argument("--audit", nargs="+", required=True, help="audit.jsonl files from past patrols")
     cb.add_argument("--labels", required=True, help="CSV with partition, verdict (right or wrong): was the chosen fix right?")
@@ -179,7 +186,15 @@ def main(argv=None):
             with open(args.summary_md, "a", encoding="utf-8") as f:
                 f.write(markdown(res, table, report=str(Path(args.out) / "dashboard.html")))
         print_summary(res, args.out, json_output=args.json)
-        return 2 if args.fail_on_escalate and any(r["decision"] == "escalate" for r in res.incidents) else 0
+        escalated = any(r["decision"] == "escalate" for r in res.incidents)
+        webhook = args.notify_webhook or os.environ.get("DATARANGER_WEBHOOK")
+        if webhook and (escalated or args.notify_always):
+            from .notify import post
+            from .summary import markdown
+            failed = post(webhook, markdown(res, table, report=str(Path(args.out) / "dashboard.html")))
+            if failed:  # a note only: the patrol itself worked, so the exit code stays as it is
+                print(f"dataranger: note: could not post to the webhook: {failed}", file=sys.stderr)
+        return 2 if args.fail_on_escalate and escalated else 0
     if args.command == "bench":
         from .bench import detect, generate, inject, score
         inst = generate(args.seed, args.size)

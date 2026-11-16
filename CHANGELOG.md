@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `patrol --notify-webhook URL` (or `DATARANGER_WEBHOOK`) posts the patrol summary to a Slack or Teams incoming webhook when an incident needs a person; `--notify-always` posts after every patrol. A failed post is a note on stderr and doesn't change the exit code, and the URL is never printed.
+
 ## 0.5.4 (2026-11-15)
 
 - `python -m dataranger` now works, for when pip installs the `dataranger` command into a folder that is not on PATH (common on Windows).
