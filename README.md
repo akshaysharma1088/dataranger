@@ -167,7 +167,9 @@ dbt build
 dataranger patrol --dbt-model fct_payments --days 45
 ```
 
-Flags such as `--key` or `--dbt-ref-model` override the `meta` block, and `--dbt-target prod` picks another target. There is a complete project you can run without a warehouse in [examples/dbt](examples/dbt/).
+When `meta` doesn't set `key`, a `unique` test on one column of the model gives it. When it doesn't set `reference`, a `relationships` test gives the reference column, `ref_model` and `ref_key`. If a model has two such tests, DataRanger doesn't guess: it keeps the default and says which setting to add.
+
+Flags such as `--key` or `--dbt-ref-model` override the `meta` block (and the tests), and `--dbt-target prod` picks another target. There is a complete project you can run without a warehouse in [examples/dbt](examples/dbt/).
 
 ## GitHub Action
 

@@ -17,12 +17,17 @@ Example, in the model's YAML file:
             date: paid_on
             segment: channel
             amount: amount
+
+Without a `key`, `reference` or `ref_key` there (or on the command line), the model's dbt tests fill them in:
+a `unique` test on one column gives the key, and a `relationships` test gives the reference column, the
+reference model and its key. Two such tests on one model are ambiguous, so nothing is guessed from them.
 """
 from __future__ import annotations
 
 import json
 import os
 import re
+import sys
 from pathlib import Path
 
 from . import sql
@@ -99,6 +104,68 @@ def model_settings(node: dict) -> dict:
     return settings
 
 
+_REF = re.compile(r"""^\s*ref\(\s*(?:['"][^'"]+['"]\s*,\s*)?['"]([^'"]+)['"]\s*(?:,[^)]*)?\)\s*$""")
+_SOURCE = re.compile(r"""^\s*source\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)\s*$""")
+
+
+def _tests_on(manifest: dict, node: dict, test_name: str) -> list[dict]:
+    """Generic dbt tests named test_name (unique, relationships) attached to node, one entry per test."""
+    uid = node.get("unique_id")
+    out = []
+    for test in manifest.get("nodes", {}).values():
+        meta = test.get("test_metadata") or {}
+        if test.get("resource_type") != "test" or meta.get("name") != test_name or meta.get("namespace"):
+            continue
+        kwargs = meta.get("kwargs") or {}
+        attached = test.get("attached_node")
+        if attached is None:  # manifests before dbt 1.5: the model is only named in the kwargs
+            attached_here = f"ref('{node['name']}')" in str(kwargs.get("model", "")).replace('"', "'")
+        else:
+            attached_here = attached == uid
+        column = kwargs.get("column_name") or test.get("column_name")
+        if attached_here and isinstance(column, str) and column:
+            out.append({"column": column, **kwargs})
+    return out
+
+
+def _model_name(to: str) -> str | None:
+    """The model a relationships test points at: ref('dim') -> dim, source('s', 't') -> s.t."""
+    if m := _REF.match(to or ""):
+        return m.group(1)
+    if m := _SOURCE.match(to or ""):
+        return f"{m.group(1)}.{m.group(2)}"
+    return None
+
+
+def settings_from_tests(manifest: dict, node: dict, notes: dict[str, str] | None = None) -> dict:
+    """key, reference, ref_key and ref_model taken from the model's own dbt tests.
+
+    A `unique` test on one column names the key; a `relationships` test names the reference column, the
+    model it points to and that model's key. With two tests of a kind, nothing is taken from that kind,
+    and notes[field] says so (field is key or reference).
+    """
+    out = {}
+    name = node["name"]
+    unique = sorted({t["column"] for t in _tests_on(manifest, node, "unique")})
+    if len(unique) == 1:
+        out["key"] = unique[0]
+    elif len(unique) > 1 and notes is not None:
+        notes["key"] = (f"dbt model {name!r} has unique tests on {len(unique)} columns ({', '.join(unique)}), "
+                        "so the key is not guessed from them; set key in meta.dataranger or pass --key")
+    rels = {(t["column"], _model_name(str(t.get("to", ""))), t.get("field"))
+            for t in _tests_on(manifest, node, "relationships")}
+    rels = {r for r in rels if r[1] and isinstance(r[2], str) and r[2]}
+    if len(rels) == 1:
+        column, ref_model, field = rels.pop()
+        out.update(reference=column, ref_model=ref_model, ref_key=field)
+    elif len(rels) > 1 and notes is not None:
+        cols = ", ".join(sorted(r[0] for r in rels))
+        notes["reference"] = (f"dbt model {name!r} has relationships tests on {len(rels)} columns ({cols}), "
+                              "so the reference is not guessed from them; set reference, ref_key and ref_model in "
+                              "meta.dataranger or pass --reference, --ref-key and --dbt-ref-model")
+    return out
+
+
 def load_target(project_dir: str | Path, target: str | None = None, profiles_dir: str | Path | None = None) -> dict:
     """The connection details dbt would use: the project's profile and its chosen (or default) target."""
     project_dir = Path(project_dir)
@@ -155,8 +222,19 @@ def from_dbt(project_dir: str | Path, model: str, mapping_overrides: dict | None
 
     manifest = load_manifest(project_dir, manifest_path)
     node = find_node(manifest, model)
-    settings = model_settings(node)
     overrides = {k: v for k, v in (mapping_overrides or {}).items() if v is not None}
+    # Preference: command line, then meta.dataranger, then the model's dbt tests, then the defaults.
+    meta = model_settings(node)
+    notes: dict[str, str] = {}
+    from_tests = settings_from_tests(manifest, node, notes)
+    if {"reference", "ref_key"} & (set(meta) | set(overrides)):
+        # The relationships test describes one column; once the reference is set elsewhere it may not be that one.
+        for field in ("reference", "ref_key", "ref_model"):
+            from_tests.pop(field, None)
+    settings = {**from_tests, **meta}
+    for field, note in notes.items():
+        if field not in meta and field not in overrides:  # only when the default is really what gets used
+            print(f"dataranger: {note}.", file=sys.stderr)
     mapping = Mapping(**{"category": None, **{k: settings[k] for k in MAPPING_KEYS if k in settings}, **overrides})
     ref_model = ref_model or settings.get("ref_model")
     manifest_model = manifest_model or settings.get("manifest_model")

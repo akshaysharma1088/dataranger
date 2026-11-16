@@ -270,3 +270,49 @@ def test_days_and_markdown_summary_for_file_sources(case, tmp_path, capsys):
         case.warehouse["transactions"].assign(txn_date="2020-01-01").to_csv(future, index=False)
         main(["patrol", "--facts-file", str(future), "--ref-file", str(r), "--manifest-file", str(m), "--days", "1",
               "--out", str(tmp_path / "out2")])
+
+
+def _generic_test(test_name, column, **kwargs):
+    """A dbt generic test on fct_payments, as the manifest records it (see tests/test_dbt_tests_mapping.py)."""
+    return {"resource_type": "test", "attached_node": "model.shop.fct_payments", "column_name": column,
+            "test_metadata": {"name": test_name, "namespace": None, "kwargs": {"column_name": column, **kwargs}}}
+
+
+def _with_tests(project, *tests):
+    path = project / "target" / "manifest.json"
+    data = json.loads(path.read_text())
+    data["nodes"]["model.shop.fct_payments"]["unique_id"] = "model.shop.fct_payments"
+    data["nodes"].update({f"test.shop.t{i}": t for i, t in enumerate(tests)})
+    path.write_text(json.dumps(data))
+
+
+def test_from_dbt_prefers_command_line_then_meta_then_tests(case, tmp_path, capsys):
+    meta = {"ref_model": "dim_customers", "manifest_model": "control_totals", "date": "paid_on", "category": "category"}
+    project = _dbt_project(tmp_path, case, meta=meta)
+    _with_tests(project, _generic_test("unique", "payment_id"))
+    *_, mapping, _ = dbt_source.from_dbt(project, "fct_payments")
+    assert mapping.key == "payment_id"  # from the test: meta has no key
+
+    meta_key = _dbt_project(tmp_path / "meta", case, meta={**meta, "key": "payment_id"})
+    _with_tests(meta_key, _generic_test("unique", "customer_id"))
+    *_, mapping, _ = dbt_source.from_dbt(meta_key, "fct_payments")
+    assert mapping.key == "payment_id"  # meta wins over the test
+
+    *_, mapping, _ = dbt_source.from_dbt(project, "fct_payments", mapping_overrides={"key": "customer_id"})
+    assert mapping.key == "customer_id"  # the command line wins over both
+    assert capsys.readouterr().err == ""
+
+
+def test_from_dbt_keeps_the_default_and_says_so_when_ambiguous(case, tmp_path, capsys):
+    meta = {"ref_model": "dim_customers", "manifest_model": "control_totals", "date": "paid_on"}
+    project = _dbt_project(tmp_path, case, meta=meta)
+    _with_tests(project, _generic_test("unique", "payment_id"), _generic_test("unique", "customer_id"))
+    *_, mapping, _ = dbt_source.from_dbt(project, "fct_payments", mapping_overrides={"key": "payment_id"})
+    assert capsys.readouterr().err == ""  # --key given: nothing to say
+    try:
+        dbt_source.from_dbt(project, "fct_payments")
+    except Exception:
+        pass  # the default txn_id column doesn't exist in this warehouse; only the note matters here
+    err = capsys.readouterr().err
+    assert "dataranger: dbt model 'fct_payments' has unique tests on 2 columns" in err
+    assert "pass --key" in err

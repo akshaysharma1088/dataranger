@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `--dbt-model`: when neither the command line nor `meta.dataranger` sets the key, a `unique` test on one column of the model gives it. Likewise, a `relationships` test gives `reference`, `ref_key` and `ref_model`. Two tests of a kind on one model mean no guess, and a line on stderr says which setting to add. The order of preference is command line, `meta`, tests, defaults.
+
 ## 0.5.4 (2026-11-15)
 
 - `python -m dataranger` now works, for when pip installs the `dataranger` command into a folder that is not on PATH (common on Windows).
