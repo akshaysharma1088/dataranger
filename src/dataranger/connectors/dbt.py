@@ -70,7 +70,16 @@ def load_manifest(project_dir: str | Path, manifest_path: str | Path | None = No
 
 
 def find_node(manifest: dict, name: str) -> dict:
-    """A model, seed or snapshot by name, or a source written as source_name.table_name."""
+    """A model, seed or snapshot by name, or a source written as source_name.table_name.
+
+    A manifest unique_id (model.package.name, source.package.source_name.table_name) also works, for a name two
+    packages share; settings_from_tests gives one for a package-qualified ref.
+    """
+    if name in manifest.get("sources", {}):
+        return manifest["sources"][name]
+    by_id = manifest.get("nodes", {}).get(name)
+    if by_id and by_id.get("resource_type") in ("model", "seed", "snapshot"):
+        return by_id
     nodes = [n for n in manifest.get("nodes", {}).values()
              if n.get("name") == name and n.get("resource_type") in ("model", "seed", "snapshot")]
     nodes += [s for s in manifest.get("sources", {}).values() if f"{s.get('source_name')}.{s.get('name')}" == name]
@@ -104,7 +113,7 @@ def model_settings(node: dict) -> dict:
     return settings
 
 
-_REF = re.compile(r"""^\s*ref\(\s*(?:['"][^'"]+['"]\s*,\s*)?['"]([^'"]+)['"]\s*(?:,[^)]*)?\)\s*$""")
+_REF = re.compile(r"""^\s*ref\(\s*(?:['"]([^'"]+)['"]\s*,\s*)?['"]([^'"]+)['"]\s*(?:,[^)]*)?\)\s*$""")
 _SOURCE = re.compile(r"""^\s*source\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)\s*$""")
 
 
@@ -124,14 +133,26 @@ def _tests_on(manifest: dict, node: dict, test_name: str) -> list[dict]:
             attached_here = attached == uid
         column = kwargs.get("column_name") or test.get("column_name")
         if attached_here and isinstance(column, str) and column:
-            out.append({"column": column, **kwargs})
+            # A `where` config limits the test to some rows, so it says nothing about the whole model.
+            where = (test.get("config") or {}).get("where") or kwargs.get("where")
+            out.append({"column": column, **kwargs, "_filtered": bool(where)})
     return out
 
 
-def _model_name(to: str) -> str | None:
-    """The model a relationships test points at: ref('dim') -> dim, source('s', 't') -> s.t."""
+def _model_name(manifest: dict, to: str) -> str | None:
+    """The model a relationships test points at: ref('dim') -> dim, source('s', 't') -> s.t.
+
+    A package-qualified ref('pkg', 'dim') gives that package's node by unique_id, so a name another package also
+    uses stays unambiguous for find_node; None when the manifest has no such node, or `to` is not a plain ref or
+    source (a var or other Jinja), so nothing is guessed.
+    """
     if m := _REF.match(to or ""):
-        return m.group(1)
+        package, name = m.group(1), m.group(2)
+        if package is None:
+            return name
+        return next((uid for uid, n in manifest.get("nodes", {}).items()
+                     if n.get("package_name") == package and n.get("name") == name
+                     and n.get("resource_type") in ("model", "seed", "snapshot")), None)
     if m := _SOURCE.match(to or ""):
         return f"{m.group(1)}.{m.group(2)}"
     return None
@@ -145,24 +166,37 @@ def settings_from_tests(manifest: dict, node: dict, notes: dict[str, str] | None
     and notes[field] says so (field is key or reference).
     """
     out = {}
+    notes = {} if notes is None else notes
     name = node["name"]
-    unique = sorted({t["column"] for t in _tests_on(manifest, node, "unique")})
+    uniques = _tests_on(manifest, node, "unique")
+    unique = sorted({t["column"] for t in uniques if not t["_filtered"]})
     if len(unique) == 1:
         out["key"] = unique[0]
-    elif len(unique) > 1 and notes is not None:
+    elif len(unique) > 1:
         notes["key"] = (f"dbt model {name!r} has unique tests on {len(unique)} columns ({', '.join(unique)}), "
                         "so the key is not guessed from them; set key in meta.dataranger or pass --key")
-    rels = {(t["column"], _model_name(str(t.get("to", ""))), t.get("field"))
+    elif filtered := sorted({t["column"] for t in uniques}):
+        notes["key"] = (f"the unique test on {', '.join(filtered)} of dbt model {name!r} has a where filter, so it "
+                        "does not make a key for the whole model; set key in meta.dataranger or pass --key")
+    advice = "set reference, ref_key and ref_model in meta.dataranger or pass --reference, --ref-key and --dbt-ref-model"
+    # Every attached relationships test counts, also one whose target can't be read: two candidates mean no guess.
+    rels = {(t["column"], str(t.get("to", "")), t.get("field"), t["_filtered"])
             for t in _tests_on(manifest, node, "relationships")}
-    rels = {r for r in rels if r[1] and isinstance(r[2], str) and r[2]}
     if len(rels) == 1:
-        column, ref_model, field = rels.pop()
-        out.update(reference=column, ref_model=ref_model, ref_key=field)
-    elif len(rels) > 1 and notes is not None:
-        cols = ", ".join(sorted(r[0] for r in rels))
-        notes["reference"] = (f"dbt model {name!r} has relationships tests on {len(rels)} columns ({cols}), "
-                              "so the reference is not guessed from them; set reference, ref_key and ref_model in "
-                              "meta.dataranger or pass --reference, --ref-key and --dbt-ref-model")
+        column, to, field, filtered = next(iter(rels))
+        ref_model = _model_name(manifest, to)
+        if ref_model and isinstance(field, str) and field and not filtered:
+            out.update(reference=column, ref_model=ref_model, ref_key=field)
+        else:
+            why = "has a where filter" if filtered else f"points at {to!r}, which is not a plain ref or source"
+            if not filtered and ref_model and not (isinstance(field, str) and field):
+                why = "names no field"
+            notes["reference"] = (f"the relationships test on {column} of dbt model {name!r} {why}, so the reference "
+                                  f"is not taken from it; {advice}")
+    elif len(rels) > 1:
+        cols = ", ".join(sorted({r[0] for r in rels}))
+        notes["reference"] = (f"dbt model {name!r} has {len(rels)} relationships tests ({cols}), "
+                              f"so the reference is not guessed from them; {advice}")
     return out
 
 
