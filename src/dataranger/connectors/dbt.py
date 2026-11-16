@@ -17,12 +17,17 @@ Example, in the model's YAML file:
             date: paid_on
             segment: channel
             amount: amount
+
+Without a `key`, `reference` or `ref_key` there (or on the command line), the model's dbt tests fill them in:
+a `unique` test on one column gives the key, and a `relationships` test gives the reference column, the
+reference model and its key. Two such tests on one model are ambiguous, so nothing is guessed from them.
 """
 from __future__ import annotations
 
 import json
 import os
 import re
+import sys
 from pathlib import Path
 
 from . import sql
@@ -65,7 +70,16 @@ def load_manifest(project_dir: str | Path, manifest_path: str | Path | None = No
 
 
 def find_node(manifest: dict, name: str) -> dict:
-    """A model, seed or snapshot by name, or a source written as source_name.table_name."""
+    """A model, seed or snapshot by name, or a source written as source_name.table_name.
+
+    A manifest unique_id (model.package.name, source.package.source_name.table_name) also works, for a name two
+    packages share; settings_from_tests gives one for a package-qualified ref.
+    """
+    if name in manifest.get("sources", {}):
+        return manifest["sources"][name]
+    by_id = manifest.get("nodes", {}).get(name)
+    if by_id and by_id.get("resource_type") in ("model", "seed", "snapshot"):
+        return by_id
     nodes = [n for n in manifest.get("nodes", {}).values()
              if n.get("name") == name and n.get("resource_type") in ("model", "seed", "snapshot")]
     nodes += [s for s in manifest.get("sources", {}).values() if f"{s.get('source_name')}.{s.get('name')}" == name]
@@ -97,6 +111,93 @@ def model_settings(node: dict) -> dict:
     if unknown:
         raise ValueError(f"meta.dataranger on dbt model {node['name']!r} has unknown setting(s): {', '.join(unknown)}")
     return settings
+
+
+_REF = re.compile(r"""^\s*ref\(\s*(?:['"]([^'"]+)['"]\s*,\s*)?['"]([^'"]+)['"]\s*(?:,[^)]*)?\)\s*$""")
+_SOURCE = re.compile(r"""^\s*source\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)\s*$""")
+
+
+def _tests_on(manifest: dict, node: dict, test_name: str) -> list[dict]:
+    """Generic dbt tests named test_name (unique, relationships) attached to node, one entry per test."""
+    uid = node.get("unique_id")
+    out = []
+    for test in manifest.get("nodes", {}).values():
+        meta = test.get("test_metadata") or {}
+        if test.get("resource_type") != "test" or meta.get("name") != test_name or meta.get("namespace"):
+            continue
+        kwargs = meta.get("kwargs") or {}
+        attached = test.get("attached_node")
+        if attached is None:  # manifests before dbt 1.5: the model is only named in the kwargs
+            attached_here = f"ref('{node['name']}')" in str(kwargs.get("model", "")).replace('"', "'")
+        else:
+            attached_here = attached == uid
+        column = kwargs.get("column_name") or test.get("column_name")
+        if attached_here and isinstance(column, str) and column:
+            # A `where` config limits the test to some rows, so it says nothing about the whole model.
+            where = (test.get("config") or {}).get("where") or kwargs.get("where")
+            out.append({"column": column, **kwargs, "_filtered": bool(where)})
+    return out
+
+
+def _model_name(manifest: dict, to: str) -> str | None:
+    """The model a relationships test points at: ref('dim') -> dim, source('s', 't') -> s.t.
+
+    A package-qualified ref('pkg', 'dim') gives that package's node by unique_id, so a name another package also
+    uses stays unambiguous for find_node; None when the manifest has no such node, or `to` is not a plain ref or
+    source (a var or other Jinja), so nothing is guessed.
+    """
+    if m := _REF.match(to or ""):
+        package, name = m.group(1), m.group(2)
+        if package is None:
+            return name
+        return next((uid for uid, n in manifest.get("nodes", {}).items()
+                     if n.get("package_name") == package and n.get("name") == name
+                     and n.get("resource_type") in ("model", "seed", "snapshot")), None)
+    if m := _SOURCE.match(to or ""):
+        return f"{m.group(1)}.{m.group(2)}"
+    return None
+
+
+def settings_from_tests(manifest: dict, node: dict, notes: dict[str, str] | None = None) -> dict:
+    """key, reference, ref_key and ref_model taken from the model's own dbt tests.
+
+    A `unique` test on one column names the key; a `relationships` test names the reference column, the
+    model it points to and that model's key. With two tests of a kind, nothing is taken from that kind,
+    and notes[field] says so (field is key or reference).
+    """
+    out = {}
+    notes = {} if notes is None else notes
+    name = node["name"]
+    uniques = _tests_on(manifest, node, "unique")
+    unique = sorted({t["column"] for t in uniques if not t["_filtered"]})
+    if len(unique) == 1:
+        out["key"] = unique[0]
+    elif len(unique) > 1:
+        notes["key"] = (f"dbt model {name!r} has unique tests on {len(unique)} columns ({', '.join(unique)}), "
+                        "so the key is not guessed from them; set key in meta.dataranger or pass --key")
+    elif filtered := sorted({t["column"] for t in uniques}):
+        notes["key"] = (f"the unique test on {', '.join(filtered)} of dbt model {name!r} has a where filter, so it "
+                        "does not make a key for the whole model; set key in meta.dataranger or pass --key")
+    advice = "set reference, ref_key and ref_model in meta.dataranger or pass --reference, --ref-key and --dbt-ref-model"
+    # Every attached relationships test counts, also one whose target can't be read: two candidates mean no guess.
+    rels = {(t["column"], str(t.get("to", "")), t.get("field"), t["_filtered"])
+            for t in _tests_on(manifest, node, "relationships")}
+    if len(rels) == 1:
+        column, to, field, filtered = next(iter(rels))
+        ref_model = _model_name(manifest, to)
+        if ref_model and isinstance(field, str) and field and not filtered:
+            out.update(reference=column, ref_model=ref_model, ref_key=field)
+        else:
+            why = "has a where filter" if filtered else f"points at {to!r}, which is not a plain ref or source"
+            if not filtered and ref_model and not (isinstance(field, str) and field):
+                why = "names no field"
+            notes["reference"] = (f"the relationships test on {column} of dbt model {name!r} {why}, so the reference "
+                                  f"is not taken from it; {advice}")
+    elif len(rels) > 1:
+        cols = ", ".join(sorted({r[0] for r in rels}))
+        notes["reference"] = (f"dbt model {name!r} has {len(rels)} relationships tests ({cols}), "
+                              f"so the reference is not guessed from them; {advice}")
+    return out
 
 
 def load_target(project_dir: str | Path, target: str | None = None, profiles_dir: str | Path | None = None) -> dict:
@@ -155,8 +256,19 @@ def from_dbt(project_dir: str | Path, model: str, mapping_overrides: dict | None
 
     manifest = load_manifest(project_dir, manifest_path)
     node = find_node(manifest, model)
-    settings = model_settings(node)
     overrides = {k: v for k, v in (mapping_overrides or {}).items() if v is not None}
+    # Preference: command line, then meta.dataranger, then the model's dbt tests, then the defaults.
+    meta = model_settings(node)
+    notes: dict[str, str] = {}
+    from_tests = settings_from_tests(manifest, node, notes)
+    if {"reference", "ref_key"} & (set(meta) | set(overrides)):
+        # The relationships test describes one column; once the reference is set elsewhere it may not be that one.
+        for field in ("reference", "ref_key", "ref_model"):
+            from_tests.pop(field, None)
+    settings = {**from_tests, **meta}
+    for field, note in notes.items():
+        if field not in meta and field not in overrides:  # only when the default is really what gets used
+            print(f"dataranger: {note}.", file=sys.stderr)
     mapping = Mapping(**{"category": None, **{k: settings[k] for k in MAPPING_KEYS if k in settings}, **overrides})
     ref_model = ref_model or settings.get("ref_model")
     manifest_model = manifest_model or settings.get("manifest_model")
