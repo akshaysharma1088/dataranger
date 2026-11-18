@@ -291,8 +291,8 @@ def patrol_dbt(
     data is right) or "escalate" (a person must decide).
 
     Use this after `dbt build` or `dbt run`, before trusting or publishing a date-partitioned model. It
-    finds the model's table from dbt's manifest, connects the way the project's profile says (DuckDB and
-    Snowflake targets are supported), and takes the column mapping from the model's `meta: dataranger:`
+    finds the model's table from dbt's manifest, connects the way the project's profile says (DuckDB,
+    Snowflake and BigQuery targets are supported), and takes the column mapping from the model's `meta: dataranger:`
     block unless you pass columns here. Use patrol_snowflake or patrol_duckdb for tables that are not dbt
     models, and patrol_files for CSV or Parquet exports.
 
