@@ -1,6 +1,8 @@
 """Snowflake and dbt sources. Snowflake is stood in for by DuckDB behind the connector's cursor interface,
 with upper-case column names and DECIMAL amounts, as Snowflake returns them."""
 import json
+import sys
+import types
 from datetime import date, timedelta
 
 import duckdb
@@ -214,8 +216,8 @@ def test_dbt_problems_are_explained(case, tmp_path):
         dbt_source.from_dbt(tmp_path / "missing", "fct_payments")
     with pytest.raises(SystemExit, match="patrol: dbt model 'nope' not found"):
         main(["patrol", "--dbt-model", "nope", "--dbt-project-dir", str(project)])
-    other = _dbt_project(tmp_path / "pg", case, profile_output="type: postgres\n      host: localhost")
-    with pytest.raises(ValueError, match="'postgres' is not supported yet"):
+    other = _dbt_project(tmp_path / "bq", case, profile_output="type: bigquery\n      project: shop")
+    with pytest.raises(ValueError, match="'bigquery' is not supported yet"):
         dbt_source.from_dbt(other, "fct_payments")
     typo = _dbt_project(tmp_path / "typo", case, meta={"ref_model": "dim_customers", "manifest_model": "control_totals",
                                                        "keys": "payment_id"})
@@ -245,6 +247,98 @@ def test_dbt_snowflake_target_uses_the_profile(case, tmp_path, monkeypatch):
     monkeypatch.delenv("SNOW_PW")
     with pytest.raises(ValueError, match="environment variable SNOW_PW is not set"):
         dbt_source.from_dbt(project, "fct_payments", snowflake_opener=opener)
+
+
+class FakePostgres(FakeSnowflake):
+    """The dbt project's DuckDB file behind a DB-API connection, as psycopg returns rows: no pandas fetch."""
+
+    def __init__(self, path):
+        self.con, self.queries, self.pandas, self.closed = duckdb.connect(str(path), read_only=True), [], False, False
+
+
+PG_OUTPUT = ("type: postgres\n      host: db.internal\n      port: 5433\n      user: ranger\n"
+             "      pass: \"{{ env_var('PG_PW') }}\"\n      dbname: shop\n      schema: main\n      role: reader\n"
+             "      sslmode: require\n      threads: 4")
+
+
+def test_dbt_postgres_target_uses_the_profile(case, expected, tmp_path, monkeypatch):
+    monkeypatch.setenv("PG_PW", "s3cret")
+    project = _dbt_project(tmp_path, case, profile_output=PG_OUTPUT)
+    seen, opened = {}, []
+
+    def opener(params):
+        seen.update(params)
+        opened.append(FakePostgres(project / "shop.duckdb"))
+        return opened[-1]
+
+    facts, refs, totals, mapping, _ = dbt_source.from_dbt(project, "fct_payments", postgres_opener=opener)
+    assert seen == {"host": "db.internal", "port": 5433, "user": "ranger", "password": "s3cret", "dbname": "shop",
+                    "sslmode": "require", "role": "reader"}
+    assert len(opened[0].queries) == 3 and opened[0].closed
+    assert all(q.startswith("select ") and '"shop"."main".' in q for q in opened[0].queries)
+    res = patrol(facts, refs, totals, mapping)
+    assert sorted((str(r["partition"]), r["decision"]) for r in res.incidents) == expected
+
+
+def test_dbt_postgres_errors_are_one_line(case, tmp_path, monkeypatch):
+    monkeypatch.setenv("PG_PW", "s3cret")
+    project = _dbt_project(tmp_path, case, profile_output=PG_OUTPUT)
+
+    def refused(params):
+        raise RuntimeError('connection to server at "db.internal" failed: password authentication failed\nDETAIL: x')
+
+    with pytest.raises(ValueError, match=r'^could not connect to Postgres: connection to server .* failed$'):
+        dbt_source.from_dbt(project, "fct_payments", postgres_opener=refused)
+
+    class Broken(FakePostgres):
+        def cursor(self):
+            raise RuntimeError('relation "main.fct_payments" does not exist\nLINE 1: select ...')
+
+    broken = Broken(project / "shop.duckdb")
+    with pytest.raises(ValueError, match=r'^Postgres query failed: relation "main.fct_payments" does not exist$'):
+        dbt_source.from_dbt(project, "fct_payments", postgres_opener=lambda params: broken)
+    assert broken.closed
+
+
+def test_dbt_postgres_without_a_driver_says_what_to_install(case, tmp_path, monkeypatch):
+    monkeypatch.setenv("PG_PW", "s3cret")
+    monkeypatch.setitem(sys.modules, "psycopg", None)
+    monkeypatch.setitem(sys.modules, "psycopg2", None)
+    project = _dbt_project(tmp_path, case, profile_output=PG_OUTPUT)
+    with pytest.raises(SystemExit, match=r'pip install "dataranger\[postgres\]"'):
+        dbt_source.from_dbt(project, "fct_payments")
+
+
+def test_postgres_session_is_read_only_and_sets_the_role(monkeypatch):
+    from dataranger.connectors import postgres as pg
+
+    calls = {}
+
+    class Cursor:
+        def execute(self, query):
+            calls.setdefault("executed", []).append(query)
+
+        def close(self):
+            pass
+
+    class Conn:
+        def cursor(self):
+            return Cursor()
+
+    fake = types.ModuleType("psycopg")
+    fake.connect = lambda **kwargs: calls.update(kwargs=kwargs) or Conn()
+    monkeypatch.setitem(sys.modules, "psycopg", fake)
+    pg.connect({"host": "h", "dbname": "shop", "role": 'odd"role'})
+    assert calls["kwargs"] == {"host": "h", "dbname": "shop", "application_name": "dataranger",
+                               "options": "-c default_transaction_read_only=on"}
+    assert calls["executed"] == ['set role "odd""role"']
+
+    monkeypatch.setitem(sys.modules, "psycopg", None)
+    fake2 = types.ModuleType("psycopg2")
+    fake2.connect = lambda **kwargs: calls.update(kwargs2=kwargs) or Conn()
+    monkeypatch.setitem(sys.modules, "psycopg2", fake2)
+    pg.connect({"host": "h"})
+    assert calls["kwargs2"]["options"] == "-c default_transaction_read_only=on"
 
 
 def test_days_and_markdown_summary_for_file_sources(case, tmp_path, capsys):
