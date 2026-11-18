@@ -92,7 +92,7 @@ dataranger totals --facts-file raw_payments.parquet --out control_totals.csv \
     --date booking_date --segment channel --amount amount
 ```
 
-`totals` counts each day's rows (a timestamp counts toward its calendar day) and sums the amount, per segment and for the whole day. It stops if a row has no date, or has the segment value `*`. Rows with no segment count only toward the day's `*` row. Running it again replaces the output. `--out-table` is the only way DataRanger writes to your database: it writes only the table you name, and replaces an existing table only if that table already has the control-totals columns. The totals are only as independent as the table they come from, so build them upstream of the load you want to check.
+`totals` counts each day's rows (a timestamp counts toward its calendar day) and sums the amount, per segment and for the whole day. It stops if a row has no date, or has the segment value `*`. Rows with no segment count only toward the day's `*` row. Running it again replaces the output. `--out-table` is the only way DataRanger writes to your database: it writes only the table you name, replaces an existing table only if that table already has the control-totals columns, and never replaces the `--table` it reads from. The totals are only as independent as the table they come from, so build them upstream of the load you want to check.
 
 For scheduled jobs, add `--json` to either `patrol` command to print one JSON object with
 `incidents`, `auto_fixed`, `no_action`, `escalate`, and the `report` path. Add

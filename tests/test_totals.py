@@ -139,11 +139,14 @@ def test_totals_argument_errors(argv, message, capsys):
 def test_totals_will_not_replace_a_table_that_is_not_control_totals(tmp_path):
     db = tmp_path / "w.duckdb"
     _raw_db(db, [(1, "2026-11-01", "card", 1.0)])
+    con = duckdb.connect(str(db))
+    con.execute("create table raw.ledger as select * from raw.payments")
+    con.close()
     with pytest.raises(SystemExit) as e:
-        main(["totals", "--db", str(db), "--table", "raw.payments", "--out-table", "raw.payments",
+        main(["totals", "--db", str(db), "--table", "raw.payments", "--out-table", "raw.ledger",
               "--date", "booked_at", "--segment", "pay channel", "--amount", "value"])
-    assert "raw.payments already exists and isn't a control-totals table" in str(e.value)
-    assert duckdb.connect(str(db), read_only=True).execute("select count(*) from raw.payments").fetchone()[0] == 1
+    assert "raw.ledger already exists and isn't a control-totals table" in str(e.value)
+    assert duckdb.connect(str(db), read_only=True).execute("select count(*) from raw.ledger").fetchone()[0] == 1
 
 
 def test_totals_will_not_overwrite_its_source_file(tmp_path, capsys):
@@ -153,3 +156,30 @@ def test_totals_will_not_overwrite_its_source_file(tmp_path, capsys):
         main(["totals", "--facts-file", str(raw), "--out", str(raw)])
     assert "--out is the --facts-file" in capsys.readouterr().err
     assert raw.read_text().startswith("txn_date,channel,amount")
+
+
+@pytest.mark.parametrize("out_table", ["raw.payments", "RAW.Payments", "w.raw.payments"])
+def test_totals_will_not_replace_its_source_table_even_with_matching_columns(tmp_path, out_table):
+    db = tmp_path / "w.duckdb"
+    con = duckdb.connect(str(db))
+    con.execute("create schema raw")
+    con.execute("create table raw.payments (txn_date date, channel varchar, n bigint, amount double)")
+    con.execute("insert into raw.payments values ('2026-11-01', 'card', 7, 1.0), ('2026-11-01', 'wire', 9, 2.0)")
+    con.close()
+    with pytest.raises(SystemExit) as e:
+        main(["totals", "--db", str(db), "--table", "raw.payments", "--out-table", out_table])
+    assert "is the --table the totals are read from" in str(e.value)
+    con = duckdb.connect(str(db), read_only=True)
+    assert con.execute("select * from raw.payments order by channel").fetchall() == [
+        (date(2026, 11, 1), "card", 7, 1.0), (date(2026, 11, 1), "wire", 9, 2.0)]
+    con.close()
+
+
+def test_totals_rerun_replaces_an_existing_output_file(tmp_path):
+    raw = tmp_path / "raw.csv"
+    out = tmp_path / "totals.csv"
+    raw.write_text("txn_date,channel,amount\n2026-11-01,card,1\n2026-11-02,card,2\n")
+    out.write_text("stale\n")
+    assert main(["totals", "--facts-file", str(raw), "--out", str(out)]) == 0
+    assert out.read_text().splitlines() == ["txn_date,channel,n,amount", "2026-11-01,*,1,1.0", "2026-11-01,card,1,1.0",
+                                            "2026-11-02,*,1,2.0", "2026-11-02,card,1,2.0"]

@@ -189,7 +189,7 @@ def main(argv=None):
             if args.out:
                 write_file(args.out, totals)
             else:
-                write_table(args.db, args.out_table, totals)
+                write_table(args.db, args.out_table, totals, source_table=args.table)
         except (ValueError, duckdb_error()) as e:
             raise SystemExit(f"totals: {e}") from None
         days = totals[args.date].nunique()

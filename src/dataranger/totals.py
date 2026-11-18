@@ -77,14 +77,26 @@ def build(*, db: str | None = None, table: str | None = None, facts_file: str | 
         con.close()
 
 
-def write_table(db: str, out_table: str, totals: pd.DataFrame) -> None:
+def _table_key(con: duckdb.DuckDBPyConnection, name: str) -> tuple[str, ...]:
+    """*name* as (database, schema, table), lowercased, filling in the current database and schema."""
+    parts = [part.lower() for part in name.split(".")]
+    if len(parts) < 3:
+        database, schema = con.execute("select current_database(), current_schema()").fetchone()
+        parts = [database.lower(), schema.lower()][: 3 - len(parts)] + parts
+    return tuple(parts)
+
+
+def write_table(db: str, out_table: str, totals: pd.DataFrame, source_table: str | None = None) -> None:
     """Create or replace *out_table* in the DuckDB database with *totals*.
 
     An existing table is replaced only if it has the control-totals columns, so a mistyped name can't
-    overwrite a fact table.
+    overwrite a fact table. *out_table* may never be *source_table*, even when the source happens to have
+    the same columns as the totals.
     """
     con = duckdb.connect(db)
     try:
+        if source_table and _table_key(con, out_table) == _table_key(con, source_table):
+            raise ValueError(f"{out_table} is the --table the totals are read from; choose another --out-table")
         try:
             existing = con.execute(f"select * from {_quoted(out_table)} limit 0").df().columns.tolist()
         except duckdb.CatalogException:
