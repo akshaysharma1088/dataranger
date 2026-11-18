@@ -1,7 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 (2026-11-18)
 
+More warehouses for dbt projects, alerts where your team already works, and less to configure. All five changes below were contributed by @sarankumar1325.
+
+- **dbt on Postgres.** `--dbt-model` now patrols models on a Postgres target. The session is opened read-only and named `dataranger`, the profile's `role` is applied, and psycopg 3 or psycopg2 both work. Install with `pip install "dataranger[dbt,postgres]"`.
+- **dbt on BigQuery (experimental).** `--dbt-model` also patrols models on a BigQuery target, with `oauth`, `service-account` and `service-account-json` profiles. If the profile sets `maximum_bytes_billed`, every query carries that cap. BigQuery bills by bytes scanned, so use `--days` to keep the scan small. It has so far only run against a stand-in client, so please report what you see on a real project. Install with `pip install "dataranger[dbt,bigquery]"`.
 - `patrol --threshold` must be from 0 to 0.5 (the calibration grid's range), and `calibrate --alpha` and `--delta` must be strictly between 0 and 1. Other values now stop with a short usage error (exit 2) instead of being accepted. An empty or header-only `--labels` file also gets a one-line error instead of a pandas traceback.
 - `--dbt-model`: when neither the command line nor `meta.dataranger` sets the key, a `unique` test on one column of the model gives it. Likewise, a `relationships` test gives `reference`, `ref_key` and `ref_model`. Two tests of a kind on one model mean no guess, and a line on stderr says which setting to add. The order of preference is command line, `meta`, tests, defaults.
 - `patrol --notify-webhook URL` (or `DATARANGER_WEBHOOK`) posts the patrol summary to a Slack or Teams incoming webhook (an Adaptive Card for Teams Workflows URLs) when an incident needs a person; `--notify-always` posts after every patrol. A failed post is a note on stderr and doesn't change the exit code, and the URL is never printed.
