@@ -216,8 +216,8 @@ def test_dbt_problems_are_explained(case, tmp_path):
         dbt_source.from_dbt(tmp_path / "missing", "fct_payments")
     with pytest.raises(SystemExit, match="patrol: dbt model 'nope' not found"):
         main(["patrol", "--dbt-model", "nope", "--dbt-project-dir", str(project)])
-    other = _dbt_project(tmp_path / "bq", case, profile_output="type: bigquery\n      project: shop")
-    with pytest.raises(ValueError, match="'bigquery' is not supported yet"):
+    other = _dbt_project(tmp_path / "dbx", case, profile_output="type: databricks\n      host: localhost")
+    with pytest.raises(ValueError, match="'databricks' is not supported yet"):
         dbt_source.from_dbt(other, "fct_payments")
     typo = _dbt_project(tmp_path / "typo", case, meta={"ref_model": "dim_customers", "manifest_model": "control_totals",
                                                        "keys": "payment_id"})
@@ -339,6 +339,171 @@ def test_postgres_session_is_read_only_and_sets_the_role(monkeypatch):
     monkeypatch.setitem(sys.modules, "psycopg2", fake2)
     pg.connect({"host": "h"})
     assert calls["kwargs2"]["options"] == "-c default_transaction_read_only=on"
+
+
+def test_bigquery_queries_use_date_literals_and_backticks():
+    facts, refs, totals = sql.build_queries("`my-proj`.`gold`.`payments`", "`my-proj`.gold.customers",
+                                            "`my-proj`.`ops`.`control_totals`", MAPPING, days=30,
+                                            today=date(2026, 11, 12), dialect="bigquery")
+    assert facts == ("select txn_id, customer_id, txn_date, channel, amount, category from `my-proj`.`gold`.`payments` "
+                     "where txn_date >= '2026-10-14'")
+    assert refs == "select distinct customer_id from `my-proj`.gold.customers"
+    assert totals.endswith("from `my-proj`.`ops`.`control_totals` where txn_date >= '2026-10-14'")
+    for bad in ["`a`b`.t", "`a\\`.t", "``.t", "`a`;drop"]:
+        with pytest.raises(ValueError):
+            sql.build_queries(bad, "r", "m", MAPPING, dialect="bigquery")
+    with pytest.raises(ValueError):  # backticks only for BigQuery
+        sql.build_queries("`my-proj`.gold.payments", "r", "m", MAPPING)
+
+
+class FakeBigQuery:
+    """The dbt project's DuckDB file behind the BigQuery client's query().result() interface."""
+
+    def __init__(self, path):
+        self.con, self.queries, self.closed = duckdb.connect(str(path), read_only=True), [], False
+
+    def query(self, query, job_config=None):
+        self.queries.append(query)
+        result = self.con.execute(query.replace("`", '"'))
+        names = [d[0] for d in result.description]
+        rows = [types.SimpleNamespace(values=lambda r=r: r) for r in result.fetchall()]
+
+        class Rows(list):
+            schema = [types.SimpleNamespace(name=n) for n in names]
+
+        return types.SimpleNamespace(result=lambda: Rows(rows))
+
+    def close(self):
+        self.closed = True
+
+
+def _bigquery_project(tmp_path, case, output):
+    project = _dbt_project(tmp_path, case, profile_output=output)
+    path = project / "target" / "manifest.json"
+    manifest = json.loads(path.read_text())
+    for node in manifest["nodes"].values():
+        node["relation_name"] = node["relation_name"].replace('"', "`")
+    path.write_text(json.dumps(manifest))
+    return project
+
+
+def test_dbt_bigquery_target_uses_the_profile(case, expected, tmp_path):
+    output = ("type: bigquery\n      method: service-account\n      project: shop-data\n"
+              "      execution_project: shop-billing\n      dataset: main\n      keyfile: keys/sa.json\n"
+              "      location: EU\n      threads: 4")
+    project = _bigquery_project(tmp_path, case, output)
+    seen, opened = {}, []
+
+    def opener(params):
+        seen.update(params)
+        opened.append(FakeBigQuery(project / "shop.duckdb"))
+        return opened[-1]
+
+    facts, refs, totals, mapping, _ = dbt_source.from_dbt(project, "fct_payments", days=30, bigquery_opener=opener)
+    assert seen == {"method": "service-account", "project": "shop-billing", "location": "EU",
+                    "keyfile": str(project / "keys" / "sa.json")}
+    assert opened[0].closed and len(opened[0].queries) == 3
+    assert all("`shop`.`main`." in q for q in opened[0].queries)
+    assert "paid_on >= '" in opened[0].queries[0] and "::" not in opened[0].queries[0]
+    full = dbt_source.from_dbt(project, "fct_payments", bigquery_opener=opener)
+    res = patrol(*full[:4])
+    assert sorted((str(r["partition"]), r["decision"]) for r in res.incidents) == expected
+    assert 0 < len(facts) < len(full[0])
+
+
+def test_dbt_bigquery_cutoff_works_on_a_timestamp_column(case, expected, tmp_path):
+    # BigQuery has no TIMESTAMP >= DATE comparison, so the cutoff is a plain string literal that BigQuery coerces
+    # to the column's own type (DATE, DATETIME or TIMESTAMP), and the column is left bare for partition pruning.
+    project = _bigquery_project(tmp_path, case, "type: bigquery\n      method: oauth\n      project: shop")
+    with duckdb.connect(str(project / "shop.duckdb")) as con:
+        for table in ("fct_payments", "control_totals"):
+            con.execute(f"alter table {table} alter paid_on type timestamp")
+        assert con.execute("select typeof(paid_on) from fct_payments limit 1").fetchone() == ("TIMESTAMP",)
+    opened = []
+
+    def opener(params):
+        opened.append(FakeBigQuery(project / "shop.duckdb"))
+        return opened[-1]
+
+    facts, *_ = dbt_source.from_dbt(project, "fct_payments", days=30, bigquery_opener=opener)
+    since = sql.cutoff(30).isoformat()
+    assert [q.endswith(f" where paid_on >= '{since}'") for q in opened[0].queries] == [True, False, True]
+    full = dbt_source.from_dbt(project, "fct_payments", bigquery_opener=opener)
+    assert 0 < len(facts) < len(full[0])
+    res = patrol(*full[:4])
+    assert sorted((str(r["partition"]), r["decision"]) for r in res.incidents) == expected
+
+
+def test_bigquery_jobs_carry_the_profiles_byte_cap(monkeypatch):
+    from dataranger.connectors import bigquery as bq
+
+    base = {"method": "oauth", "project": "p"}
+    assert bq.params_from_profile({**base, "maximum_bytes_billed": 10**9}) == {**base, "maximum_bytes_billed": 10**9}
+    assert bq.params_from_profile({**base, "maximum_bytes_billed": "500"})["maximum_bytes_billed"] == 500
+    for bad in (0, -1, "1e9", 1.5, True):
+        with pytest.raises(ValueError, match="maximum_bytes_billed must be a positive whole number"):
+            bq.params_from_profile({**base, "maximum_bytes_billed": bad})
+
+    configs, clients = [], []
+    fake = types.ModuleType("google.cloud.bigquery")
+    fake.QueryJobConfig = lambda **kwargs: configs.append(kwargs) or kwargs
+    fake.Client = lambda **kwargs: clients.append(kwargs) or Stub()
+    cloud = types.ModuleType("google.cloud")
+    cloud.bigquery = fake
+    monkeypatch.setitem(sys.modules, "google.cloud", cloud)
+    monkeypatch.setitem(sys.modules, "google.cloud.bigquery", fake)
+
+    class Stub:
+        def query(self, query, job_config=None):
+            assert job_config is configs[-1]
+            rows = type("Rows", (list,), {"schema": [types.SimpleNamespace(name="n")]})
+            return types.SimpleNamespace(result=lambda: rows([types.SimpleNamespace(values=lambda: (1,))]))
+
+    frames = bq.run_queries(["select 1 as n"] * 2, params={**base, "maximum_bytes_billed": 500})
+    assert [len(f) for f in frames] == [1, 1]
+    assert clients == [{"project": "p"}]  # the cap is a job setting, not a client one
+    assert configs == [{"labels": {"application": "dataranger"}, "maximum_bytes_billed": 500}] * 2
+    bq.run_queries(["select 1 as n"], params=base)
+    assert configs[-1] == {"labels": {"application": "dataranger"}}
+
+
+def test_dbt_bigquery_profile_methods(tmp_path):
+    from dataranger.connectors import bigquery as bq
+
+    assert bq.params_from_profile({"type": "bigquery", "method": "oauth", "project": "p", "dataset": "d"}) == \
+        {"method": "oauth", "project": "p"}
+    info = {"type": "service_account", "project_id": "p"}
+    assert bq.params_from_profile({"method": "service-account-json", "project": "p", "keyfile_json": info}) == \
+        {"method": "service-account-json", "project": "p", "keyfile_json": info}
+    for output, message in [({"method": "oauth-secrets", "project": "p"}, "'oauth-secrets' is not supported yet"),
+                            ({"method": "service-account", "project": "p"}, "needs keyfile"),
+                            ({"method": "service-account-json", "project": "p"}, "needs keyfile_json")]:
+        with pytest.raises(ValueError, match=message):
+            bq.params_from_profile(output)
+
+
+def test_dbt_bigquery_errors_are_one_line(case, tmp_path, monkeypatch):
+    project = _bigquery_project(tmp_path, case, "type: bigquery\n      method: oauth\n      project: shop")
+
+    def refused(params):
+        raise RuntimeError("Your default credentials were not found.\nTo set up ADC, see ...")
+
+    with pytest.raises(ValueError, match=r"^could not connect to BigQuery: Your default credentials were not found\.$"):
+        dbt_source.from_dbt(project, "fct_payments", bigquery_opener=refused)
+
+    class Broken(FakeBigQuery):
+        def query(self, query, job_config=None):
+            raise RuntimeError("404 Not found: Table shop:main.fct_payments was not found in location US\n\nLocation: US")
+
+    broken = Broken(project / "shop.duckdb")
+    with pytest.raises(ValueError, match=r"^BigQuery query failed: 404 Not found: Table .* location US$"):
+        dbt_source.from_dbt(project, "fct_payments", bigquery_opener=lambda params: broken)
+    assert broken.closed
+
+    monkeypatch.setitem(sys.modules, "google.cloud.bigquery", None)
+    monkeypatch.setitem(sys.modules, "google.cloud", None)
+    with pytest.raises(SystemExit, match=r'pip install "dataranger\[bigquery\]"'):
+        dbt_source.from_dbt(project, "fct_payments")
 
 
 def test_days_and_markdown_summary_for_file_sources(case, tmp_path, capsys):

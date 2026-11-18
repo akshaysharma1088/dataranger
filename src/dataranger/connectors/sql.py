@@ -8,15 +8,18 @@ import pandas as pd
 
 _SIMPLE = re.compile(r"[A-Za-z_][A-Za-z0-9_$]*")
 _QUOTED = re.compile(r'"[^"]+"')
+_BACKTICKED = re.compile(r"`[^`\\]+`")  # BigQuery: `my-project`.`dataset`.`table`
 
 
-def relation(name: str, what: str = "table") -> str:
+def relation(name: str, what: str = "table", backticks: bool = False) -> str:
     """Check a possibly qualified table name (db.schema.table, parts may be "quoted") and return it unchanged.
 
-    Names go straight into SQL, so anything that is not a plain or quoted identifier is refused.
+    Names go straight into SQL, so anything that is not a plain or quoted identifier is refused. With
+    `backticks` (BigQuery), parts may be `quoted` with backticks instead.
     """
-    parts = re.findall(r'"[^"]*"|[^.]+', name or "")
-    if not parts or ".".join(parts) != name or not all(_SIMPLE.fullmatch(p) or _QUOTED.fullmatch(p) for p in parts):
+    parts = re.findall(r'"[^"]*"|`[^`]*`|[^.]+', name or "")
+    quoted = (lambda p: _QUOTED.fullmatch(p) or _BACKTICKED.fullmatch(p)) if backticks else _QUOTED.fullmatch
+    if not parts or ".".join(parts) != name or not all(_SIMPLE.fullmatch(p) or quoted(p) for p in parts):
         raise ValueError(f"{what} name {name!r} is not valid: use letters, digits and underscores, "
                          'optionally qualified as database.schema.table, with "quotes" around unusual parts')
     return name
@@ -38,19 +41,30 @@ def cutoff(days: int | None, today: date | None = None) -> date | None:
 
 
 def build_queries(table: str, ref_table: str, manifest_table: str, mapping, days: int | None = None,
-                  today: date | None = None) -> tuple[str, str, str]:
-    """The three read-only queries of a patrol. Only the mapped columns are selected, to keep transfers small."""
+                  today: date | None = None, dialect: str | None = None) -> tuple[str, str, str]:
+    """The three read-only queries of a patrol. Only the mapped columns are selected, to keep transfers small.
+
+    dialect "bigquery" accepts `backtick` quoted table names and writes the date cutoff as a plain '...' string
+    literal (BigQuery has no :: cast). BigQuery coerces that literal to the date column's own type, so the cutoff
+    works for DATE, DATETIME and TIMESTAMP columns (a TIMESTAMP is compared at 00:00 UTC). The column itself is
+    not wrapped in a function, so a table partitioned on it is still pruned to the --days window.
+    """
+    bigquery = dialect == "bigquery"
     since = cutoff(days, today)
-    where = f" where {column(mapping.date, 'date column')} >= '{since.isoformat()}'::date" if since else ""
+    literal = (f"'{since.isoformat()}'" if bigquery else f"'{since.isoformat()}'::date") if since else ""
+    where = f" where {column(mapping.date, 'date column')} >= {literal}" if since else ""
     fact_cols = [mapping.key, mapping.reference, mapping.date, mapping.segment, mapping.amount]
     if mapping.category:
         fact_cols.append(mapping.category)
     fact_cols = list(dict.fromkeys(column(c) for c in fact_cols))
     man_cols = list(dict.fromkeys([column(mapping.date), column(mapping.segment), "n", "amount"]))
+    facts, refs, totals = (relation(name, what, backticks=bigquery) for name, what in
+                           ((table, "fact table"), (ref_table, "reference table"),
+                            (manifest_table, "control totals table")))
     return (
-        f"select {', '.join(fact_cols)} from {relation(table, 'fact table')}{where}",
-        f"select distinct {column(mapping.ref_key, 'reference key')} from {relation(ref_table, 'reference table')}",
-        f"select {', '.join(man_cols)} from {relation(manifest_table, 'control totals table')}{where}",
+        f"select {', '.join(fact_cols)} from {facts}{where}",
+        f"select distinct {column(mapping.ref_key, 'reference key')} from {refs}",
+        f"select {', '.join(man_cols)} from {totals}{where}",
     )
 
 

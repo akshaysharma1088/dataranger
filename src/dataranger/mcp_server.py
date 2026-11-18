@@ -292,9 +292,9 @@ def patrol_dbt(
 
     Use this after `dbt build` or `dbt run`, before trusting or publishing a date-partitioned model. It
     finds the model's table from dbt's manifest, connects the way the project's profile says (DuckDB,
-    Snowflake and Postgres targets are supported), and takes the column mapping from the model's `meta: dataranger:`
-    block unless you pass columns here. Use patrol_snowflake or patrol_duckdb for tables that are not dbt
-    models, and patrol_files for CSV or Parquet exports.
+    Snowflake and Postgres targets are supported; BigQuery is experimental), and takes the column mapping from
+    the model's `meta: dataranger:` block unless you pass columns here. Use patrol_snowflake or patrol_duckdb
+    for tables that are not dbt models, and patrol_files for CSV or Parquet exports.
 
     Behavior: reads target/manifest.json, dbt_project.yml and profiles.yml; it does not run dbt. It then
     runs three SELECT statements and nothing else, so neither the warehouse nor the dbt project is

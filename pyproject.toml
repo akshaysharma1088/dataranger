@@ -24,10 +24,12 @@ classifiers = [
 test = ["pytest>=7", "ipython>=8", "pyyaml>=6"]
 # read from Snowflake: `dataranger patrol --snowflake ...`
 snowflake = ["snowflake-connector-python[pandas]>=3.12"]
-# patrol dbt models: `dataranger patrol --dbt-model ...` (add the snowflake or postgres extra for those targets)
+# patrol dbt models: `dataranger patrol --dbt-model ...` (add the snowflake, postgres or bigquery extra for those targets)
 dbt = ["pyyaml>=6"]
 # a dbt Postgres target: `pip install "dataranger[dbt,postgres]"`
 postgres = ["psycopg[binary]>=3.1"]
+# a dbt BigQuery target (experimental): `pip install "dataranger[dbt,bigquery]"`
+bigquery = ["google-cloud-bigquery>=3"]
 # kept so `pip install "dataranger[mcp]"` from 0.4.0 still works; mcp is now a core dependency
 mcp = []
 # everything reproduce.sh needs beyond the core package
