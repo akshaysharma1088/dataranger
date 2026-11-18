@@ -22,9 +22,9 @@ Open `dataranger-report/dashboard.html` for the report.
 
 1. Add a `meta: dataranger:` block to your fact model, as in `models/schema.yml`.
 2. Run `dbt build`, then `dataranger patrol --dbt-model your_model --days 45`.
-3. For a Snowflake target, install `dataranger[dbt,snowflake]`; for BigQuery, `dataranger[dbt,bigquery]`. The connection comes from your dbt profile.
+3. For a Snowflake target, install `dataranger[dbt,snowflake]`; for Postgres, `dataranger[dbt,postgres]`; for BigQuery (experimental), `dataranger[dbt,bigquery]`. The connection comes from your dbt profile.
 
-DuckDB, Snowflake and BigQuery targets are supported. For other warehouses, export the three tables to Parquet and use `--facts-file`, `--ref-file` and `--manifest-file`.
+DuckDB, Snowflake and Postgres targets are supported, and BigQuery is experimental. For other warehouses, export the three tables to Parquet and use `--facts-file`, `--ref-file` and `--manifest-file`.
 
 ## In CI
 

@@ -153,7 +153,7 @@ Column names are matched without regard to case, so `--key payment_id` finds `PA
 
 ## dbt
 
-Patrol the table behind a dbt model. DataRanger reads dbt's `target/manifest.json` to find the table and `profiles.yml` to connect (DuckDB, Snowflake and BigQuery targets), then queries the warehouse itself; it does not run dbt.
+Patrol the table behind a dbt model. DataRanger reads dbt's `target/manifest.json` to find the table and `profiles.yml` to connect (DuckDB, Snowflake and Postgres targets, and BigQuery as experimental), then queries the warehouse itself; it does not run dbt.
 
 Keep the column mapping with the model:
 
@@ -171,7 +171,7 @@ models:
 ```
 
 ```bash
-pip install "dataranger[dbt]"        # add the snowflake or bigquery extra for those targets
+pip install "dataranger[dbt]"        # add the snowflake, postgres or bigquery extra for those targets
 dbt build
 dataranger patrol --dbt-model fct_payments --days 45
 ```

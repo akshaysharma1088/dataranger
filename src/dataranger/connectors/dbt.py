@@ -2,7 +2,7 @@
 
 DataRanger reads dbt's own files and then queries the warehouse directly; dbt itself is not run:
   * target/manifest.json says which table each model was built as (run `dbt build` or `dbt parse` first),
-  * profiles.yml says how to connect (DuckDB, Snowflake and BigQuery targets are supported),
+  * profiles.yml says how to connect (DuckDB, Snowflake and Postgres targets are supported; BigQuery is experimental),
   * the fact model's `meta: dataranger:` block can hold the column mapping, so it lives with the model.
 
 Example, in the model's YAML file:
@@ -247,7 +247,7 @@ def _read_duckdb(target: dict, queries):
 def from_dbt(project_dir: str | Path, model: str, mapping_overrides: dict | None = None, ref_model: str | None = None,
              manifest_model: str | None = None, target: str | None = None, profiles_dir: str | Path | None = None,
              days: int | None = None, manifest_path: str | Path | None = None, snowflake_opener=None,
-             bigquery_opener=None):
+             postgres_opener=None, bigquery_opener=None):
     """Read the tables behind a dbt fact model, its reference model and its control totals.
 
     Returns (facts, refs, control_totals, mapping, table_name). Column mapping comes from the model's
@@ -289,12 +289,16 @@ def from_dbt(project_dir: str | Path, model: str, mapping_overrides: dict | None
 
         params = {arg: out[key] for key, arg in SNOWFLAKE_KEYS.items() if out.get(key)}
         frames = snowflake.run_queries(queries, params=params, opener=snowflake_opener)
+    elif kind == "postgres":
+        from . import postgres
+
+        frames = postgres.run_queries(queries, params=postgres.params_from_profile(out), opener=postgres_opener)
     elif kind == "bigquery":
         from . import bigquery
 
         frames = bigquery.run_queries(queries, params=bigquery.params_from_profile(out), opener=bigquery_opener)
     else:
-        raise ValueError(f"dbt target type {kind!r} is not supported yet (DuckDB, Snowflake and BigQuery are). "
+        raise ValueError(f"dbt target type {kind!r} is not supported yet (DuckDB, Snowflake, Postgres and BigQuery are). "
                          "Export the three tables to Parquet and use --facts-file instead.")
     facts, refs, totals = sql.normalize(*frames, mapping)
     return facts, refs, totals, mapping, node["name"]
