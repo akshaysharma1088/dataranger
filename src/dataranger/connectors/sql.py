@@ -44,12 +44,14 @@ def build_queries(table: str, ref_table: str, manifest_table: str, mapping, days
                   today: date | None = None, dialect: str | None = None) -> tuple[str, str, str]:
     """The three read-only queries of a patrol. Only the mapped columns are selected, to keep transfers small.
 
-    dialect "bigquery" writes the date cutoff as DATE '...' (BigQuery has no :: cast) and accepts `backtick`
-    quoted table names.
+    dialect "bigquery" accepts `backtick` quoted table names and writes the date cutoff as a plain '...' string
+    literal (BigQuery has no :: cast). BigQuery coerces that literal to the date column's own type, so the cutoff
+    works for DATE, DATETIME and TIMESTAMP columns (a TIMESTAMP is compared at 00:00 UTC). The column itself is
+    not wrapped in a function, so a table partitioned on it is still pruned to the --days window.
     """
     bigquery = dialect == "bigquery"
     since = cutoff(days, today)
-    literal = (f"DATE '{since.isoformat()}'" if bigquery else f"'{since.isoformat()}'::date") if since else ""
+    literal = (f"'{since.isoformat()}'" if bigquery else f"'{since.isoformat()}'::date") if since else ""
     where = f" where {column(mapping.date, 'date column')} >= {literal}" if since else ""
     fact_cols = [mapping.key, mapping.reference, mapping.date, mapping.segment, mapping.amount]
     if mapping.category:

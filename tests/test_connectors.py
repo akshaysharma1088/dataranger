@@ -346,9 +346,9 @@ def test_bigquery_queries_use_date_literals_and_backticks():
                                             "`my-proj`.`ops`.`control_totals`", MAPPING, days=30,
                                             today=date(2026, 11, 12), dialect="bigquery")
     assert facts == ("select txn_id, customer_id, txn_date, channel, amount, category from `my-proj`.`gold`.`payments` "
-                     "where txn_date >= DATE '2026-10-14'")
+                     "where txn_date >= '2026-10-14'")
     assert refs == "select distinct customer_id from `my-proj`.gold.customers"
-    assert totals.endswith("from `my-proj`.`ops`.`control_totals` where txn_date >= DATE '2026-10-14'")
+    assert totals.endswith("from `my-proj`.`ops`.`control_totals` where txn_date >= '2026-10-14'")
     for bad in ["`a`b`.t", "`a\\`.t", "``.t", "`a`;drop"]:
         with pytest.raises(ValueError):
             sql.build_queries(bad, "r", "m", MAPPING, dialect="bigquery")
@@ -404,11 +404,67 @@ def test_dbt_bigquery_target_uses_the_profile(case, expected, tmp_path):
                     "keyfile": str(project / "keys" / "sa.json")}
     assert opened[0].closed and len(opened[0].queries) == 3
     assert all("`shop`.`main`." in q for q in opened[0].queries)
-    assert "DATE '" in opened[0].queries[0] and "::" not in opened[0].queries[0]
+    assert "paid_on >= '" in opened[0].queries[0] and "::" not in opened[0].queries[0]
     full = dbt_source.from_dbt(project, "fct_payments", bigquery_opener=opener)
     res = patrol(*full[:4])
     assert sorted((str(r["partition"]), r["decision"]) for r in res.incidents) == expected
     assert 0 < len(facts) < len(full[0])
+
+
+def test_dbt_bigquery_cutoff_works_on_a_timestamp_column(case, expected, tmp_path):
+    # BigQuery has no TIMESTAMP >= DATE comparison, so the cutoff is a plain string literal that BigQuery coerces
+    # to the column's own type (DATE, DATETIME or TIMESTAMP), and the column is left bare for partition pruning.
+    project = _bigquery_project(tmp_path, case, "type: bigquery\n      method: oauth\n      project: shop")
+    with duckdb.connect(str(project / "shop.duckdb")) as con:
+        for table in ("fct_payments", "control_totals"):
+            con.execute(f"alter table {table} alter paid_on type timestamp")
+        assert con.execute("select typeof(paid_on) from fct_payments limit 1").fetchone() == ("TIMESTAMP",)
+    opened = []
+
+    def opener(params):
+        opened.append(FakeBigQuery(project / "shop.duckdb"))
+        return opened[-1]
+
+    facts, *_ = dbt_source.from_dbt(project, "fct_payments", days=30, bigquery_opener=opener)
+    since = sql.cutoff(30).isoformat()
+    assert [q.endswith(f" where paid_on >= '{since}'") for q in opened[0].queries] == [True, False, True]
+    full = dbt_source.from_dbt(project, "fct_payments", bigquery_opener=opener)
+    assert 0 < len(facts) < len(full[0])
+    res = patrol(*full[:4])
+    assert sorted((str(r["partition"]), r["decision"]) for r in res.incidents) == expected
+
+
+def test_bigquery_jobs_carry_the_profiles_byte_cap(monkeypatch):
+    from dataranger.connectors import bigquery as bq
+
+    base = {"method": "oauth", "project": "p"}
+    assert bq.params_from_profile({**base, "maximum_bytes_billed": 10**9}) == {**base, "maximum_bytes_billed": 10**9}
+    assert bq.params_from_profile({**base, "maximum_bytes_billed": "500"})["maximum_bytes_billed"] == 500
+    for bad in (0, -1, "1e9", 1.5, True):
+        with pytest.raises(ValueError, match="maximum_bytes_billed must be a positive whole number"):
+            bq.params_from_profile({**base, "maximum_bytes_billed": bad})
+
+    configs, clients = [], []
+    fake = types.ModuleType("google.cloud.bigquery")
+    fake.QueryJobConfig = lambda **kwargs: configs.append(kwargs) or kwargs
+    fake.Client = lambda **kwargs: clients.append(kwargs) or Stub()
+    cloud = types.ModuleType("google.cloud")
+    cloud.bigquery = fake
+    monkeypatch.setitem(sys.modules, "google.cloud", cloud)
+    monkeypatch.setitem(sys.modules, "google.cloud.bigquery", fake)
+
+    class Stub:
+        def query(self, query, job_config=None):
+            assert job_config is configs[-1]
+            rows = type("Rows", (list,), {"schema": [types.SimpleNamespace(name="n")]})
+            return types.SimpleNamespace(result=lambda: rows([types.SimpleNamespace(values=lambda: (1,))]))
+
+    frames = bq.run_queries(["select 1 as n"] * 2, params={**base, "maximum_bytes_billed": 500})
+    assert [len(f) for f in frames] == [1, 1]
+    assert clients == [{"project": "p"}]  # the cap is a job setting, not a client one
+    assert configs == [{"labels": {"application": "dataranger"}, "maximum_bytes_billed": 500}] * 2
+    bq.run_queries(["select 1 as n"], params=base)
+    assert configs[-1] == {"labels": {"application": "dataranger"}}
 
 
 def test_dbt_bigquery_profile_methods(tmp_path):

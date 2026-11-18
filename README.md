@@ -180,6 +180,8 @@ When `meta` doesn't set `key`, a `unique` test on one column of the model gives 
 
 Flags such as `--key` or `--dbt-ref-model` override the `meta` block (and the tests), and `--dbt-target prod` picks another target. There is a complete project you can run without a warehouse in [examples/dbt](examples/dbt/).
 
+The BigQuery target is experimental: so far it has only run against a stand-in client. BigQuery bills by bytes scanned, so use `--days` to keep the scan small; without it a patrol reads the whole table. If the profile sets `maximum_bytes_billed`, every query carries that cap and BigQuery refuses a query that would scan more.
+
 ## GitHub Action
 
 Run a patrol in CI, after a load or on a schedule. The action writes the result to the job summary, uploads the report, and fails the job when an incident needs a person.

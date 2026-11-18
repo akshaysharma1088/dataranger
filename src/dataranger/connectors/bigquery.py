@@ -14,12 +14,18 @@ METHODS = ("oauth", "service-account", "service-account-json")
 
 
 def params_from_profile(output: dict) -> dict:
-    """Client settings for a dbt-bigquery output: auth method, billing project, location and key file."""
+    """Client settings for a dbt-bigquery output: auth method, billing project, location, key file and the
+    profile's maximum_bytes_billed cost cap."""
     method = output.get("method") or "oauth"
     if method not in METHODS:
         raise ValueError(f"dbt BigQuery auth method {method!r} is not supported yet ({', '.join(METHODS)} are)")
     project = output.get("execution_project") or output.get("project") or output.get("database")
     params = {"method": method, "project": project, "location": output.get("location")}
+    cap = output.get("maximum_bytes_billed")
+    if cap not in (None, ""):
+        if isinstance(cap, bool) or not str(cap).isdigit() or int(cap) <= 0:
+            raise ValueError(f"dbt BigQuery maximum_bytes_billed must be a positive whole number of bytes, not {cap!r}")
+        params["maximum_bytes_billed"] = int(cap)
     if method == "service-account":
         keyfile = output.get("keyfile")
         if not keyfile:
@@ -51,12 +57,16 @@ def connect(params: dict):
     return bigquery.Client(**kwargs)
 
 
-def _frame(client, query: str) -> pd.DataFrame:
+def _frame(client, query: str, maximum_bytes_billed: int | None = None) -> pd.DataFrame:
+    """Run one query. With maximum_bytes_billed, BigQuery refuses (without charging) a query that would scan more."""
     job_config = None
     try:
         from google.cloud import bigquery
 
-        job_config = bigquery.QueryJobConfig(labels={"application": "dataranger"})
+        settings = {"labels": {"application": "dataranger"}}
+        if maximum_bytes_billed:
+            settings["maximum_bytes_billed"] = maximum_bytes_billed
+        job_config = bigquery.QueryJobConfig(**settings)
     except ImportError:  # a test's stand-in client
         pass
     rows = client.query(query, job_config=job_config).result()
@@ -73,7 +83,7 @@ def run_queries(queries, params: dict, opener=None) -> tuple:
     except Exception as e:
         raise ValueError(f"could not connect to BigQuery: {_first_line(e)}") from None
     try:
-        return tuple(_frame(client, q) for q in queries)
+        return tuple(_frame(client, q, params.get("maximum_bytes_billed")) for q in queries)
     except Exception as e:
         raise ValueError(f"BigQuery query failed: {_first_line(e)}") from None
     finally:
