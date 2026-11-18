@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `dataranger totals` builds the control totals `patrol` needs from the raw or landing table the facts are loaded from, for teams that don't keep such a table: `--db` with `--table`, or `--facts-file`, written with `--out` (CSV, TSV or Parquet) or `--out-table` (DuckDB), using the same `--date`, `--segment` and `--amount` flags.
+
 ## 0.6.0 (2026-11-18)
 
 More warehouses for dbt projects, alerts where your team already works, and less to configure. All five changes below were contributed by @sarankumar1325.

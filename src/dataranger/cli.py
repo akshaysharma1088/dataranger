@@ -1,4 +1,4 @@
-"""DataRanger command line: demo, patrol, calibrate, bench, plan and mcp."""
+"""DataRanger command line: demo, patrol, totals, calibrate, bench, plan and mcp."""
 import argparse
 import os
 import sys
@@ -49,6 +49,12 @@ def print_summary(res, out, json_output=False):
         return
     print(f"{len(res.incidents)} incidents: {n['auto-fixed']} fixed, {n['no action needed']} checked and left alone, "
           f"{n['escalate']} for you. Report: {out}/dashboard.html")
+
+
+def duckdb_error():
+    """DuckDB's base exception class, imported only when a command needs it."""
+    import duckdb
+    return duckdb.Error
 
 
 def main(argv=None):
@@ -102,6 +108,17 @@ def main(argv=None):
                          "(default: DATARANGER_WEBHOOK)")
     pt.add_argument("--notify-always", action="store_true",
                     help="with a webhook, also post when nothing needs a person")
+    tt = sub.add_parser("totals", help="build control totals for patrol from the raw or landing table")
+    tsrc = tt.add_argument_group("source (the raw or landing table the facts are loaded from)")
+    tsrc.add_argument("--db", help="DuckDB database file")
+    tsrc.add_argument("--table", help="source table in the DuckDB database")
+    tsrc.add_argument("--facts-file", help="source as .csv, .tsv or .parquet")
+    tt.add_argument("--date", default="txn_date", help="partition date column (default: txn_date)")
+    tt.add_argument("--segment", default="channel", help="segment column, such as channel (default: channel)")
+    tt.add_argument("--amount", default="amount", help="amount column (default: amount)")
+    tout = tt.add_argument_group("output (one of)")
+    tout.add_argument("--out", metavar="PATH", help="write the totals to a .csv, .tsv or .parquet file")
+    tout.add_argument("--out-table", help="create or replace this table in the --db database")
     cb = sub.add_parser("calibrate", help="choose the gate threshold from your own reviewed incidents")
     cb.add_argument("--audit", nargs="+", required=True, help="audit.jsonl files from past patrols")
     cb.add_argument("--labels", required=True, help="CSV with partition, verdict (right or wrong): was the chosen fix right?")
@@ -148,6 +165,36 @@ def main(argv=None):
         else:
             print(f"threshold {lam:.4f} keeps wrong auto-fixes at or below {args.alpha:.1%} "
                   f"with {1 - args.delta:.0%} confidence ({len(recs)} labeled incidents). Use --threshold {lam:.4f}.")
+        return 0
+    if args.command == "totals":
+        from pathlib import Path
+        from .totals import build, check_output_path, write_file, write_table
+        if bool(args.db) == bool(args.facts_file):
+            parser.error("totals: give --db with --table, or --facts-file")
+        if args.db and not args.table:
+            parser.error("totals: --db needs --table")
+        if args.table and not args.db:
+            parser.error("totals: --table needs --db; for a file use --facts-file")
+        if bool(args.out) == bool(args.out_table):
+            parser.error("totals: give --out PATH or --out-table NAME")
+        if args.out_table and not args.db:
+            parser.error("totals: --out-table writes to the --db database; with --facts-file use --out")
+        try:
+            if args.out:
+                check_output_path(args.out)
+                if args.facts_file and Path(args.out).resolve() == Path(args.facts_file).resolve():
+                    parser.error("totals: --out is the --facts-file; write the totals to another file")
+            totals = build(db=args.db, table=args.table, facts_file=args.facts_file,
+                           date=args.date, segment=args.segment, amount=args.amount)
+            if args.out:
+                write_file(args.out, totals)
+            else:
+                write_table(args.db, args.out_table, totals)
+        except (ValueError, duckdb_error()) as e:
+            raise SystemExit(f"totals: {e}") from None
+        days = totals[args.date].nunique()
+        print(f"{len(totals)} control-total rows for {days} day(s) written to {args.out or args.out_table}. "
+              f"Use them with patrol's --manifest-{'file' if args.out else 'table'}.")
         return 0
     if args.command == "demo":
         from pathlib import Path

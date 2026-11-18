@@ -83,6 +83,17 @@ Use one source at a time. With files, `--table` is optional and only sets the re
 
 The control-totals table has one row per date and segment, plus a row with segment `*` for the whole day, with columns `n` (rows) and `amount` (sum). DataRanger never modifies your tables: fixed partitions go to `fixed_version.csv`, every decision and its evidence to `audit.jsonl`, a one-row-per-incident summary for spreadsheets to `incidents.csv`, and the morning report to `dashboard.html`.
 
+If you don't keep a control-totals table yet, build it from the raw or landing table the facts are loaded from, with the same column flags:
+
+```bash
+dataranger totals --db warehouse.duckdb --table raw.payments --out-table ops.payments_totals \
+    --date booking_date --segment channel --amount amount
+dataranger totals --facts-file raw_payments.parquet --out control_totals.csv \
+    --date booking_date --segment channel --amount amount
+```
+
+`totals` counts each day's rows (a timestamp counts toward its calendar day) and sums the amount, per segment and for the whole day. It stops if a row has no date, or has the segment value `*`. Rows with no segment count only toward the day's `*` row. Running it again replaces the output. `--out-table` is the only way DataRanger writes to your database: it writes only the table you name, and replaces an existing table only if that table already has the control-totals columns. The totals are only as independent as the table they come from, so build them upstream of the load you want to check.
+
 For scheduled jobs, add `--json` to either `patrol` command to print one JSON object with
 `incidents`, `auto_fixed`, `no_action`, `escalate`, and the `report` path. Add
 `--fail-on-escalate` to return exit code 2 when any incident needs review, or 0 otherwise.
