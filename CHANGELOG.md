@@ -3,6 +3,7 @@
 ## Unreleased
 
 - `dataranger totals` builds the control totals `patrol` needs from the raw or landing table the facts are loaded from, for teams that don't keep such a table: `--db` with `--table`, or `--facts-file`, written with `--out` (CSV, TSV or Parquet) or `--out-table` (DuckDB), using the same `--date`, `--segment` and `--amount` flags.
+- The dashboard prints cleanly and saves well as a PDF: a white page whatever the system theme, no incident card cut across pages, the navigation and action buttons left out, and links written out as text. The `@media print` approach came from @HarshRajSinghania in #64.
 
 ## 0.6.0 (2026-11-18)
 
