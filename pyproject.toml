@@ -36,8 +36,10 @@ mcp = []
 bench = ["pytest>=7", "matplotlib>=3.7", "scikit-learn>=1.3", "duckdb-extension-tpcds"]
 
 [project.urls]
-Homepage = "https://github.com/akshaysharma1088/dataranger"
+Homepage = "https://akshaysharma1088.github.io/"
+Repository = "https://github.com/akshaysharma1088/dataranger"
 Issues = "https://github.com/akshaysharma1088/dataranger/issues"
+"Author LinkedIn" = "https://www.linkedin.com/in/akshay-sharma-1088"
 
 [project.scripts]
 dataranger = "dataranger.cli:main"
