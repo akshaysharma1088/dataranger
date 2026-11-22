@@ -107,7 +107,7 @@ def model_settings(node: dict) -> dict:
     settings = meta.get("dataranger") or {}
     if not isinstance(settings, dict):
         raise ValueError(f"meta.dataranger on dbt model {node['name']!r} must be a mapping of settings")
-    unknown = sorted(set(settings) - set(MAPPING_KEYS) - {"ref_model", "manifest_model"})
+    unknown = sorted(set(settings) - set(MAPPING_KEYS) - {"ref_model", "manifest_model", "lateness_days"})
     if unknown:
         raise ValueError(f"meta.dataranger on dbt model {node['name']!r} has unknown setting(s): {', '.join(unknown)}")
     return settings
@@ -198,6 +198,20 @@ def settings_from_tests(manifest: dict, node: dict, notes: dict[str, str] | None
         notes["reference"] = (f"dbt model {name!r} has {len(rels)} relationships tests ({cols}), "
                               f"so the reference is not guessed from them; {advice}")
     return out
+
+
+def metadata_nodes(project_dir: str | Path, model: str, ref_model: str | None = None,
+                   manifest_path: str | Path | None = None) -> list[dict]:
+    """The fact model's node and, if known, its reference model's node, for a metadata
+    completeness check (issue #88). `ref_model` wins over the model's own meta.dataranger.ref_model;
+    a reference model that comes only from a dbt relationships test is not resolved here."""
+    manifest = load_manifest(project_dir, manifest_path)
+    node = find_node(manifest, model)
+    ref_model = ref_model or model_settings(node).get("ref_model")
+    nodes = [node]
+    if ref_model:
+        nodes.append(find_node(manifest, ref_model))
+    return nodes
 
 
 def load_target(project_dir: str | Path, target: str | None = None, profiles_dir: str | Path | None = None) -> dict:

@@ -17,7 +17,9 @@ ERROR_TYPES = ["duplicates", "versioned_duplicates", "late_partition", "schema_d
 DECOY_TYPES = ["volume_spike", "big_ticket_day"]
 # Harder families, not in the default mix (Section 6.8 of the paper): two errors in one partition,
 # repeated out-of-order adjustments, and wrong data that preserves every count and sum.
-HARD_TYPES = ["compound", "multi_version", "category_relabel"]
+# `swapped_amounts` (issue #87) is the simplest member of that last family: it reconciles at the
+# n/amount level and needs an extra control measure (hash_total) to be caught at all.
+HARD_TYPES = ["compound", "multi_version", "category_relabel", "swapped_amounts"]
 
 # The decision a careful engineer would make for each type.
 EXPECTED = {
@@ -35,11 +37,12 @@ EXPECTED = {
     "compound": ("dedupe_then_rescale", "auto"),
     "multi_version": ("reload_partition", "auto"),
     "category_relabel": ("reload_partition", "auto"),
+    "swapped_amounts": ("reload_partition", "escalate"),
     "missing_manifest": ("none", "escalate"),
 }
 HARD_MIX = {**{"duplicates": 2, "versioned_duplicates": 2, "late_partition": 2, "schema_drift": 1, "broken_refs": 2,
                "unit_scale": 2, "silent_drop": 2, "partial_late": 2, "rekeyed_duplicates": 2, "volume_spike": 2, "big_ticket_day": 2},
-            "compound": 2, "multi_version": 2, "category_relabel": 2}
+            "compound": 2, "multi_version": 2, "category_relabel": 2, "swapped_amounts": 2}
 
 DEFAULT_MIX = {"duplicates": 2, "versioned_duplicates": 2, "late_partition": 2, "schema_drift": 1, "broken_refs": 2,
                "unit_scale": 2, "silent_drop": 2, "partial_late": 2, "rekeyed_duplicates": 2,
@@ -73,11 +76,14 @@ class Case:
 
 
 def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, warmup: int = 14,
-           p_stale: float = 0.15, p_corrupt: float = 0.0, p_missing: float = 0.0, category_totals: bool = False) -> Case:
+           p_stale: float = 0.15, p_corrupt: float = 0.0, p_missing: float = 0.0, category_totals: bool = False,
+           extra_measures: bool = False) -> Case:
     """`p_corrupt` is the chance that an errored partition's control totals are themselves corrupt:
     computed downstream of the error, from the warehouse copy, so they agree with the wrong data.
     `p_missing` is the chance that a partition's control totals were never published at all.
-    `category_totals` makes the source publish totals per channel and category as well as per channel."""
+    `category_totals` makes the source publish totals per channel and category as well as per channel.
+    `extra_measures` (issue #87) makes the source also publish a hash_total, a distinct customer
+    count, and min/max amount per day, the only way `swapped_amounts` is caught."""
     mix = dict(DEFAULT_MIX if mix is None else mix)
     rng = np.random.default_rng(inst.seed * 1000 + 7 if seed is None else seed)
     src = inst.clean_warehouse()
@@ -213,6 +219,20 @@ def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, war
             sel = mask & (t["category"] == src_c)
             t.loc[sel, "category"] = dst_c
             detail = {"from": src_c, "to": dst_c, "rows_affected": int(sel.sum())}
+        elif k == "swapped_amounts":  # two rows' amounts are swapped: day and channel n/amount are
+            # unchanged, but the (key, amount) pairing changed -- reconciles unless the manifest
+            # also carries a hash_total (issue #87). The two rows must share a channel, or the
+            # swap would already show up in the per-channel totals the manifest always publishes.
+            ch_counts = t.loc[mask, "channel"].value_counts()
+            ch_counts = ch_counts[ch_counts >= 2]
+            pool = t.index[mask & (t["channel"] == str(rng.choice(ch_counts.index)))] if len(ch_counts) else t.index[mask][:0]
+            if len(pool) >= 2:
+                i1, i2 = (int(x) for x in rng.choice(pool, 2, replace=False))
+                a1, a2 = t.loc[i1, "amount"], t.loc[i2, "amount"]
+                t.loc[i1, "amount"], t.loc[i2, "amount"] = a2, a1
+                detail = {"rows_affected": 2, "txn_ids": sorted(int(t.loc[j, "txn_id"]) for j in (i1, i2))}
+            else:
+                detail = {"rows_affected": 0}
         issues.append(Issue(f"I{len(issues)+1:02d}", k, "transactions", d.isoformat(), False, fix, decision, detail))
 
     if "schema_drift" in kinds:  # upstream renamed a column from some day onward
@@ -226,7 +246,7 @@ def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, war
                             "escalate", {"since": d.isoformat(), "rows_affected": int(sel.sum())}))
 
     wh["transactions"] = t.reset_index(drop=True)
-    manifest = make_manifest(src["transactions"], rng, p_stale, category_totals)
+    manifest = make_manifest(src["transactions"], rng, p_stale, category_totals, extra_measures)
     if p_missing > 0:  # the source never published totals for some partitions
         mrng = np.random.default_rng((inst.seed * 1000 + 7 if seed is None else seed) + 77_777)
         gone = [d for d in days if mrng.random() < p_missing]
@@ -255,11 +275,17 @@ def inject(inst: Instance, mix: dict | None = None, seed: int | None = None, war
     return Case(instance=inst, source=src, warehouse=wh, issues=issues, manifest=manifest)
 
 
-def make_manifest(txn: pd.DataFrame, rng: np.random.Generator, p_stale: float = 0.15, category_totals: bool = False) -> pd.DataFrame:
+def make_manifest(txn: pd.DataFrame, rng: np.random.Generator, p_stale: float = 0.15, category_totals: bool = False,
+                  extra_measures: bool = False) -> pd.DataFrame:
     """Control totals per partition and channel, as a source system would publish them.
 
     With probability p_stale a partition's manifest was written before its last rows arrived,
     so it undercounts by 0.1 to 1 percent. Verification has to live with that noise.
+
+    `extra_measures` (issue #87) adds, on the whole-day ('*') row only: hash_total (a stable hash
+    of each row's key and amount, summed -- see repair.verify.hash_total), distinct_customer_id,
+    min_amount and max_amount. These are additive or close to it, so they tolerate the same stale-row
+    noise as n and amount, but catch a swap of values between rows that n and amount cannot.
     """
     keep = []
     stale = {}
@@ -273,6 +299,13 @@ def make_manifest(txn: pd.DataFrame, rng: np.random.Generator, p_stale: float = 
     by_ch = k.groupby(["txn_date", "channel"]).agg(n=("txn_id", "size"), amount=("amount", "sum")).reset_index()
     tot = k.groupby("txn_date").agg(n=("txn_id", "size"), amount=("amount", "sum")).reset_index()
     tot["channel"] = "*"
+    if extra_measures:
+        from ..repair.verify import distinct_count, hash_total
+
+        extra = tot["txn_date"].map(lambda d: k[k["txn_date"] == d]).apply(
+            lambda g: pd.Series({"hash_total": hash_total(g), "distinct_customer_id": distinct_count(g, "customer_id"),
+                                 "min_amount": float(g["amount"].min()), "max_amount": float(g["amount"].max())}))
+        tot = pd.concat([tot, extra], axis=1)
     m = pd.concat([tot, by_ch], ignore_index=True)
     if category_totals:
         by_cc = k.groupby(["txn_date", "channel", "category"]).agg(n=("txn_id", "size"), amount=("amount", "sum")).reset_index()
