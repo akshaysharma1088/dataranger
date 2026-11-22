@@ -108,8 +108,15 @@ class PatrolResult:
 
 
 def patrol(facts: pd.DataFrame, refs: pd.DataFrame, manifest: pd.DataFrame, mapping: Mapping,
-           lam: float = DEFAULT_LAMBDA, source_facts: pd.DataFrame | None = None, retention_days: int = 14) -> PatrolResult:
-    """Detect, propose, verify and gate. `manifest` has columns date, segment ('*' for the total), n, amount."""
+           lam: float = DEFAULT_LAMBDA, source_facts: pd.DataFrame | None = None, retention_days: int = 14,
+           lateness_days: int = 0, detect_ties: bool = True) -> PatrolResult:
+    """Detect, propose, verify and gate. `manifest` has columns date, segment ('*' for the total), n, amount.
+
+    `lateness_days` (issue #85): a day that is short of its control totals stays "still open" -- neither
+    auto-fixed nor escalated -- for this many days after it occurs, instead of being reported as an
+    incident; see `repair.agent.run`. `detect_ties` (issue #91): escalate when two or more candidate
+    fixes reconcile equally well but leave different data, instead of silently picking one; see
+    `repair.gate.select`."""
     mapping.validate_facts(facts)
     mapping.validate_refs(refs)
     mapping.validate_manifest(manifest)
@@ -122,14 +129,19 @@ def patrol(facts: pd.DataFrame, refs: pd.DataFrame, manifest: pd.DataFrame, mapp
     inst = Instance(seed=0, size="user", days=days, customers=cust, source_txn=src)
     case = Case(instance=inst, source={"transactions": src, "customers": cust},
                 warehouse={"transactions": t, "customers": cust}, issues=[], manifest=man)
-    recs = run(case, retention_days=retention_days if source_facts is not None else -10**6)
+    recs = run(case, retention_days=retention_days if source_facts is not None else -10**6,
+              lateness_days=lateness_days)
     fixed = t.copy()
     for r in recs:
+        if r.get("late_open"):
+            r["decision"] = "still open"
+            r["chosen"] = None
+            continue
         r["decision"] = "escalate"
         if r["table_level"]:
             continue
-        c = select(r)
-        if c and c["tier"] == "auto" and c["residual"] <= lam:
+        c = select(r, detect_ties=detect_ties)
+        if c and not c.get("ambiguous_tie") and c["tier"] == "auto" and c["residual"] <= lam:
             r["decision"] = "no action needed" if c["action"] == "none" else "auto-fixed"
             r["applied"] = c["fix"]
             if c["action"] != "none":
@@ -156,9 +168,12 @@ def _parse(s: str) -> F.Fix:
     return F.make(action, **params)
 
 
-def write_outputs(res: PatrolResult, out: Path, title: str = "DataRanger patrol report", table: str = "transactions") -> None:
+def write_outputs(res: PatrolResult, out: Path, title: str = "DataRanger patrol report", table: str = "transactions",
+                  metadata_report=None) -> None:
     from .report import render
     out.mkdir(parents=True, exist_ok=True)
+    if metadata_report is not None:
+        pd.DataFrame(metadata_report.to_rows()).to_csv(out / "metadata.csv", index=False)
     with open(out / "audit.jsonl", "w", encoding="utf-8") as f:
         for r in res.incidents:
             clean = lambda c: {k: v for k, v in c.items() if k != "correct"} if c else c  # drop benchmark-only truth
@@ -177,6 +192,8 @@ def write_outputs(res: PatrolResult, out: Path, title: str = "DataRanger patrol 
     if res.fixed_table is not None:
         res.fixed_table.to_csv(out / "fixed_version.csv", index=False)
     meta = {"table": table, "days": res.days, "lambda": res.lam, "rows": res.rows, "alpha": 0.01}
+    if metadata_report is not None:
+        meta["metadata"] = metadata_report.to_dict()
     (out / "dashboard.html").write_text(render(res.incidents, title, run_date=date.today().isoformat(), meta=meta), encoding="utf-8")
 
 

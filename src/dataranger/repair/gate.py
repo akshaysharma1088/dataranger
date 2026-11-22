@@ -19,16 +19,35 @@ GRID = np.concatenate([[0.0], np.geomspace(1e-4, 0.5, 60)])
 RES = "residual"  # which evidence the verified policies read: "residual" (per channel) or "residual_partition"
 
 
-def select(rec: dict, res: str | None = None) -> dict | None:
-    """Best-supported candidate: smallest residual; ties go to the smallest change, 'none' first."""
+def select(rec: dict, res: str | None = None, *, detect_ties: bool = True) -> dict | None:
+    """Best-supported candidate: smallest residual; ties go to the smallest change, 'none' first.
+
+    With `detect_ties` (issue #91, the default), when two or more candidates are within rounding of
+    the best residual but their repaired tables differ (their `table_fingerprint`s differ), the gate
+    cannot tell them apart from the control totals alone: the result carries `ambiguous_tie: True`
+    and `tie_candidates`, the competing candidates, so the caller can escalate with both shown side
+    by side rather than silently picking one. Candidates that tie and produce identical data are not
+    ambiguous. Pass `detect_ties=False` to keep the previous behaviour (smallest change wins outright).
+    """
     res = res or RES
     cands = rec["candidates"]
     if not cands:
         return None
-    return min(cands, key=lambda c: (round(c[res], 9), c["changed"], c["action"] != "none"))
+    best = min(cands, key=lambda c: (round(c[res], 9), c["changed"], c["action"] != "none"))
+    if not detect_ties:
+        return best
+    best_r = round(best[res], 9)
+    tied = [c for c in cands if c.get("invariants", True) and round(c[res], 9) == best_r]
+    fingerprints = {c.get("table_fingerprint") for c in tied} - {None}
+    if len(fingerprints) > 1:
+        out = dict(best)
+        out["ambiguous_tie"] = True
+        out["tie_candidates"] = tied
+        return out
+    return best
 
 
-def decide(rec: dict, policy: str, lam: float | None = None, res: str | None = None) -> dict | None:
+def decide(rec: dict, policy: str, lam: float | None = None, res: str | None = None, *, detect_ties: bool = True) -> dict | None:
     """Return the candidate the policy applies, or None to escalate."""
     if rec["table_level"]:
         return None
@@ -40,8 +59,8 @@ def decide(rec: dict, policy: str, lam: float | None = None, res: str | None = N
         return min(ok, key=lambda c: c["changed"]) if ok else None
     if policy == "verified":  # source-checked, tier-aware, threshold lam
         res = res or RES
-        c = select(rec, res)
-        return c if c and c["tier"] == "auto" and c[res] <= lam else None
+        c = select(rec, res, detect_ties=detect_ties)
+        return c if c and not c.get("ambiguous_tie") and c["tier"] == "auto" and c[res] <= lam else None
     raise ValueError(policy)
 
 

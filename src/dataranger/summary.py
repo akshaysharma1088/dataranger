@@ -3,13 +3,15 @@ from __future__ import annotations
 
 
 def markdown(res, table: str, report: str | None = None, limit: int = 20) -> str:
-    counts = {d: sum(r["decision"] == d for r in res.incidents) for d in ("auto-fixed", "no action needed", "escalate")}
+    counts = {d: sum(r["decision"] == d for r in res.incidents)
+              for d in ("auto-fixed", "no action needed", "escalate", "still open")}
+    still_open = f", {counts['still open']} still waiting on late data" if counts["still open"] else ""
     lines = [
         f"## DataRanger patrol: `{table}`",
         "",
         f"**{len(res.incidents)} incidents** across {len(res.days)} days and {res.rows:,} rows: "
         f"{counts['auto-fixed']} fix proven safe, {counts['no action needed']} checked and left alone, "
-        f"**{counts['escalate']} need a person**.",
+        f"**{counts['escalate']} need a person**{still_open}.",
     ]
     escalated = [r for r in res.incidents if r["decision"] == "escalate"]
     if escalated:

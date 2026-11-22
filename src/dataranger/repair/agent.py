@@ -17,7 +17,7 @@ import pandas as pd
 from ..bench.detect import Finding, detect
 from ..bench.inject import Case
 from . import fixes as F
-from .verify import matches_truth, residual
+from .verify import matches_truth, residual, table_fingerprint
 
 # What a rules-based auto-fixer does for each alert, with no checks.
 DEFAULT_FIX = {"duplicate_keys": "dedupe", "duplicate_rows": "dedupe_business", "missing_partition": "reload", "orphan_keys": "quarantine",
@@ -137,10 +137,23 @@ def context(part: pd.DataFrame, d, fs: list[Finding], manifest: pd.DataFrame, mo
             "channels": ch, "reload_from_source_available": reload_ok}
 
 
+def _is_shortfall(part: pd.DataFrame, manifest: pd.DataFrame, d) -> bool:
+    """True when the partition has fewer rows than the source's control totals say (not a surplus)."""
+    tot = manifest[(manifest["txn_date"] == d) & (manifest["channel"] == "*")]
+    return bool(len(tot)) and len(part) < tot.iloc[0]["n"]
+
+
 def run(case: Case, granularity: str = "channel", retention_days: int = 14, reconcile: bool = True,
-        extra: dict[str, F.Fix | None] | None = None, check_invariants: bool = True) -> list[dict]:
+        extra: dict[str, F.Fix | None] | None = None, check_invariants: bool = True,
+        lateness_days: int = 0) -> list[dict]:
     """`extra` maps a partition to a fix from another proposer (an LLM); it is verified like the rest
-    and marked with source 'llm'. A None value records that the proposer chose to escalate."""
+    and marked with source 'llm'. A None value records that the proposer chose to escalate.
+
+    `lateness_days` (issue #85): a day stays "open" -- neither auto-fixed nor escalated for a
+    shortfall -- for this many days after it occurs, measured from the most recent day in the
+    patrol (DataRanger has no load-time to measure from). A surplus of rows is still reported as
+    an ordinary incident even inside the window; duplicates, orphan references and schema drift
+    are unaffected."""
     inst = case.instance
     wh = {k: v.copy() for k, v in case.warehouse.items()}
     src_t = case.source["transactions"]
@@ -171,12 +184,18 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
     for f in findings:
         if f.partition is not None and f.detector != "null_spike":
             by_part.setdefault(f.partition, []).append(f)
+    late_open: dict[str, float] = {}
     if reconcile:  # source-aware monitor: any partition that does not match its control totals
         for d, part in t.groupby("txn_date"):
             gap = residual(part, case.manifest, d, granularity)
-            if gap > 1e-9:
-                by_part.setdefault(pd.Timestamp(d).date().isoformat(), []).append(
-                    Finding("reconcile_gap", "transactions", pd.Timestamp(d).date().isoformat(), gap, {}))
+            if gap <= 1e-9:
+                continue
+            p = pd.Timestamp(d).date().isoformat()
+            still_open = lateness_days > 0 and (last - pd.Timestamp(d).date()).days < lateness_days
+            if still_open and _is_shortfall(part, case.manifest, d):
+                late_open[p] = gap
+                continue
+            by_part.setdefault(p, []).append(Finding("reconcile_gap", "transactions", p, gap, {}))
 
     for p, fs in sorted(by_part.items()):
         d = pd.Timestamp(p).date()
@@ -204,10 +223,24 @@ def run(case: Case, granularity: str = "channel", retention_days: int = 14, reco
                          "residual_partition": residual(fixed, case.manifest, d, "partition") if inv else float("inf"),
                          "changed": int(abs(len(fixed) - len(part)) + (fixed["amount"].sum() != part["amount"].sum())),
                          "correct": matches_truth(fixed, truth),
-                         "monitors_quiet": mon.quiet(fixed, d) if len(fixed) else False})
+                         "monitors_quiet": mon.quiet(fixed, d) if len(fixed) else False,
+                         "table_fingerprint": table_fingerprint(fixed) if inv else None})
         records.append({"partition": p, "kinds": issue_kinds.get(p, ["false_alarm"]), "table_level": False,
                         "detectors": sorted({f.detector for f in fs}), "reload_ok": reload_ok,
                         "default": str(default) if default else None, "candidates": rows,
                         "llm": str(llm_fix) if llm_fix is not None else None,
                         "context": context(part, d, fs, case.manifest, mon, reload_ok)})
+    for p, gap in sorted(late_open.items()):
+        if p in by_part:
+            continue  # a real finding on this day already produced an ordinary incident
+        d = pd.Timestamp(p).date()
+        part = t[t["txn_date"] == d]
+        m = case.manifest[(case.manifest["txn_date"] == d) & (case.manifest["channel"] == "*")]
+        src_rows = int(m.iloc[0]["n"]) if len(m) else None
+        records.append({"partition": p, "kinds": issue_kinds.get(p, ["late_open"]), "table_level": False,
+                        "detectors": ["late_open"], "late_open": True, "reload_ok": False,
+                        "default": None, "candidates": [], "llm": None,
+                        "context": {"date": d.isoformat(), "weekday": pd.Timestamp(d).day_name(),
+                                   "rows": int(len(part)), "source_rows": src_rows, "gap": round(gap, 6),
+                                   "lateness_days": lateness_days}})
     return records

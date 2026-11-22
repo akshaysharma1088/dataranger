@@ -37,18 +37,27 @@ gate_threshold = _bounded_float("threshold", 0.0, 0.5, include_low=True)
 probability = {name: _bounded_float(name, 0.0, 1.0, include_low=False) for name in ("alpha", "delta")}
 
 
-def print_summary(res, out, json_output=False):
-    n = {d: sum(r["decision"] == d for r in res.incidents) for d in ("auto-fixed", "no action needed", "escalate")}
+def print_summary(res, out, json_output=False, metadata_report=None):
+    n = {d: sum(r["decision"] == d for r in res.incidents)
+         for d in ("auto-fixed", "no action needed", "escalate", "still open")}
     if json_output:
         import json
         from pathlib import Path
 
-        print(json.dumps({"incidents": len(res.incidents), "auto_fixed": n["auto-fixed"],
-                          "no_action": n["no action needed"], "escalate": n["escalate"],
-                          "report": str(Path(out) / "dashboard.html")}))
+        payload = {"incidents": len(res.incidents), "auto_fixed": n["auto-fixed"],
+                  "no_action": n["no action needed"], "escalate": n["escalate"],
+                  "report": str(Path(out) / "dashboard.html")}
+        if n["still open"]:
+            payload["still_open"] = n["still open"]
+        if metadata_report is not None:
+            payload["metadata"] = metadata_report.to_dict()
+        print(json.dumps(payload))
         return
+    still_open = f", {n['still open']} still waiting on late data" if n["still open"] else ""
     print(f"{len(res.incidents)} incidents: {n['auto-fixed']} fixed, {n['no action needed']} checked and left alone, "
-          f"{n['escalate']} for you. Report: {out}/dashboard.html")
+          f"{n['escalate']} for you{still_open}. Report: {out}/dashboard.html")
+    if metadata_report is not None:
+        print(metadata_report.coverage_line())
 
 
 def duckdb_error():
@@ -99,6 +108,15 @@ def main(argv=None):
     pt.add_argument("--days", type=int, default=None, help="patrol only the last N days (recommended for warehouses)")
     pt.add_argument("--threshold", type=gate_threshold, default=None,
                     help="gate threshold, from 0 to 0.5 (default: benchmark-calibrated)")
+    pt.add_argument("--lateness-days", type=int, default=None, metavar="N", help=(
+        "a day that is short of its control totals stays 'still open' -- neither auto-fixed nor "
+        "escalated -- for N days after it occurs, instead of reporting a late-arriving load as broken "
+        "(default: 0, or meta.dataranger.lateness_days for a dbt source)"))
+    pt.add_argument("--allow-ambiguous-autofix", action="store_true", help=(
+        "apply the smallest-residual fix even when another candidate reconciles equally well but "
+        "leaves different data, instead of escalating the ambiguous tie (previous behavior)"))
+    pt.add_argument("--skip-metadata-check", action="store_true",
+                    help="skip the read-only check for columns and tables with no business definition")
     pt.add_argument("--out", default="dataranger-report")
     pt.add_argument("--json", action="store_true", help="print only a machine-readable JSON summary")
     pt.add_argument("--summary-md", metavar="PATH", help="also append a Markdown summary to this file (for CI job summaries)")
@@ -108,7 +126,7 @@ def main(argv=None):
                          "(default: DATARANGER_WEBHOOK)")
     pt.add_argument("--notify-always", action="store_true",
                     help="with a webhook, also post when nothing needs a person")
-    tt = sub.add_parser("totals", help="build control totals for patrol from the raw or landing table")
+    tt = sub.add_parser("totals", help="build control totals for patrol from the raw table, or from a trailer")
     tsrc = tt.add_argument_group("source (the raw or landing table the facts are loaded from)")
     tsrc.add_argument("--db", help="DuckDB database file")
     tsrc.add_argument("--table", help="source table in the DuckDB database")
@@ -116,6 +134,21 @@ def main(argv=None):
     tt.add_argument("--date", default="txn_date", help="partition date column (default: txn_date)")
     tt.add_argument("--segment", default="channel", help="segment column, such as channel (default: channel)")
     tt.add_argument("--amount", default="amount", help="amount column (default: amount)")
+    tr = tt.add_argument_group("source: a delivery file's trailer or a sidecar control file (issue #86)")
+    tr.add_argument("--from-trailer", metavar="PATH", help="read one control total from this file's trailer line")
+    tr.add_argument("--trailer-date", metavar="DATE", help="business date the trailer's total covers (required with --from-trailer)")
+    tr.add_argument("--trailer-segment", default="*", help="segment the trailer's total covers (default: '*', the whole day)")
+    tr.add_argument("--trailer-count-field", metavar="FIELD", default="0",
+                    help="which field holds the row count: a 0-based delimited field index, or start:end for fixed-width (default: 0)")
+    tr.add_argument("--trailer-amount-field", metavar="FIELD", default="1",
+                    help="which field holds the amount: a 0-based delimited field index, or start:end for fixed-width (default: 1)")
+    tr.add_argument("--trailer-delimiter", default=",", help="field delimiter for a delimited trailer (default: ',')")
+    tr.add_argument("--trailer-record-type-field", metavar="FIELD",
+                    help="field that marks the trailer line among data rows (0-based index, or start:end for fixed-width); "
+                         "omit to use the file's last non-blank line")
+    tr.add_argument("--trailer-record-type-value", metavar="VALUE", help="value --trailer-record-type-field must equal")
+    tr.add_argument("--compare-to", metavar="PATH", help="a totals file (from --table) to check the trailer against; "
+                                                          "disagreement is reported and fails the command")
     tout = tt.add_argument_group("output (one of)")
     tout.add_argument("--out", metavar="PATH", help="write the totals to a .csv, .tsv or .parquet file")
     tout.add_argument("--out-table", help="create or replace this table in the --db database")
@@ -169,8 +202,48 @@ def main(argv=None):
     if args.command == "totals":
         from pathlib import Path
         from .totals import build, check_output_path, write_file, write_table
+        if args.from_trailer:
+            import pandas as pd
+
+            from .totals import TrailerFormat, _parse_field_spec, compare_trailer_to_computed, \
+                control_totals_from_trailer, read_totals_file
+            if args.db or args.table or args.facts_file:
+                parser.error("totals: --from-trailer is its own source; don't also give --db/--table or --facts-file")
+            if not args.trailer_date:
+                parser.error("totals: --from-trailer needs --trailer-date")
+            if bool(args.out) == bool(args.out_table):
+                parser.error("totals: give --out PATH or --out-table NAME")
+            if args.out_table and not args.db:
+                parser.error("totals: --out-table writes to the --db database; with --from-trailer use --out")
+            if bool(args.trailer_record_type_field) != bool(args.trailer_record_type_value):
+                parser.error("totals: --trailer-record-type-field needs --trailer-record-type-value, and the reverse")
+            try:
+                if args.out:
+                    check_output_path(args.out)
+                fmt = TrailerFormat(
+                    count_field=_parse_field_spec(args.trailer_count_field),
+                    amount_field=_parse_field_spec(args.trailer_amount_field),
+                    delimiter=args.trailer_delimiter,
+                    record_type_field=_parse_field_spec(args.trailer_record_type_field) if args.trailer_record_type_field else None,
+                    record_type_value=args.trailer_record_type_value)
+                totals = control_totals_from_trailer(args.from_trailer, fmt, args.trailer_date, args.trailer_segment)
+                if args.compare_to:
+                    computed = read_totals_file(args.compare_to)
+                    disagree = compare_trailer_to_computed(totals, computed)
+                    if len(disagree):
+                        raise SystemExit(f"totals: the trailer disagrees with {args.compare_to} on "
+                                         f"{len(disagree)} row(s):\n{disagree.to_string(index=False)}")
+                if args.out:
+                    write_file(args.out, totals)
+                else:
+                    write_table(args.db, args.out_table, totals)
+            except (ValueError, duckdb_error()) as e:
+                raise SystemExit(f"totals: {e}") from None
+            print(f"{len(totals)} control-total row(s) read from the trailer of {args.from_trailer} and written to "
+                  f"{args.out or args.out_table}. Use them with patrol's --manifest-{'file' if args.out else 'table'}.")
+            return 0
         if bool(args.db) == bool(args.facts_file):
-            parser.error("totals: give --db with --table, or --facts-file")
+            parser.error("totals: give --db with --table, or --facts-file, or --from-trailer")
         if args.db and not args.table:
             parser.error("totals: --db needs --table")
         if args.table and not args.db:
@@ -225,13 +298,27 @@ def main(argv=None):
         given = {"key": args.key, "reference": args.reference, "date": args.date, "segment": args.segment,
                  "category": args.category, "amount": args.amount, "ref_key": args.ref_key}
         mp = Mapping(**{"category": None, **{k: v for k, v in given.items() if v is not None}})
+        dbt_lateness = None
+        meta_report = None
         try:
             if args.dbt_model:
-                from .connectors.dbt import from_dbt
+                from .connectors.dbt import find_node, from_dbt, load_manifest, model_settings
                 facts, refs, man, mp, table = from_dbt(
                     args.dbt_project_dir, args.dbt_model, mapping_overrides=given, ref_model=args.dbt_ref_model,
                     manifest_model=args.dbt_manifest_model, target=args.dbt_target,
                     profiles_dir=args.dbt_profiles_dir, days=args.days)
+                try:
+                    dbt_lateness = model_settings(find_node(load_manifest(args.dbt_project_dir), args.dbt_model)).get("lateness_days")
+                except ValueError:
+                    dbt_lateness = None
+                if not args.skip_metadata_check:
+                    from . import metadata as metamod
+                    from .connectors.dbt import metadata_nodes
+                    try:
+                        meta_report = metamod.from_dbt(metadata_nodes(args.dbt_project_dir, args.dbt_model,
+                                                                       ref_model=args.dbt_ref_model))
+                    except ValueError:
+                        meta_report = None
             elif args.snowflake is not None or args.db:
                 source = "--db" if args.db else "--snowflake"
                 missing = [n for n, v in zip(("--table", "--ref-table", "--manifest-table"), table_given) if not v]
@@ -245,6 +332,14 @@ def main(argv=None):
                     from .connectors.snowflake import from_snowflake
                     facts, refs, man = from_snowflake(args.table, args.ref_table, args.manifest_table, mp,
                                                       days=args.days, connection=args.snowflake or None)
+                if not args.skip_metadata_check:
+                    from . import metadata as metamod
+                    try:
+                        tables = [t for t in (args.table, args.ref_table) if t]
+                        meta_report = metamod.from_duckdb(args.db, tables) if args.db else \
+                            metamod.from_snowflake(tables, connection=args.snowflake or None)
+                    except Exception:
+                        meta_report = None
             else:
                 missing = [n for n, v in zip(("--facts-file", "--ref-file", "--manifest-file"), file_given) if not v]
                 if missing:
@@ -256,13 +351,15 @@ def main(argv=None):
             raise SystemExit(f"patrol: {e}") from None
         if facts is not None and not len(facts):
             raise SystemExit("patrol: the facts table has no rows" + (f" in the last {args.days} days" if args.days else ""))
-        res = patrol(facts, refs, man, mp, lam=args.threshold if args.threshold is not None else DEFAULT_LAMBDA)
-        write_outputs(res, Path(args.out), f"DataRanger patrol: {table}", table=table)
+        lateness_days = args.lateness_days if args.lateness_days is not None else int(dbt_lateness or 0)
+        res = patrol(facts, refs, man, mp, lam=args.threshold if args.threshold is not None else DEFAULT_LAMBDA,
+                     lateness_days=lateness_days, detect_ties=not args.allow_ambiguous_autofix)
+        write_outputs(res, Path(args.out), f"DataRanger patrol: {table}", table=table, metadata_report=meta_report)
         if args.summary_md:
             from .summary import markdown
             with open(args.summary_md, "a", encoding="utf-8") as f:
                 f.write(markdown(res, table, report=str(Path(args.out) / "dashboard.html")))
-        print_summary(res, args.out, json_output=args.json)
+        print_summary(res, args.out, json_output=args.json, metadata_report=meta_report)
         escalated = any(r["decision"] == "escalate" for r in res.incidents)
         webhook = args.notify_webhook or os.environ.get("DATARANGER_WEBHOOK")
         if webhook and (escalated or args.notify_always):

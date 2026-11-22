@@ -1,9 +1,14 @@
-"""Build control totals from the raw or landing table a fact table is loaded from.
+"""Build control totals from the raw or landing table a fact table is loaded from, or read them
+straight from the source's own trailer or control record.
 
 `patrol` checks fixes against the source's control totals: one row per date and segment, plus a row
 with segment ``*`` for the whole day, each with ``n`` (rows) and ``amount`` (sum). `totals` writes that
-layout from the source table itself, for teams that don't keep such a table yet.
+layout from the source table itself, for teams that don't keep such a table yet (issue #62); or, for
+upstream flat files, from the delivery's own trailer record or a sidecar control file, which is
+stronger evidence because the sender wrote it (issue #86).
 """
+from dataclasses import dataclass
+from datetime import date as _date
 from pathlib import Path
 
 import duckdb
@@ -12,6 +17,118 @@ import pandas as pd
 from .patrol import _quoted
 
 TOTAL = "*"
+
+
+@dataclass
+class TrailerFormat:
+    """How to read one control/trailer record.
+
+    A field is either a plain 0-based index into the line's delimiter-split parts (delimited), or a
+    ``(start, end)`` 0-based character slice of the raw line (fixed-width); mixing the two in one
+    format is not supported. ``record_type_field``/``record_type_value`` pick out the trailer line
+    among a delivery file's data rows (for example the last field reading ``"TRL"``); leave
+    `record_type_field` as None to read the file's (or sidecar's) last non-blank line as the trailer.
+    """
+
+    count_field: int | tuple[int, int]
+    amount_field: int | tuple[int, int]
+    delimiter: str = ","
+    record_type_field: int | tuple[int, int] | None = None
+    record_type_value: str | None = None
+
+    @property
+    def fixed_width(self) -> bool:
+        return isinstance(self.count_field, tuple) or isinstance(self.amount_field, tuple) or \
+            isinstance(self.record_type_field, tuple)
+
+
+def _parse_field_spec(spec: str) -> int | tuple[int, int]:
+    """"3" -> 3 (a delimited field index); "10:20" -> (10, 20) (a fixed-width character slice)."""
+    if ":" in spec:
+        start, end = spec.split(":", 1)
+        return int(start), int(end)
+    return int(spec)
+
+
+def _field(line: str, parts: list[str] | None, spec: int | tuple[int, int]) -> str:
+    if isinstance(spec, tuple):
+        start, end = spec
+        return line[start:end].strip()
+    return parts[spec].strip()
+
+
+def read_trailer(path: str, fmt: TrailerFormat, encoding: str = "utf-8") -> tuple[int, float]:
+    """Read one delivery file's trailer (or a sidecar control file) and return (n, amount).
+
+    Raises ValueError if the file has no lines, or no line matches `record_type_value` when one is
+    given, or the count/amount fields do not parse as a whole number and a number.
+    """
+    lines = [ln for ln in Path(path).read_text(encoding=encoding).splitlines() if ln.strip()]
+    if not lines:
+        raise ValueError(f"{path} has no lines to read a trailer from")
+    parts_of = (lambda ln: None) if fmt.fixed_width else (lambda ln: ln.split(fmt.delimiter))
+    if fmt.record_type_field is not None:
+        matches = [ln for ln in lines if _field(ln, parts_of(ln), fmt.record_type_field) == fmt.record_type_value]
+        if not matches:
+            raise ValueError(f"{path} has no line with field {fmt.record_type_field} = {fmt.record_type_value!r}")
+        line = matches[-1]
+    else:
+        line = lines[-1]
+    parts = parts_of(line)
+    try:
+        n = int(_field(line, parts, fmt.count_field))
+    except (ValueError, IndexError) as e:
+        raise ValueError(f"{path}: could not read the record count from field {fmt.count_field}: {e}") from None
+    try:
+        amount = float(_field(line, parts, fmt.amount_field))
+    except (ValueError, IndexError) as e:
+        raise ValueError(f"{path}: could not read the record amount from field {fmt.amount_field}: {e}") from None
+    return n, amount
+
+
+def control_totals_from_trailer(path: str, fmt: TrailerFormat, date: "_date | str", segment: str = TOTAL,
+                                encoding: str = "utf-8") -> pd.DataFrame:
+    """One control-total row (date, segment, n, amount) read from a delivery file's own trailer.
+
+    `date` is the business date the file covers (the trailer itself rarely says, so the caller
+    supplies it); `segment` defaults to the whole-day row ``'*'``, since a single trailer total
+    usually covers a whole delivery rather than one segment.
+    """
+    n, amount = read_trailer(path, fmt, encoding)
+    return pd.DataFrame([{"txn_date": pd.Timestamp(date).date(), "channel": segment, "n": n, "amount": float(amount)}])
+
+
+def read_totals_file(path: str) -> pd.DataFrame:
+    """Read a control-totals file written by `totals` (CSV, TSV or Parquet), for --compare-to."""
+    con = duckdb.connect()
+    try:
+        suffix = Path(path).suffix.lower()
+        if suffix in (".csv", ".tsv"):
+            df = con.execute("select * from read_csv_auto(?)", [path]).df()
+        elif suffix in (".parquet", ".pq"):
+            df = con.execute("select * from read_parquet(?)", [path]).df()
+        else:
+            raise ValueError(f"unsupported file type for {path!r}: expected .csv, .tsv, .parquet or .pq")
+    finally:
+        con.close()
+    df["txn_date"] = pd.to_datetime(df["txn_date"]).dt.date
+    return df
+
+
+def compare_trailer_to_computed(trailer: pd.DataFrame, computed: pd.DataFrame) -> pd.DataFrame:
+    """Rows where the trailer's totals and the totals computed from the raw table disagree.
+
+    A disagreement here is an incident in its own right (issue #86): the sender's own trailer and
+    DataRanger's own count of the landed rows don't match, independently of anything patrol checks
+    against the warehouse. Returns an empty frame when every matched (date, segment) agrees.
+    """
+    merged = trailer.merge(computed, on=["txn_date", "channel"], how="outer", suffixes=("_trailer", "_computed"),
+                           indicator=True)
+    mismatched = merged[merged["_merge"] != "both"]
+    both = merged[merged["_merge"] == "both"]
+    disagree = both[(both["n_trailer"] != both["n_computed"]) | (both["amount_trailer"] != both["amount_computed"])]
+    out = pd.concat([mismatched, disagree], ignore_index=True).drop(columns=["_merge"])
+    return out.sort_values(["txn_date", "channel"], ignore_index=True)
 
 
 def _ident(name: str) -> str:

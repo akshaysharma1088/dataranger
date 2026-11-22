@@ -7,11 +7,50 @@ correct fix may leave a small residual.
 """
 from __future__ import annotations
 
+import hashlib
+
 import pandas as pd
 
 
+def table_fingerprint(part: pd.DataFrame) -> str:
+    """A content fingerprint of a repaired partition, order-independent: equal fingerprints mean
+    two candidates produced identical data; different fingerprints mean they differ (issue #91).
+    Not a security hash -- just a cheap, deterministic way to compare two repaired tables."""
+    if not len(part):
+        return hashlib.sha256(b"<empty>").hexdigest()
+    cols = ["txn_id", "customer_id", "channel", "category", "amount"]
+    a = part[cols].assign(amount=part["amount"].round(2)).sort_values("txn_id").reset_index(drop=True)
+    text = "\n".join(",".join(map(str, row)) for row in a.itertuples(index=False))
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _stable_hash(s: str) -> int:
+    return int(hashlib.md5(s.encode("utf-8")).hexdigest()[:8], 16)
+
+
+def hash_total(df: pd.DataFrame, key_col: str = "txn_id", value_col: str = "amount") -> float:
+    """Sum of a stable hash of (key, value) per row: a control total with no arithmetic meaning of
+    its own (the classic batch-processing "hash total"), used only to notice that a row's value
+    changed even when aggregate counts and sums still match (issue #87) -- for example two amounts
+    swapped between otherwise-unchanged rows. It is additive like `n` and `amount`, so a few stale
+    (missing) rows shift it by a small amount rather than breaking it outright."""
+    if not len(df):
+        return 0.0
+    h = (df[key_col].astype(str) + "|" + df[value_col].round(2).astype(str)).map(_stable_hash)
+    return float(h.sum())
+
+
+def distinct_count(df: pd.DataFrame, col: str) -> int:
+    return int(df[col].nunique()) if col in df.columns and len(df) else 0
+
+
 def residual(part: pd.DataFrame, manifest: pd.DataFrame, d, granularity: str = "channel") -> float:
-    """Largest relative gap between the partition and its control totals (0 = exact match)."""
+    """Largest relative gap between the partition and its control totals (0 = exact match).
+
+    Beyond `n` and `amount`, if the control totals carry any of the optional extra measures from
+    issue #87 -- `hash_total`, `min_amount`, `max_amount`, or a `distinct_<column>` count -- each
+    present measure is checked the same way and folded into the same max-gap statistic. A manifest
+    without those columns (the default) is checked exactly as before."""
     m = manifest[manifest["txn_date"] == d]
     if m.empty:
         return float("inf")
@@ -19,6 +58,18 @@ def residual(part: pd.DataFrame, manifest: pd.DataFrame, d, granularity: str = "
     tot = m[m["channel"] == "*"].iloc[0]
     gaps.append(abs(len(part) - tot["n"]) / max(tot["n"], 1))
     gaps.append(abs(part["amount"].sum() - tot["amount"]) / max(abs(tot["amount"]), 1.0))
+    if "hash_total" in tot.index and pd.notna(tot["hash_total"]):
+        gaps.append(abs(hash_total(part) - tot["hash_total"]) / max(abs(tot["hash_total"]), 1.0))
+    if len(part):
+        if "min_amount" in tot.index and pd.notna(tot["min_amount"]):
+            gaps.append(abs(part["amount"].min() - tot["min_amount"]) / max(abs(tot["min_amount"]), 1.0))
+        if "max_amount" in tot.index and pd.notna(tot["max_amount"]):
+            gaps.append(abs(part["amount"].max() - tot["max_amount"]) / max(abs(tot["max_amount"]), 1.0))
+    for col in tot.index:
+        if col.startswith("distinct_") and pd.notna(tot[col]):
+            key_col = col[len("distinct_"):]
+            if key_col in part.columns:
+                gaps.append(abs(distinct_count(part, key_col) - tot[col]) / max(tot[col], 1))
     if granularity in ("channel", "channel+category"):
         obs = part.groupby("channel").agg(n=("txn_id", "size"), amount=("amount", "sum"))
         seg = m[(m["channel"] != "*") & ~m["channel"].astype(str).str.contains("/")]
