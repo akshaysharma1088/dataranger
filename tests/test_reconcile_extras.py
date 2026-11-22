@@ -2,7 +2,6 @@
 from datetime import date, timedelta
 
 import pandas as pd
-import pytest
 
 from dataranger.bench import generate, inject
 from dataranger.bench.inject import EXPECTED

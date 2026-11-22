@@ -4,7 +4,6 @@
 from datetime import date, timedelta
 
 import pandas as pd
-import pytest
 
 from dataranger.bench import generate
 from dataranger.bench.inject import Case

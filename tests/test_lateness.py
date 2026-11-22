@@ -2,7 +2,6 @@
 from datetime import date
 
 import pandas as pd
-import pytest
 
 from dataranger.cli import main
 from dataranger.patrol import Mapping, patrol
