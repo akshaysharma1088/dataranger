@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.7.0 (2026-11-22)
+
+Five fixes built from feedback on the launch post — thank you to everyone who commented, especially Sabarinathan Govindaraj and Lavanya Aalla, whose suggestions became two of them.
+
+- **Flags undocumented tables and columns** (Sabarinathan Govindaraj). `patrol` now also checks how much of the source is actually documented — reading descriptions and owners from dbt's manifest, DuckDB's own comments, or Snowflake's `INFORMATION_SCHEMA`. The CLI summary, `metadata.csv` and the dashboard all show the coverage line; `--skip-metadata-check` turns it off.
+- **Catches errors that reconcile at the totals level** (Lavanya Aalla). A row count and amount matching the source doesn't prove each row is right — two rows can swap values and the totals stay exactly the same. `residual()` now also checks optional extra control measures (`hash_total`, `distinct_<column>`, `min_amount`/`max_amount`) whenever a manifest publishes them; a manifest without them behaves exactly as before.
+- **A lateness window for late-arriving records.** `patrol --lateness-days N` gives a day N days of grace before a shortfall against its control totals is reported as broken, since it may just be waiting on records that haven't landed yet. A shortfall inside the window is "still open" instead of an incident, and gets re-checked on the next patrol. Wired into the CLI, the dbt `meta.dataranger` block, and all four MCP server tools.
+- **Control totals straight from a flat file's own trailer record.** `dataranger totals --from-trailer` reads one control total from a delivery file's own trailer line or a sidecar control file — delimited or fixed-width — which is stronger evidence than a totals table computed downstream, since the sender wrote it. `--compare-to` optionally checks it against computed totals.
+- **Escalates an ambiguous tie instead of guessing.** When two candidate fixes both reconcile against the source equally well but leave the table in different states, the gate now escalates rather than silently picking one (`--allow-ambiguous-autofix` restores the old behavior). The dashboard shows the competing fixes side by side.
 - `dataranger totals` builds the control totals `patrol` needs from the raw or landing table the facts are loaded from, for teams that don't keep such a table: `--db` with `--table`, or `--facts-file`, written with `--out` (CSV, TSV or Parquet) or `--out-table` (DuckDB), using the same `--date`, `--segment` and `--amount` flags.
 
 ## 0.6.0 (2026-11-18)
