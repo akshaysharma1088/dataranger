@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Write a proven fix to a Snowflake clone** (#97, first part of safe apply, #96). `dataranger.connectors.snowflake_apply.write_fix_to_clone` clones the patrolled table and replays the fix on the clone as row-level statements, so columns the patrol never read stay as they were. The patrolled table is never written to, and nothing in `patrol` calls this yet: a patrol is still three `SELECT` statements. Fixes that reload rows from the source, and duplicate copies that differ only in a column the patrol did not read, are refused with a clear message.
+
 ## 0.7.0 (2026-11-22)
 
 Five fixes built from feedback on the launch post — thank you to everyone who commented, especially Sabarinathan Govindaraj and Lavanya Aalla, whose suggestions became two of them.
