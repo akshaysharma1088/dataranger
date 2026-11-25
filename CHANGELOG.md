@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Example: a daily patrol as an Airflow DAG, in `examples/airflow`.
+
 ## 0.7.0 (2026-11-22)
 
 Five fixes built from feedback on the launch post — thank you to everyone who commented, especially Sabarinathan Govindaraj and Lavanya Aalla, whose suggestions became two of them.
