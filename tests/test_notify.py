@@ -137,3 +137,26 @@ def test_teams_workflows_get_an_adaptive_card_with_the_same_text(url):
     card = attachment["content"]
     assert card["type"] == "AdaptiveCard"
     assert card["body"] == [{"type": "TextBlock", "text": "| table |\n3 need a person", "wrap": True}]
+
+@pytest.mark.parametrize("url", ["https://discord.com/api/webhooks/1/abc", "https://discordapp.com/api/webhooks/1/abc",
+                                 "https://ptb.discord.com/api/webhooks/1/abc"])
+def test_discord_gets_content_not_text(url):
+    assert payload(url, "3 need a person") == {"content": "3 need a person"}
+
+
+def test_discord_summary_over_the_limit_is_cut_at_a_line_break_with_a_count():
+    rows = [f"| 2026-01-{day:02d} | nulls | dedupe |" for day in range(1, 31)] * 3
+    text = "\n".join(["## DataRanger patrol", "", "| Partition | Problems | Best-supported fix |", "|---|---|---|"] + rows)
+    assert len(text) > 2000
+    content = payload("https://discord.com/api/webhooks/1/abc", text)["content"]
+    assert set(payload("https://discord.com/api/webhooks/1/abc", text)) == {"content"}
+    assert len(content) <= 2000
+    body, last = content.rsplit("\n", 1)
+    assert all(line in text.splitlines() for line in body.splitlines())
+    kept = sum(line.startswith("| 2026") for line in body.splitlines())
+    assert last == f"... {len(rows) - kept} more partitions left out, see the report."
+
+
+def test_slack_payload_is_not_shortened():
+    text = "x\n" * 3000
+    assert payload("https://hooks.slack.com/services/T/B/x", text) == {"text": text}
