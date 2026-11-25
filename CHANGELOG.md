@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `--notify-webhook` supports Discord webhooks: the summary is sent as `{"content": ...}` and cut to Discord's 2,000 character limit.
+
 ## 0.7.0 (2026-11-22)
 
 Five fixes built from feedback on the launch post — thank you to everyone who commented, especially Sabarinathan Govindaraj and Lavanya Aalla, whose suggestions became two of them.
