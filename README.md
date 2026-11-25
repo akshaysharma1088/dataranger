@@ -104,7 +104,9 @@ To hear about escalations without opening the report, add `--notify-webhook URL`
 incident needs a person, the patrol posts `{"text": ...}` with the table, the counts and the
 partitions to look at (the same text as `--summary-md`). A Teams webhook made with the
 Workflows app (a `logic.azure.com` or `powerplatform.com` URL) gets the same text in an
-Adaptive Card instead, which is the shape it expects. `--notify-always` also posts when
+Adaptive Card instead, which is the shape it expects. A Discord webhook (`discord.com`) gets
+`{"content": ...}`, cut at a line break to Discord's 2,000 character limit with a closing line
+that says how many partitions were left out. `--notify-always` also posts when
 nothing needs a person. A failed post prints a note and leaves the exit code alone, and the
 webhook URL is never printed.
 
@@ -195,6 +197,8 @@ safe to apply without waking anyone up.
 </p>
 
 DataRanger reads from Snowflake, dbt models, DuckDB and files, and runs from the command line, a GitHub Action or an AI agent. Whatever the source, a patrol is three `SELECT` statements: nothing is written back.
+
+To run it on a schedule, see the [GitHub Actions example](examples/scheduled/README.md) and the [Airflow DAG example](examples/airflow/README.md).
 
 ## Snowflake
 
