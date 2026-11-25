@@ -196,6 +196,8 @@ safe to apply without waking anyone up.
 
 DataRanger reads from Snowflake, dbt models, DuckDB and files, and runs from the command line, a GitHub Action or an AI agent. Whatever the source, a patrol is three `SELECT` statements: nothing is written back.
 
+To run it on a schedule, see the [GitHub Actions example](examples/scheduled/README.md) and the [Airflow DAG example](examples/airflow/README.md).
+
 ## Snowflake
 
 ```bash
