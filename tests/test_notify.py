@@ -138,6 +138,7 @@ def test_teams_workflows_get_an_adaptive_card_with_the_same_text(url):
     assert card["type"] == "AdaptiveCard"
     assert card["body"] == [{"type": "TextBlock", "text": "| table |\n3 need a person", "wrap": True}]
 
+
 @pytest.mark.parametrize("url", ["https://discord.com/api/webhooks/1/abc", "https://discordapp.com/api/webhooks/1/abc",
                                  "https://ptb.discord.com/api/webhooks/1/abc"])
 def test_discord_gets_content_not_text(url):
