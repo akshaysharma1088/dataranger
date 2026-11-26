@@ -36,6 +36,7 @@ class Cursor:
             raise RuntimeError("002003 (42S02): SQL compilation error\nmore detail")
         head, sep, source = query.partition(" clone ")  # DuckDB has no zero-copy clone
         self.result = self.fake.con.execute(f"{head} as select * from {source}" if sep else query)
+        self.description = self.result.description
         self.sfqid = f"01-{len(self.fake.queries):04d}"
 
     def fetchall(self):
@@ -227,3 +228,144 @@ def test_a_real_patrol_replays_onto_the_clone():
     want = res.fixed_table[cols].sort_values(["txn_date", "txn_id"], ignore_index=True)
     assert len(clone) == len(want) and list(clone["txn_id"]) == list(want["txn_id"])
     assert (clone["amount"].astype(float) - want["amount"]).abs().max() < 0.005
+
+
+# ---- verify_clone (issue #98): the fixed days, read back from the clone, held to the control totals ----
+
+from datetime import timedelta  # noqa: E402
+
+from dataranger.bench import generate, inject  # noqa: E402
+from dataranger.patrol import DEFAULT_LAMBDA, patrol  # noqa: E402
+from dataranger.repair.verify import hash_total  # noqa: E402
+
+FACT_COLS = ["txn_id", "customer_id", "txn_date", "channel", "category", "amount"]
+BENCH = Mapping(category="category")
+
+
+class Patrolled:
+    """A patrolled warehouse table, its control totals, the patrol's result and the clone carrying its fixes."""
+
+    def __init__(self, hash_totals=False, upper=False):
+        case = inject(generate(7, "small", start=date.today() - timedelta(days=60)))
+        t, man = case.warehouse["transactions"], case.manifest.copy()  # noqa: F841
+        if hash_totals:  # what a source that publishes a hash total per day would send
+            src = case.source["transactions"]
+            totals = {d: hash_total(g) for d, g in src.groupby("txn_date")}
+            man["hash_total"] = [totals.get(d) if ch == "*" else None for d, ch in zip(man["txn_date"], man["channel"])]
+        wh = Warehouse.__new__(Warehouse)
+        wh.con, wh.queries, wh.fail_on, wh.closed = duckdb.connect(), [], None, False
+        wh.con.execute("create schema GOLD; create schema OPS")
+        q = (lambda c: f'{c} as "{c.upper()}"') if upper else (lambda c: c)
+        amount = 'amount::decimal(18,2) as "AMOUNT"' if upper else "amount::decimal(18,2) as amount"
+        wh.con.execute(f"create table GOLD.PAYMENTS as select {q('txn_id')}, {q('customer_id')}, {q('txn_date')}, "
+                       f"{q('channel')}, {q('category')}, {amount}, {q('payment_channel')} from t")
+        wh.con.execute("create table OPS.CONTROL_TOTALS as select "
+                       + ", ".join(q(c) for c in man.columns) + " from man")
+        self.wh, self.open = wh, lambda connection, params: wh
+        self.facts = wh.con.execute(f"select {', '.join(FACT_COLS)} from GOLD.PAYMENTS").df()
+        self.facts.columns = FACT_COLS
+        self.facts["amount"] = self.facts["amount"].astype(float)
+        self.res = patrol(self.facts, case.warehouse["customers"], man, BENCH)
+        self.fixed_days = [r["partition"] for r in self.res.incidents if r["decision"] == "auto-fixed"]
+        self.residuals = {str(r["partition"]): r["chosen"]["residual"] for r in self.res.incidents
+                          if r["decision"] == "auto-fixed"}
+        done = sa.write_fix_to_clone("GOLD.PAYMENTS", self.facts, self.res.fixed_table, BENCH, self.fixed_days,
+                                     run_id="v1", opener=self.open)
+        self.clone, self.days = done["clone"], done["days"]
+        wh.queries.clear()
+
+    def verify(self, **kw):
+        kw.setdefault("lam", DEFAULT_LAMBDA)
+        return sa.verify_clone(self.clone, "OPS.CONTROL_TOTALS", BENCH, self.days, opener=self.open, **kw)
+
+
+@pytest.fixture
+def patrolled():
+    return Patrolled()
+
+
+def test_a_correctly_written_clone_passes_with_the_gates_own_gap(patrolled):
+    out = patrolled.verify(fixed=patrolled.res.fixed_table)
+    assert out["passed"] and not out["dropped"] and [r["day"] for r in out["days"]] == patrolled.days
+    for r in out["days"]:  # the same number the gate saw when it approved the fix
+        assert r["passed"] and r["reason"] is None and r["threshold"] == DEFAULT_LAMBDA
+        assert r["gap"] == pytest.approx(patrolled.residuals[r["day"]], abs=1e-6)
+    assert patrolled.clone.split(".")[-1] in patrolled.wh.tables()
+    assert len(patrolled.wh.queries) == 2 and all(q.startswith("select ") for q in patrolled.wh.queries)
+    assert patrolled.wh.closed
+
+
+def test_a_truncated_amount_fails_and_the_clone_is_dropped(patrolled):
+    day = patrolled.days[0]
+    before = patrolled.wh.con.execute("select count(*), sum(amount) from GOLD.PAYMENTS").fetchall()
+    patrolled.wh.con.execute(f"update {patrolled.clone} set amount = floor(amount / 10) where txn_date = '{day}'")
+    out = patrolled.verify()
+    bad = {r["day"]: r for r in out["days"]}[day]
+    assert not out["passed"] and out["dropped"] and not bad["passed"] and "above the threshold" in bad["reason"]
+    assert all(r["passed"] for r in out["days"] if r["day"] != day)
+    assert patrolled.clone.split(".")[-1] not in patrolled.wh.tables()
+    assert patrolled.wh.queries[-1] == f"drop table if exists {patrolled.clone}"
+    assert patrolled.wh.con.execute("select count(*), sum(amount) from GOLD.PAYMENTS").fetchall() == before
+
+
+def _swap_two_amounts(p, day):
+    """Swap the amounts of two rows in one segment of the clone: the day's counts and sums do not move."""
+    a, b = p.wh.con.execute(f"select txn_id, amount from {p.clone} where txn_date = '{day}' and channel = "
+                            f"(select min(channel) from {p.clone} where txn_date = '{day}') "
+                            "order by amount limit 2 offset 3").fetchall()
+    assert a[1] != b[1]
+    for key, amount in ((a[0], b[1]), (b[0], a[1])):
+        p.wh.con.execute(f"update {p.clone} set amount = {amount} where txn_id = '{key}' and txn_date = '{day}'")
+
+
+def test_swapped_amounts_pass_on_totals_alone_but_not_against_the_approved_fix(patrolled):
+    day = patrolled.days[0]
+    _swap_two_amounts(patrolled, day)
+    assert patrolled.verify(drop_on_fail=False)["passed"]  # counts and sums cannot see a swap
+    out = patrolled.verify(fixed=patrolled.res.fixed_table, drop_on_fail=False)
+    bad = {r["day"]: r for r in out["days"]}[day]
+    assert not out["passed"] and bad["reason"] == "the rows differ from the fix the gate approved"
+    assert not out["dropped"] and patrolled.clone.split(".")[-1] in patrolled.wh.tables()
+
+
+def test_a_published_hash_total_is_read_and_moves_the_gap():
+    """The optional measures are part of the gap. On a day with a few hundred rows a swap of two amounts
+    moves the hash total by less than the gate's threshold, so the comparison with the approved fix is
+    still what catches it (see the test above)."""
+    p = Patrolled(hash_totals=True)
+    day = p.days[0]
+    gap = lambda out: {r["day"]: r for r in out["days"]}[day]["gap"]
+    clean = p.verify()
+    assert clean["passed"]
+    _swap_two_amounts(p, day)
+    swapped = p.verify(drop_on_fail=False)
+    assert gap(swapped) > gap(clean)
+    assert not p.verify(fixed=p.res.fixed_table)["passed"]
+
+
+def test_names_in_upper_case_as_snowflake_returns_them():
+    p = Patrolled(hash_totals=True, upper=True)
+    out = p.verify(fixed=p.res.fixed_table)
+    assert out["passed"] and len(out["days"]) == len(p.days)
+
+
+def test_a_day_with_no_control_totals_fails(patrolled):
+    day = patrolled.days[0]
+    patrolled.wh.con.execute(f"delete from OPS.CONTROL_TOTALS where txn_date = '{day}'")
+    out = patrolled.verify()
+    bad = {r["day"]: r for r in out["days"]}[day]
+    assert not out["passed"] and bad["gap"] is None and bad["reason"] == "no control totals for this day"
+
+
+def test_bad_names_are_refused_before_connecting_and_errors_are_one_line(patrolled):
+    def refuse(connection, params):
+        raise AssertionError("should not connect")
+
+    for clone, totals, days in [("GOLD.X; drop table y", "OPS.CONTROL_TOTALS", [D1]), ("GOLD.X", "OPS.T--", [D1]),
+                                ("GOLD.X", "OPS.CONTROL_TOTALS", [])]:
+        with pytest.raises(ValueError):
+            sa.verify_clone(clone, totals, BENCH, days, lam=DEFAULT_LAMBDA, opener=refuse)
+    patrolled.wh.fail_on = "CONTROL_TOTALS"
+    with pytest.raises(ValueError, match=r"^Snowflake query failed: 002003 \(42S02\): SQL compilation error$"):
+        patrolled.verify()
+    assert patrolled.wh.closed

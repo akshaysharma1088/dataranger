@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Check the Snowflake clone before any swap** (#98, second part of safe apply, #96). `snowflake_apply.verify_clone` reads the fixed days back from the clone and holds them to the control totals with the same gap rule and threshold as the patrol's gate. Given the patrol's fixed table, it also requires each day to hold exactly the rows the gate approved. A failed check drops the clone. Two read-only queries; nothing in `patrol` calls it yet.
+
 - **Write a proven fix to a Snowflake clone** (#97, first part of safe apply, #96). `dataranger.connectors.snowflake_apply.write_fix_to_clone` clones the patrolled table and replays the fix on the clone as row-level statements, so columns the patrol never read stay as they were. The patrolled table is never written to, and nothing in `patrol` calls this yet: a patrol is still three `SELECT` statements. Fixes that reload rows from the source, and duplicate copies that differ only in a column the patrol did not read, are refused with a clear message.
 
 - `--notify-webhook` supports Discord webhooks: the summary is sent as `{"content": ...}` and cut to Discord's 2,000 character limit.
