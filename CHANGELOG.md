@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.8.0 (2026-11-26)
+
+A fix to the hash-total check from 0.7.0, the first two of four steps toward safe apply on Snowflake, and two contributions from @areebaf29: Discord alerts and an Airflow example. If your control totals carry a `hash_total`, upgrade: 0.7.0 could miss a two-row swap on days with more than about 200 rows.
 
 - **Fix: the hash total now decides the day** (#113). In 0.7.0 a `hash_total` in the control totals was compared as a fraction of its own value, so two amounts swapped between rows moved it by about one row's worth and stayed under the gate's threshold on any day with more than about 200 rows; a patrol reported such days as "no action needed". When a day's row count and amount match the control totals exactly, its hash total must now match exactly too. A swap on a day that is also short of late rows still cannot be seen.
 
@@ -10,9 +12,9 @@
 
 - **Write a proven fix to a Snowflake clone** (#97, first part of safe apply, #96). `dataranger.connectors.snowflake_apply.write_fix_to_clone` clones the patrolled table and replays the fix on the clone as row-level statements, so columns the patrol never read stay as they were. The patrolled table is never written to, and nothing in `patrol` calls this yet: a patrol is still three `SELECT` statements. Fixes that reload rows from the source, and duplicate copies that differ only in a column the patrol did not read, are refused with a clear message.
 
-- `--notify-webhook` supports Discord webhooks: the summary is sent as `{"content": ...}` and cut to Discord's 2,000 character limit.
+- `--notify-webhook` supports Discord webhooks: the summary is sent as `{"content": ...}` and cut to Discord's 2,000 character limit. Contributed by @areebaf29.
 
-- Example: a daily patrol as an Airflow DAG, in `examples/airflow`.
+- Example: a daily patrol as an Airflow DAG, in `examples/airflow`. Contributed by @areebaf29.
 
 ## 0.7.0 (2026-11-22)
 
