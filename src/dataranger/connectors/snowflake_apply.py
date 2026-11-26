@@ -1,8 +1,9 @@
-"""Write a proven fix to a zero-copy clone of a Snowflake table (issue #97, part of #96).
+"""Safe apply on Snowflake, the parts before the swap (issues #97 and #98, part of #96).
 
-Nothing here writes to the table that was patrolled. The fix lands on a clone named
-``<table>__DATARANGER_<run id>``; checking that clone against the control totals (#98) and swapping
-it in (#99) are separate steps. A patrol stays read-only unless this module is called.
+Nothing here writes to the table that was patrolled. `write_fix_to_clone` puts the fix on a clone
+named ``<table>__DATARANGER_<run id>``. `verify_clone` then reads the fixed days back from that clone
+and holds them to the source's control totals with the same rule the patrol's gate uses. Swapping
+the clone in (#99) is a separate step. A patrol stays read-only unless this module is called.
 
 A patrol reads only the mapped columns, so the fixed rows it holds are not whole rows. The fix is
 therefore replayed on the clone as row-level statements (delete, keep one copy, update the amount),
@@ -17,8 +18,9 @@ from datetime import date
 
 import pandas as pd
 
+from ..repair.verify import residual, table_fingerprint
 from . import sql
-from .snowflake import _first_line, connect
+from .snowflake import _first_line, _frame, connect
 
 CHUNK = 1000  # rows per statement, well under Snowflake's limit on the length of an IN list
 _RUN_ID = re.compile(r"[A-Za-z0-9_]+")
@@ -216,3 +218,112 @@ def write_fix_to_clone(table: str, facts: pd.DataFrame, fixed: pd.DataFrame, map
             "rows_deleted": sum(len(p.delete_keys) for p in plans),
             "duplicates_resolved": sum(len(p.keep_copies) for p in plans),
             "amounts_updated": sum(len(p.set_amounts) for p in plans), "statements": log}
+
+
+def _day_list(days) -> list[date]:
+    return sorted({pd.Timestamp(x).date() for x in days})
+
+
+def verify_queries(clone: str, manifest_table: str, mapping, days) -> tuple[str, str]:
+    """The two read-only queries of the check: the fixed days as they now sit in the clone, and every
+    column of the control totals for those days (so optional measures such as hash_total come along)."""
+    wanted = _day_list(days)
+    if not wanted:
+        raise ValueError("no days to check")
+    d = sql.column(mapping.date, "date column")
+    cols = [mapping.key, mapping.reference, mapping.date, mapping.segment, mapping.amount]
+    if mapping.category:
+        cols.append(mapping.category)
+    cols = list(dict.fromkeys(sql.column(c) for c in cols))
+    where = f" where {d} in ({', '.join(_lit(x) for x in wanted)})"
+    return (f"select {', '.join(cols)} from {sql.relation(clone, 'clone')}{where}",
+            f"select * from {sql.relation(manifest_table, 'control totals table')}{where}")
+
+
+def _control_totals(frame: pd.DataFrame, mapping) -> pd.DataFrame:
+    """Control totals as `residual` expects them: internal date and segment names, and the measure
+    columns (n, amount, hash_total, min_amount, max_amount, distinct_<column>) in lower case and numeric,
+    whatever case the warehouse returned them in."""
+    names = {}
+    for c in frame.columns:
+        low = str(c).lower()
+        names[c] = "txn_date" if low == mapping.date.lower() else "channel" if low == mapping.segment.lower() else low
+    man = frame.rename(columns=names)
+    missing = [c for c in ("txn_date", "channel", "n", "amount") if c not in man]
+    if missing:
+        raise ValueError(f"the control totals table has no column {', '.join(missing)}")
+    man["txn_date"] = pd.to_datetime(man["txn_date"]).dt.date
+    for c in man.columns:
+        if c in ("n", "amount", "hash_total", "min_amount", "max_amount") or c.startswith("distinct_"):
+            man[c] = pd.to_numeric(man[c], errors="coerce").astype(float)
+    return man
+
+
+def verify_clone(clone: str, manifest_table: str, mapping, days, lam: float, fixed: pd.DataFrame | None = None,
+                 drop_on_fail: bool = True, connection: str | None = None, params: dict | None = None,
+                 opener=None) -> dict:
+    """Check the fixed days in `clone` against the source's control totals. Returns one result per day.
+
+    The rows are read back from the clone, so this checks what the write left there, not what the
+    patrol meant to write. Each day's gap is computed by `repair.verify.residual`, the same function
+    and granularity the gate used, and passes when it is at or below `lam`, the patrol's threshold.
+    Optional measures (hash_total, min_amount, max_amount, distinct_<column>) count when the control
+    totals carry them. If `fixed` (`PatrolResult.fixed_table`) is given, each day must also hold
+    exactly the rows the gate approved.
+
+    A day with no control totals fails. If any day fails and `drop_on_fail` is set, the clone is
+    dropped, so there is nothing left to swap in. Connection and query errors raise ValueError.
+    """
+    from ..patrol import INTERNAL  # here, not at the top: patrol imports the connectors
+
+    wanted = _day_list(days)
+    queries = verify_queries(clone, manifest_table, mapping, wanted)  # refuses bad names before connecting
+    try:
+        conn = (opener or connect)(connection, params)
+    except SystemExit:
+        raise
+    except Exception as e:
+        raise ValueError(f"could not connect to Snowflake: {_first_line(e)}") from None
+    try:
+        try:
+            rows, totals = (_frame(conn, q) for q in queries)
+        except Exception as e:
+            raise ValueError(f"Snowflake query failed: {_first_line(e)}") from None
+        cols = [c for c in (mapping.key, mapping.reference, mapping.date, mapping.segment, mapping.amount,
+                            mapping.category) if c]
+        rows = sql._match_case(rows, cols)
+        rows[mapping.amount] = pd.to_numeric(rows[mapping.amount], errors="coerce").astype(float)
+        part_all, man = mapping.to_internal(rows), _control_totals(totals, mapping)
+        approved = mapping.to_internal(fixed) if fixed is not None else None
+        results = []
+        for day in wanted:
+            part = part_all[part_all["txn_date"] == day]
+            gap = residual(part, man, day, "channel")
+            reason = None
+            if gap == float("inf"):
+                reason = "no control totals for this day"
+            elif part[list(INTERNAL)].isna().any().any():
+                reason = "a mapped column holds a missing value"
+            elif gap > lam:
+                reason = f"gap {gap:.4f} is above the threshold {lam:.4f}"
+            elif approved is not None and (table_fingerprint(part)
+                                           != table_fingerprint(approved[approved["txn_date"] == day])):
+                reason = "the rows differ from the fix the gate approved"
+            results.append({"day": day.isoformat(), "rows": int(len(part)),
+                            "amount": round(float(part["amount"].sum()), 2),
+                            "gap": None if gap == float("inf") else round(gap, 6), "threshold": lam,
+                            "passed": reason is None, "reason": reason})
+        passed = all(r["passed"] for r in results)
+        dropped = False
+        if not passed and drop_on_fail:
+            cur = conn.cursor()
+            try:
+                cur.execute(f"drop table if exists {clone}")
+                dropped = True
+            except Exception as e:
+                raise ValueError(f"the check failed and the clone could not be dropped: {_first_line(e)}") from None
+            finally:
+                cur.close()
+        return {"clone": clone, "passed": passed, "dropped": dropped, "days": results}
+    finally:
+        conn.close()
