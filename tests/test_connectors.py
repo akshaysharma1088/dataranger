@@ -575,3 +575,27 @@ def test_from_dbt_keeps_the_default_and_says_so_when_ambiguous(case, tmp_path, c
     err = capsys.readouterr().err
     assert "dataranger: dbt model 'fct_payments' has unique tests on 2 columns" in err
     assert "pass --key" in err
+
+
+def test_snowflake_reads_optional_control_measures_and_escalates_a_swap():
+    """#113: the control totals are read whole, so a published hash total is used from a warehouse too."""
+    from dataranger.bench import generate, inject
+
+    case = inject(generate(3, "small", start=date.today() - timedelta(days=60)), mix={"swapped_amounts": 6},
+                  extra_measures=True)
+    case.warehouse["transactions"]["payment_channel"] = "web"  # the fake table carries one column a patrol never reads
+    fake = FakeSnowflake(case)
+    m = case.manifest  # noqa: F841
+    fake.con.execute('create or replace table OPS.CONTROL_TOTALS as select txn_date as "TXN_DATE", channel as "CHANNEL", '
+                     'n as "N", amount::decimal(18,2) as "AMOUNT", hash_total as "HASH_TOTAL", '
+                     'distinct_customer_id as "DISTINCT_CUSTOMER_ID", min_amount as "MIN_AMOUNT", '
+                     'max_amount as "MAX_AMOUNT" from m')
+    facts, refs, totals = sf.from_snowflake("GOLD.PAYMENTS", "GOLD.CUSTOMERS", "OPS.CONTROL_TOTALS", MAPPING,
+                                            opener=lambda c, p: fake)
+    assert fake.queries[2] == "select * from OPS.CONTROL_TOTALS"
+    assert {"hash_total", "distinct_customer_id", "min_amount", "max_amount"} <= set(totals.columns)
+    assert totals["hash_total"].dtype == float and totals["hash_total"].notna().any()
+    res = patrol(facts, refs, totals, MAPPING)
+    swapped = {i.partition for i in case.issues if i.kind == "swapped_amounts" and i.detail.get("rows_affected")}
+    decisions = {str(r["partition"]): r["decision"] for r in res.incidents}
+    assert sum(decisions.get(p) == "escalate" for p in swapped) >= 3  # the rest have stale control totals

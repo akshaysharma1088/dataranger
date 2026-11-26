@@ -241,22 +241,14 @@ def verify_queries(clone: str, manifest_table: str, mapping, days) -> tuple[str,
 
 
 def _control_totals(frame: pd.DataFrame, mapping) -> pd.DataFrame:
-    """Control totals as `residual` expects them: internal date and segment names, and the measure
-    columns (n, amount, hash_total, min_amount, max_amount, distinct_<column>) in lower case and numeric,
-    whatever case the warehouse returned them in."""
-    names = {}
-    for c in frame.columns:
-        low = str(c).lower()
-        names[c] = "txn_date" if low == mapping.date.lower() else "channel" if low == mapping.segment.lower() else low
-    man = frame.rename(columns=names)
-    missing = [c for c in ("txn_date", "channel", "n", "amount") if c not in man]
+    """Control totals as `residual` expects them, whatever case the warehouse returned the columns in:
+    the same preparation a patrol applies (`sql.normalize`, then `Mapping.totals_to_internal`)."""
+    lower = {str(c).lower() for c in frame.columns}
+    missing = [c for c in (mapping.date, mapping.segment, "n", "amount") if c.lower() not in lower]
     if missing:
         raise ValueError(f"the control totals table has no column {', '.join(missing)}")
-    man["txn_date"] = pd.to_datetime(man["txn_date"]).dt.date
-    for c in man.columns:
-        if c in ("n", "amount", "hash_total", "min_amount", "max_amount") or c.startswith("distinct_"):
-            man[c] = pd.to_numeric(man[c], errors="coerce").astype(float)
-    return man
+    _, _, totals = sql.normalize(pd.DataFrame(), pd.DataFrame(), frame, mapping)
+    return mapping.totals_to_internal(totals)
 
 
 def verify_clone(clone: str, manifest_table: str, mapping, days, lam: float, fixed: pd.DataFrame | None = None,

@@ -88,6 +88,24 @@ class Mapping:
         out["txn_date"] = pd.to_datetime(out["txn_date"]).dt.date
         return out[list(INTERNAL)]
 
+    def totals_to_internal(self, manifest: pd.DataFrame) -> pd.DataFrame:
+        """Control totals with DataRanger's internal names. A `distinct_<column>` measure names one of the
+        user's columns (distinct_cust_id for --reference cust_id), so it is renamed along with them; left
+        as it was, it would match no column and be skipped without a word."""
+        self.validate_manifest(manifest)
+        internal = {self.key: "txn_id", self.reference: "customer_id", self.segment: "channel"}
+        if self.category:
+            internal[self.category] = "category"
+        internal = {str(k).lower(): v for k, v in internal.items()}
+        names = {self.date: "txn_date", self.segment: "channel"}
+        for c in manifest.columns:
+            low = str(c).lower()
+            if low.startswith("distinct_"):
+                names[c] = "distinct_" + internal.get(low[len("distinct_"):], low[len("distinct_"):])
+        man = manifest.rename(columns=names).copy()
+        man["txn_date"] = pd.to_datetime(man["txn_date"]).dt.date
+        return man
+
     def to_user(self, df: pd.DataFrame) -> pd.DataFrame:
         m = {"txn_id": self.key, "customer_id": self.reference, "txn_date": self.date,
              "channel": self.segment, "amount": self.amount}
@@ -122,8 +140,7 @@ def patrol(facts: pd.DataFrame, refs: pd.DataFrame, manifest: pd.DataFrame, mapp
     mapping.validate_manifest(manifest)
     t = mapping.to_internal(facts)
     cust = refs.rename(columns={mapping.ref_key: "customer_id"})[["customer_id"]]
-    man = manifest.rename(columns={mapping.date: "txn_date", mapping.segment: "channel"}).copy()
-    man["txn_date"] = pd.to_datetime(man["txn_date"]).dt.date
+    man = mapping.totals_to_internal(manifest)
     days = sorted(pd.date_range(min(t["txn_date"]), max(t["txn_date"])).date)
     src = mapping.to_internal(source_facts) if source_facts is not None else t.iloc[:0]
     inst = Instance(seed=0, size="user", days=days, customers=cust, source_txn=src)

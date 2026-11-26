@@ -328,19 +328,15 @@ def test_swapped_amounts_pass_on_totals_alone_but_not_against_the_approved_fix(p
     assert not out["dropped"] and patrolled.clone.split(".")[-1] in patrolled.wh.tables()
 
 
-def test_a_published_hash_total_is_read_and_moves_the_gap():
-    """The optional measures are part of the gap. On a day with a few hundred rows a swap of two amounts
-    moves the hash total by less than the gate's threshold, so the comparison with the approved fix is
-    still what catches it (see the test above)."""
+def test_a_published_hash_total_catches_the_swap_without_the_approved_fix():
+    """The day's count and amount match the control totals, so its hash total has to match exactly (#113)."""
     p = Patrolled(hash_totals=True)
     day = p.days[0]
-    gap = lambda out: {r["day"]: r for r in out["days"]}[day]["gap"]
-    clean = p.verify()
-    assert clean["passed"]
+    assert p.verify()["passed"]
     _swap_two_amounts(p, day)
-    swapped = p.verify(drop_on_fail=False)
-    assert gap(swapped) > gap(clean)
-    assert not p.verify(fixed=p.res.fixed_table)["passed"]
+    out = p.verify()
+    bad = {r["day"]: r for r in out["days"]}[day]
+    assert not out["passed"] and out["dropped"] and bad["gap"] == 1.0 and "above the threshold" in bad["reason"]
 
 
 def test_names_in_upper_case_as_snowflake_returns_them():
