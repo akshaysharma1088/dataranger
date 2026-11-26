@@ -92,3 +92,88 @@ def test_with_extra_measures_the_swap_is_caught_by_reconciliation():
     flagged_dates = {r["partition"] for r in recs if "reconcile_gap" in (r.get("detectors") or [])}
     swapped_dates = {i.partition for i in case.issues if i.kind == "swapped_amounts" and i.detail.get("rows_affected")}
     assert swapped_dates and swapped_dates <= flagged_dates
+
+
+# ---- #113: the hash total has to decide the day, not just move the gap ----
+
+def _day(rows: int, seed: int = 0) -> pd.DataFrame:
+    import numpy as np
+
+    rng = np.random.default_rng(seed)
+    return pd.DataFrame({"txn_id": [f"t{i}" for i in range(rows)], "customer_id": rng.integers(1, 50, rows),
+                         "channel": rng.choice(["card", "ach"], rows), "category": "x",
+                         "amount": rng.integers(100, 99_999, rows) / 100})
+
+
+def _totals(day: pd.DataFrame, d, **extra) -> pd.DataFrame:
+    rows = [{"txn_date": d, "channel": "*", "n": len(day), "amount": day["amount"].sum(), **extra}]
+    rows += [{"txn_date": d, "channel": ch, "n": len(g), "amount": g["amount"].sum()} for ch, g in day.groupby("channel")]
+    return pd.DataFrame(rows)
+
+
+def _swap_in_one_channel(day: pd.DataFrame) -> pd.DataFrame:
+    i, j = day.index[day["channel"] == "card"][:2]
+    out = day.copy()
+    out.loc[[i, j], "amount"] = out.loc[[j, i], "amount"].to_numpy()
+    assert out.loc[i, "amount"] != day.loc[i, "amount"]
+    return out
+
+
+def test_a_swap_is_a_full_gap_at_realistic_day_sizes():
+    from dataranger.patrol import DEFAULT_LAMBDA
+
+    d = date(2026, 1, 1)
+    for rows in (300, 10_000):
+        day = _day(rows)
+        totals = _totals(day, d, hash_total=hash_total(day))
+        swapped = _swap_in_one_channel(day)
+        assert residual(day, totals, d) < 1e-9
+        assert residual(swapped, _totals(day, d), d) < 1e-9  # counts and sums cannot see it
+        assert residual(swapped, totals, d) == 1.0 > DEFAULT_LAMBDA  # before #113 this was about 1 / rows
+
+
+def test_with_rows_missing_the_hash_total_is_still_compared_as_a_fraction():
+    d = date(2026, 1, 1)
+    day = _day(1_000)
+    totals = _totals(day, d, hash_total=hash_total(day))
+    short = day.iloc[:-3]  # three late rows: count and amount are off, so an exact hash match is impossible
+    gap = residual(short, totals, d)
+    assert 0.0 < gap < 0.02
+
+
+def test_float_rounding_of_a_large_hash_total_is_not_a_mismatch():
+    d = date(2026, 1, 1)
+    day = _day(300)
+    stored = float(f"{hash_total(day):.15e}")  # a control-totals table that keeps 16 significant digits
+    assert residual(day, _totals(day, d, hash_total=stored), d) < 1e-9
+
+
+def test_a_patrol_escalates_a_swapped_day_whose_totals_are_settled():
+    """Before #113 every one of these days was reported "no action needed". A swapped day whose control
+    totals are also short of late rows still is: one hash total per day cannot tell the two apart."""
+    from dataranger.patrol import Mapping, patrol
+
+    case = inject(generate(3, "small", start=date.today() - timedelta(days=60)), mix={"swapped_amounts": 6},
+                  extra_measures=True)
+    swapped = {i.partition for i in case.issues if i.kind == "swapped_amounts" and i.detail.get("rows_affected")}
+    t, man = case.warehouse["transactions"], case.manifest
+    whole = man[man["channel"] == "*"].set_index("txn_date")["n"]
+    settled = {p for p in swapped if (t["txn_date"] == date.fromisoformat(p)).sum() == whole[date.fromisoformat(p)]}
+    cols = ["txn_id", "customer_id", "txn_date", "channel", "category", "amount"]
+    res = patrol(t[cols], case.warehouse["customers"], man, Mapping(category="category"))
+    decisions = {str(r["partition"]): r["decision"] for r in res.incidents}
+    assert len(swapped) == 6 and len(settled) >= 3
+    assert {decisions.get(p) for p in settled} == {"escalate"}
+    assert {decisions.get(p) for p in swapped - settled} <= {"no action needed"}
+
+
+def test_distinct_measure_follows_the_users_column_name():
+    from dataranger.patrol import Mapping
+
+    mapping = Mapping(key="payment_id", reference="CUST_ID", date="paid_on", segment="rail", amount="amount")
+    totals = pd.DataFrame([{"paid_on": date(2026, 1, 1), "rail": "*", "n": 2, "amount": 30.0, "DISTINCT_cust_id": 2}])
+    man = mapping.totals_to_internal(totals)
+    assert "distinct_customer_id" in man.columns and list(man.columns[:2]) == ["txn_date", "channel"]
+    part = pd.DataFrame({"txn_id": [1, 2], "customer_id": [7, 7], "channel": ["card", "card"],
+                         "category": ["x", "x"], "amount": [10.0, 20.0]})
+    assert residual(part, man, date(2026, 1, 1), "partition") == 0.5  # one customer where the source saw two

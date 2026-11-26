@@ -128,11 +128,13 @@ Checking that a partition's row count and amount match the source's control tota
 
 To catch that kind of error, publish extra control measures alongside `n` and `amount` on the control-totals table's whole-day (`*`) row:
 
-- `hash_total`: the sum of a stable hash of each row's key and amount. Additive like `n`/`amount` (so it tolerates the same late-arriving-row noise), but a value swapped between two rows changes it.
-- `distinct_<column>`: a distinct count, for example `distinct_customer_id`.
+- `hash_total`: the sum of a stable hash of each row's key and amount. When a day's row count and amount match the control totals exactly, its hash total must match exactly too, so a value swapped between two rows fails the day whatever its size. When rows are missing or extra, an exact match is impossible and the hash total is compared as a fraction, like `n` and `amount`.
+- `distinct_<column>`: a distinct count of one of your columns, named as you name it, for example `distinct_customer_id`.
 - `min_amount` / `max_amount`: the smallest and largest amount for the day.
 
-DataRanger reads whichever of these columns are present on the manifest and folds them into the same gap-to-source check automatically; a manifest with none of them behaves exactly as before. There's no flag to turn this on at the `patrol`/`totals` CLI level yet — publish the columns and DataRanger picks them up. A second, finer control-totals cut (per channel *and* category, for example) catches a swap between two rows in different categories of the same channel; DataRanger's benchmark can publish this with `category_totals=True`.
+DataRanger reads whichever of these columns are present on the manifest, from files, DuckDB and warehouse sources alike, and folds them into the same gap-to-source check automatically; a manifest with none of them behaves exactly as before.
+
+One limit remains: a swap on a day whose control totals are also short of late rows cannot be seen with one hash total per day, because the count and amount do not match there and the hash total is only compared as a fraction. There's no flag to turn this on at the `patrol`/`totals` CLI level yet — publish the columns and DataRanger picks them up. A second, finer control-totals cut (per channel *and* category, for example) catches a swap between two rows in different categories of the same channel; DataRanger's benchmark can publish this with `category_totals=True`.
 
 ## Late-arriving data
 
