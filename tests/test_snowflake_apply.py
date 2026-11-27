@@ -201,12 +201,11 @@ def test_literals_are_quoted_or_refused():
 
 def test_a_real_patrol_replays_onto_the_clone():
     """End to end: the clone ends up equal, on the columns the patrol read, to the patrol's own fixed table."""
-    from datetime import timedelta
 
     from dataranger.bench import generate, inject
     from dataranger.patrol import patrol
 
-    case = inject(generate(7, "small", start=date.today() - timedelta(days=60)))
+    case = inject(generate(7, "small", start=FIXED_START))
     mapping = Mapping(category="category")
     t, c = case.warehouse["transactions"], case.warehouse["customers"]  # noqa: F841
     wh = Warehouse.__new__(Warehouse)
@@ -232,7 +231,6 @@ def test_a_real_patrol_replays_onto_the_clone():
 
 # ---- verify_clone (issue #98): the fixed days, read back from the clone, held to the control totals ----
 
-from datetime import timedelta  # noqa: E402
 
 from dataranger.bench import generate, inject  # noqa: E402
 from dataranger.patrol import DEFAULT_LAMBDA, patrol  # noqa: E402
@@ -240,13 +238,14 @@ from dataranger.repair.verify import hash_total  # noqa: E402
 
 FACT_COLS = ["txn_id", "customer_id", "txn_date", "channel", "category", "amount"]
 BENCH = Mapping(category="category")
+FIXED_START = date(2026, 9, 1)  # generated data depends on its start date; a fixed one keeps these tests the same every day
 
 
 class Patrolled:
     """A patrolled warehouse table, its control totals, the patrol's result and the clone carrying its fixes."""
 
     def __init__(self, hash_totals=False, upper=False):
-        case = inject(generate(7, "small", start=date.today() - timedelta(days=60)))
+        case = inject(generate(7, "small", start=FIXED_START))
         t, man = case.warehouse["transactions"], case.manifest.copy()  # noqa: F841
         if hash_totals:  # what a source that publishes a hash total per day would send
             src = case.source["transactions"]

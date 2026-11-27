@@ -149,12 +149,13 @@ def test_float_rounding_of_a_large_hash_total_is_not_a_mismatch():
 
 
 def test_a_patrol_escalates_a_swapped_day_whose_totals_are_settled():
-    """Before #113 every one of these days was reported "no action needed". A swapped day whose control
-    totals are also short of late rows still is: one hash total per day cannot tell the two apart."""
+    """Before #113 every one of these days was reported "no action needed". On a swapped day whose control
+    totals are also short of late rows the swap still cannot be seen: one hash total per day cannot tell
+    the two apart."""
     from dataranger.patrol import Mapping, patrol
 
-    case = inject(generate(3, "small", start=date.today() - timedelta(days=60)), mix={"swapped_amounts": 6},
-                  extra_measures=True)
+    # a fixed start date: the generated days, and so which swapped days have settled totals, never change
+    case = inject(generate(3, "small", start=date(2026, 9, 1)), mix={"swapped_amounts": 6}, extra_measures=True)
     swapped = {i.partition for i in case.issues if i.kind == "swapped_amounts" and i.detail.get("rows_affected")}
     t, man = case.warehouse["transactions"], case.manifest
     whole = man[man["channel"] == "*"].set_index("txn_date")["n"]
@@ -164,7 +165,9 @@ def test_a_patrol_escalates_a_swapped_day_whose_totals_are_settled():
     decisions = {str(r["partition"]): r["decision"] for r in res.incidents}
     assert len(swapped) == 6 and len(settled) >= 3
     assert {decisions.get(p) for p in settled} == {"escalate"}
-    assert {decisions.get(p) for p in swapped - settled} <= {"no action needed"}
+    # The other swapped days are short of late rows. Whether those escalate depends only on how many rows are
+    # late, not on the swap, so nothing is asserted about them here; the rule for that case is pinned by
+    # test_with_rows_missing_the_hash_total_is_still_compared_as_a_fraction.
 
 
 def test_distinct_measure_follows_the_users_column_name():
