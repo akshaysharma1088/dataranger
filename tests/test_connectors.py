@@ -581,8 +581,7 @@ def test_snowflake_reads_optional_control_measures_and_escalates_a_swap():
     """#113: the control totals are read whole, so a published hash total is used from a warehouse too."""
     from dataranger.bench import generate, inject
 
-    case = inject(generate(3, "small", start=date.today() - timedelta(days=60)), mix={"swapped_amounts": 6},
-                  extra_measures=True)
+    case = inject(generate(3, "small", start=date(2026, 9, 1)), mix={"swapped_amounts": 6}, extra_measures=True)
     case.warehouse["transactions"]["payment_channel"] = "web"  # the fake table carries one column a patrol never reads
     fake = FakeSnowflake(case)
     m = case.manifest  # noqa: F841
