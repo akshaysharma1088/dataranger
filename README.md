@@ -29,6 +29,19 @@ wrong fixes under a rate you choose. Everything else goes to a person, with the 
 
 Most data-quality tools stop at an alert. Letting an AI agent fix data is the obvious next step, and a risky one: a wrong fix can pass every monitor you have. In the DQ-Repair benchmark, a rules engine left wrong data behind in 31% of incidents and an agent checked only by monitors in 24%. DataRanger's calibrated gate kept it under 1% while handling 59% of incidents without a person.
 
+## See it in a minute
+
+```bash
+pip install dataranger
+dataranger demo
+```
+
+The demo patrols a sample payments table with planted problems and writes a report you open in a browser. It runs locally in a few seconds, with no account or API key.
+
+![Installing DataRanger, running the demo, and opening a fixed incident in the report](https://raw.githubusercontent.com/akshaysharma1088/dataranger/main/docs/assets/demo.gif)
+
+For each incident the report shows every fix DataRanger tested on a copy and how far each one left the data from the source's control totals. Above, dividing one channel's amounts by 100 matches the source exactly, so that fix was applied; the same fix on every channel would have left a 99% gap. To run it on your own tables, see [Try it](#try-it).
+
 ## The patrol loop
 
 1. **Detect.** Rules and statistics find nulls, duplicates, schema drift, late partitions, broken references, unit errors and silent shifts. No LLM.
