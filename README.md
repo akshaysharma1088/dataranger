@@ -29,6 +29,19 @@ wrong fixes under a rate you choose. Everything else goes to a person, with the 
 
 Most data-quality tools stop at an alert. Letting an AI agent fix data is the obvious next step, and a risky one: a wrong fix can pass every monitor you have. In the DQ-Repair benchmark, a rules engine left wrong data behind in 31% of incidents and an agent checked only by monitors in 24%. DataRanger's calibrated gate kept it under 1% while handling 59% of incidents without a person.
 
+## See it in a minute
+
+```bash
+pip install dataranger
+dataranger demo
+```
+
+The demo patrols a sample payments table with planted problems and writes a report you open in a browser. It runs locally in a few seconds, with no account or API key.
+
+![Installing DataRanger, running the demo, and opening a fixed incident in the report](https://raw.githubusercontent.com/akshaysharma1088/dataranger/main/docs/assets/demo.gif)
+
+For each incident the report shows every fix DataRanger tested on a copy and how far each one left the data from the source's control totals. Above, dividing one channel's amounts by 100 matches the source exactly, so that fix was applied; the same fix on every channel would have left a 99% gap. To run it on your own tables, see [Try it](#try-it).
+
 ## The patrol loop
 
 1. **Detect.** Rules and statistics find nulls, duplicates, schema drift, late partitions, broken references, unit errors and silent shifts. No LLM.
@@ -104,7 +117,9 @@ To hear about escalations without opening the report, add `--notify-webhook URL`
 incident needs a person, the patrol posts `{"text": ...}` with the table, the counts and the
 partitions to look at (the same text as `--summary-md`). A Teams webhook made with the
 Workflows app (a `logic.azure.com` or `powerplatform.com` URL) gets the same text in an
-Adaptive Card instead, which is the shape it expects. `--notify-always` also posts when
+Adaptive Card instead, which is the shape it expects. A Discord webhook (`discord.com`) gets
+`{"content": ...}`, cut at a line break to Discord's 2,000 character limit with a closing line
+that says how many partitions were left out. `--notify-always` also posts when
 nothing needs a person. A failed post prints a note and leaves the exit code alone, and the
 webhook URL is never printed.
 
@@ -119,6 +134,60 @@ dataranger calibrate --audit report/audit.jsonl --labels reviewed.csv --alpha 0.
 ```
 
 `reviewed.csv` has columns `partition` and `verdict` (right or wrong). About 300 reviewed incidents certify a 1% target and about 60 certify 5%.
+
+## What reconciliation can and cannot prove
+
+Checking that a partition's row count and amount match the source's control totals (`n` and `amount`) proves the partition has the right number of rows and the right total value. It does not prove each row is right: two rows can swap values and the count and sum stay exactly the same. For example, if a partition's amounts for two transactions are swapped between rows, `n` and `amount` are unchanged, so an ordinary patrol reports it as clean.
+
+To catch that kind of error, publish extra control measures alongside `n` and `amount` on the control-totals table's whole-day (`*`) row:
+
+- `hash_total`: the sum of a stable hash of each row's key and amount. When a day's row count and amount match the control totals exactly, its hash total must match exactly too, so a value swapped between two rows fails the day whatever its size. When rows are missing or extra, an exact match is impossible and the hash total is compared as a fraction, like `n` and `amount`.
+- `distinct_<column>`: a distinct count of one of your columns, named as you name it, for example `distinct_customer_id`.
+- `min_amount` / `max_amount`: the smallest and largest amount for the day.
+
+DataRanger reads whichever of these columns are present on the manifest, from files, DuckDB and warehouse sources alike, and folds them into the same gap-to-source check automatically; a manifest with none of them behaves exactly as before.
+
+One limit remains: a swap on a day whose control totals are also short of late rows cannot be seen with one hash total per day, because the count and amount do not match there and the hash total is only compared as a fraction. There's no flag to turn this on at the `patrol`/`totals` CLI level yet — publish the columns and DataRanger picks them up. A second, finer control-totals cut (per channel *and* category, for example) catches a swap between two rows in different categories of the same channel; DataRanger's benchmark can publish this with `category_totals=True`.
+
+## Late-arriving data
+
+A fresh partition can look broken simply because its records haven't all landed yet. Give DataRanger a grace period:
+
+```bash
+dataranger patrol --facts-file payments.csv --ref-file customers.csv \
+    --manifest-file control_totals.csv --lateness-days 2
+```
+
+A partition that is *short* of its control totals and is no more than `--lateness-days` days older than the most recent day in the data is reported as **still open** — neither auto-fixed nor escalated — instead of as an incident. (DataRanger has no load timestamp to measure from, so the window counts back from the most recent day it sees, not from wall-clock time.) The next patrol checks it again: once the data fills in, the "still open" entry disappears on its own; if it's still short once it falls outside the window, it's reported as an ordinary incident. A *surplus* of rows is always reported immediately, inside the window or not, since extra rows are not what late arrivals look like. For a dbt model, set `lateness_days` in the `meta.dataranger` block instead of passing the flag every time.
+
+## Control totals from a flat file's own trailer record
+
+When the source is a flat file, its own trailer line (or a sidecar `.ctl` file) is often stronger evidence than a totals table computed downstream, because the sender wrote it:
+
+```bash
+dataranger totals --from-trailer payments_20261101.csv --trailer-date 2026-11-01 \
+    --trailer-record-type-field 0 --trailer-record-type-value TRL \
+    --trailer-count-field 1 --trailer-amount-field 2 --out control_totals.csv
+```
+
+`--trailer-count-field`/`--trailer-amount-field` are 0-based field positions; give `start:end` (for example `3:9`) instead of a plain index to read fixed-width files by character slice rather than by delimiter. Add `--trailer-record-type-field`/`--trailer-record-type-value` when the trailer line is marked (for example a leading `TRL`); without them, the file's (or sidecar's) last non-blank line is read as the trailer. Add `--compare-to computed_totals.csv` to also check the trailer's own numbers against totals computed from the landed rows — a disagreement there is reported as an error and nothing is written, independently of anything `patrol` checks against the warehouse. See [examples/trailers](examples/trailers/) for a worked fixed-width and delimited example.
+
+## Flagging undocumented tables and columns
+
+`patrol` also checks how much of the source is actually documented — column and table descriptions and owners — alongside the data itself:
+
+```bash
+dataranger patrol --dbt-model fct_payments            # reads descriptions from the dbt manifest
+dataranger patrol --db warehouse.duckdb --table payments --ref-table customers \
+    --manifest-table control_totals --date booking_date --segment channel --amount amount
+    # reads `comment on table`/`comment on column` from DuckDB, or INFORMATION_SCHEMA comments on Snowflake
+```
+
+The summary prints a coverage line ("definitions: 14 of 19 columns") and the dashboard shows the same figure alongside any table missing a description or an owner; `metadata.csv` in the report folder has one row per table. Pass `--skip-metadata-check` to turn this off.
+
+## Escalating an ambiguous tie
+
+Sometimes two different repairs both reconcile perfectly against the source's control totals but leave the table in different states — for example, deduplicating a true duplicate key by keeping the first copy versus the latest, when the two copies agree on amount (so either choice passes every reconciliation check) but disagree on some other column. DataRanger can't tell which is right from the totals alone, so by default it escalates rather than silently picking one; the patrol console shows the competing fixes side by side. Pass `--allow-ambiguous-autofix` to restore the old behavior of picking the smallest change outright.
 
 ## How DataRanger compares
 
@@ -143,6 +212,8 @@ safe to apply without waking anyone up.
 </p>
 
 DataRanger reads from Snowflake, dbt models, DuckDB and files, and runs from the command line, a GitHub Action or an AI agent. Whatever the source, a patrol is three `SELECT` statements: nothing is written back.
+
+To run it on a schedule, see the [GitHub Actions example](examples/scheduled/README.md) and the [Airflow DAG example](examples/airflow/README.md).
 
 ## Snowflake
 
@@ -198,7 +269,7 @@ The BigQuery target is experimental: so far it has only run against a stand-in c
 Run a patrol in CI, after a load or on a schedule. The action writes the result to the job summary, uploads the report, and fails the job when an incident needs a person.
 
 ```yaml
-- uses: akshaysharma1088/dataranger@v0.6.0
+- uses: akshaysharma1088/dataranger@v0.8.0
   with:
     snowflake: "true"
     table: ANALYTICS.GOLD.PAYMENTS
@@ -218,7 +289,7 @@ Run a patrol in CI, after a load or on a schedule. The action writes the result 
 After `dbt build`, one line is enough when the mapping is in the model's `meta` block:
 
 ```yaml
-- uses: akshaysharma1088/dataranger@v0.6.0
+- uses: akshaysharma1088/dataranger@v0.8.0
   with:
     dbt-model: fct_payments
 ```
@@ -265,6 +336,18 @@ Each patrol returns the counts (auto-fixed, no action needed, escalate), the inc
 The tools are read-only towards your data. Inputs are opened read-only, nothing is written back, and fixes exist only in the proposed fixed version for review. An agent can learn what is wrong and what DataRanger could prove; it cannot change your warehouse through this server.
 
 Try asking your agent: *"Use DataRanger to run the demo and tell me which partitions need a person, and why."*
+
+### Docker
+
+Prebuilt images, one per release, on the [GitHub Container Registry](https://github.com/akshaysharma1088/dataranger/pkgs/container/dataranger):
+
+```bash
+docker run --rm -i ghcr.io/akshaysharma1088/dataranger:latest
+```
+
+Runs DataRanger as the same MCP server over stdio, for hosts that run tools in a container rather
+than a local Python environment. Pin a version instead of `latest` with
+`ghcr.io/akshaysharma1088/dataranger:v0.6.2`, and so on for any tagged release.
 
 ## What data leaves your machine
 

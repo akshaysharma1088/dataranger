@@ -45,6 +45,7 @@ h1{font-size:30px;line-height:1.1;margin:0;font-weight:600}.sub{color:var(--ridg
 .stop.fixed b{width:12px;height:12px;background:var(--canopy)}
 .stop.benign b{width:11px;height:11px;background:var(--surface);border:2px solid var(--canopy)}
 .stop.escalate b{width:14px;height:14px;border-radius:3px;transform:rotate(45deg);background:var(--blaze)}
+.stop.open b{width:11px;height:11px;background:var(--surface);border:2px dashed var(--ridge)}
 .stop[aria-pressed="true"] b{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--ink)}
 .ticks{display:flex;justify-content:space-between;font-size:12px;color:var(--ridge)}
 .summary{font-size:17px;margin:18px 0 18px;max-width:72ch}.summary .count{font-size:22px;font-weight:600}
@@ -60,12 +61,13 @@ h1{font-size:30px;line-height:1.1;margin:0;font-weight:600}.sub{color:var(--ridg
 .item:hover{background:var(--moss)}.item[aria-current="true"]{background:var(--moss);box-shadow:inset 3px 0 0 var(--canopy)}
 .item .d{font-weight:600}.item .a{display:block;color:var(--ridge);font-size:13px}
 .mark{width:12px;height:12px;border-radius:50%}.mark.escalate{background:var(--blaze);border-radius:2px;transform:rotate(45deg) scale(.85)}
-.mark.fixed{background:var(--canopy)}.mark.benign{border:2px solid var(--canopy)}
+.mark.fixed{background:var(--canopy)}.mark.benign{border:2px solid var(--canopy)}.mark.open{border:2px dashed var(--ridge)}
 .state{font-size:12.5px;color:var(--ridge)}.empty{padding:22px 16px;color:var(--ridge)}
 .detail{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;min-width:0}
 .detail h2{font-size:24px;margin:0;font-weight:600}.verdict{margin:6px 0 16px;font-size:15.5px;max-width:70ch}
 .badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:13px;font-weight:600;margin-right:6px}
 .badge.escalate{background:var(--blaze-soft);color:#7a5600}.badge.fixed{background:var(--moss);color:var(--canopy)}.badge.benign{background:var(--fog);color:var(--ridge)}
+.badge.open{background:var(--fog);color:var(--ridge);border:1px dashed var(--ridge)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .badge.escalate{color:var(--blaze)}}:root[data-theme="dark"] .badge.escalate{color:var(--blaze)}
 h3{font-size:16px;margin:18px 0 8px;font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:13px}
@@ -73,6 +75,11 @@ h3{font-size:16px;margin:18px 0 8px;font-weight:600}
 .facts div span{display:block;color:var(--ridge);font-size:12.5px}
 .cands{width:100%;border-collapse:collapse;font-size:14px}.cands th{text-align:left;color:var(--ridge);font-weight:600;font-size:12.5px;padding:6px 8px;border-bottom:1px solid var(--line)}
 .cands td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}.cands tr.chosen td{background:var(--moss)}
+.cands tr.tied td{background:var(--blaze-soft)}
+.tieboxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0}
+.tiebox{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px}.tiebox h4{margin:0 0 4px;font-size:13.5px}
+.metabox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;max-width:340px;font-size:13.5px}
+.metabox strong{display:block;font-size:14.5px}.metabox span{color:var(--ridge)}
 .gap{position:relative;height:10px;background:var(--fog);border-radius:5px;min-width:120px}
 .gap i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--canopy)}.gap i.over{background:var(--blaze)}.gap i.inf{background:var(--ember);width:100%!important}
 .gap u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
@@ -106,9 +113,9 @@ const FIX = {none:()=>'Leave the data as it is', dedupe:p=>p.keep==='last'?'Remo
 const ALERT = {duplicate_keys:'Duplicate keys', duplicate_rows:'Rows re-sent under new keys', missing_partition:'Partition missing',
  orphan_keys:'Unknown customers', volume_drop:'Volume drop', volume_rise:'Volume spike', mix_drop:'Category or channel share fell',
  mix_rise:'Category or channel share rose', scale_shift:'Amounts on a different scale', reconcile_gap:'Does not match source totals',
- schema_contract:'Schema changed', null_spike:'Column suddenly empty'};
-const KIND = {'auto-fixed':'fixed','no action needed':'benign','escalate':'escalate'};
-const LABEL = {fixed:'Fixed and proven', benign:'Checked, left alone', escalate:'Needs you'};
+ schema_contract:'Schema changed', null_spike:'Column suddenly empty', late_open:'Short of source totals, still within the lateness window'};
+const KIND = {'auto-fixed':'fixed','no action needed':'benign','escalate':'escalate','still open':'open'};
+const LABEL = {fixed:'Fixed and proven', benign:'Checked, left alone', escalate:'Needs you', open:'Still waiting on late data'};
 function parse(fx){const m=/^(\w+)\((.*)\)$/.exec(fx||'');if(!m)return{a:fx,p:{}};const p={};
  m[2].split(', ').filter(Boolean).forEach(kv=>{const i=kv.indexOf('=');p[kv.slice(0,i)]=kv.slice(i+1)});return{a:m[1],p}}
 const fixName = fx=>{const {a,p}=parse(fx);return (FIX[a]||(()=>fx))(p)};
@@ -140,9 +147,12 @@ function list(){const ul=document.getElementById('list');const rows=inc.filter(r
   <span class="state">${r.state||''}</span></button></li>`).join(''):`<li class="empty">${tab==='escalate'?'Nothing needs you. The patrol handled every incident on its own or found nothing wrong.':'No incidents here.'}</li>`;
  ul.querySelectorAll('.item').forEach(b=>b.onclick=()=>select(+b.dataset.i))}
 
-function why(r){const c=r.chosen;if(r.table_level)return'A column was renamed or changed type upstream. Schema changes always go to a person.';
+function why(r){const c=r.chosen;const ctx=r.context||{};
+ if(r.k==='open')return`This partition is short of the source's control totals by ${pct(ctx.gap)}, but it is still inside the lateness window (${ctx.lateness_days} day${ctx.lateness_days===1?'':'s'}), so it may just be waiting on records that haven't arrived yet. It will be checked again on the next patrol.`;
+ if(r.table_level)return'A column was renamed or changed type upstream. Schema changes always go to a person.';
  if(r.k==='fixed')return`${fixName(c.fix)}. The result matches the source's control totals within ${pct(c.residual)}, under the certified threshold of ${pct(lam)}.`;
  if(r.k==='benign')return`The data already matches the source within ${pct(c.residual)}. The alert reflects a real event or a slightly stale control total.`;
+ if(c&&c.ambiguous_tie)return`${c.tie_candidates.length} fixes all match the source's control totals equally well, but they leave the data in different states. DataRanger can't tell which is right from the totals alone, so a person picks.`;
  if(!c)return'No fix could be proposed for this alert.';
  if(!isFinite(c.residual))return`Every fix DataRanger could try would still leave duplicate keys, unknown customers or an empty partition.`;
  if(c.tier!=='auto')return`The best-supported fix, "${fixName(c.fix).toLowerCase()}", deletes data or changes its meaning, so a person decides.`;
@@ -154,18 +164,24 @@ function detail(){const r=inc.find(x=>x.i===sel);const el=document.getElementByI
   <div><span>Rows at source</span>${(ctx.source_rows??'n/a').toLocaleString()}</div><div><span>Usual for this weekday</span>${(ctx.typical_rows_for_weekday??'').toLocaleString()}</div>
   <div><span>Reload possible</span>${ctx.reload_from_source_available?'Yes':'No, outside retention'}</div></div>`;
  const maxR=Math.max(lam*4,...(r.candidates||[]).map(c=>isFinite(c.residual)?c.residual:0),0.001);
+ const tie=r.chosen&&r.chosen.ambiguous_tie?r.chosen:null;
+ const tieFps=tie?new Set((tie.tie_candidates||[]).map(x=>x.table_fingerprint)):null;
  const cands=(r.candidates||[]).slice().sort((a,b)=>(isFinite(a.residual)?a.residual:9)-(isFinite(b.residual)?b.residual:9)).map(c=>{
-  const chosen=r.chosen&&c.fix===r.chosen.fix;const inf=!isFinite(c.residual);const w=inf?100:Math.min(100,c.residual/maxR*100);
+  const chosen=r.chosen&&!tie&&c.fix===r.chosen.fix;const tied=tieFps&&tieFps.has(c.table_fingerprint);
+  const inf=!isFinite(c.residual);const w=inf?100:Math.min(100,c.residual/maxR*100);
   const over=!inf&&c.residual>lam;const tier=c.tier==='auto'?'May run automatically':'Always asks a person';
-  return`<tr class="${chosen?'chosen':''}"><td>${fixName(c.fix)}${chosen?' <span class="badge '+r.k+'">Chosen</span>':''}<div class="gapnum">${tier}</div></td>
+  return`<tr class="${chosen?'chosen':''}${tied?' tied':''}"><td>${fixName(c.fix)}${chosen?' <span class="badge '+r.k+'">Chosen</span>':''}${tied?' <span class="badge escalate">Tied</span>':''}<div class="gapnum">${tier}</div></td>
    <td style="width:38%"><div class="gap" role="img" aria-label="Gap to source ${pct(c.residual)}"><i class="${inf?'inf':(over?'over':'')}" style="width:${w}%"></i><u style="left:${Math.min(100,lam/maxR*100)}%"></u></div></td>
    <td class="gapnum">${pct(c.residual)}</td></tr>`}).join('');
- const act=r.k==='escalate'?(r.chosen&&isFinite(r.chosen.residual)?`<button class="btn primary" data-act="Approved">Approve: ${fixName(r.chosen.fix).toLowerCase()}</button>`:'')+`<button class="btn" data-act="Rejected">${r.chosen&&isFinite(r.chosen.residual)?'Reject and fix by hand':'Fix by hand'}</button>`
+ const tieboxes=tie?`<h3>Competing fixes, side by side</h3><div class="tieboxes">${tie.tie_candidates.map(c=>
+  `<div class="tiebox"><h4>${fixName(c.fix)}</h4>Matches source totals within ${pct(c.residual)}<br>Fingerprint: ${(c.table_fingerprint||'').slice(0,12)}&hellip;</div>`).join('')}</div>`:'';
+ const act=r.k==='open'?'':r.k==='escalate'?(r.chosen&&!tie&&isFinite(r.chosen.residual)?`<button class="btn primary" data-act="Approved">Approve: ${fixName(r.chosen.fix).toLowerCase()}</button>`:'')+`<button class="btn" data-act="Rejected">${r.chosen&&!tie&&isFinite(r.chosen.residual)?'Reject and fix by hand':'Fix by hand'}</button>`
   :r.k==='fixed'?`<button class="btn" data-act="Rolled back">Roll back to the previous version</button>`:`<button class="btn" data-act="Reopened">Reopen as an incident</button>`;
  el.innerHTML=`<h2>${fmtDate(r.partition)}</h2><p class="verdict"><span class="badge ${r.k}">${LABEL[r.k]}</span>${why(r)}</p>
   <h3>What fired</h3><div class="chips">${alerts}</div>${facts?'<h3>The partition</h3>'+facts:''}
+  ${tieboxes}
   ${cands?`<h3>Fixes DataRanger tried</h3><table class="cands"><thead><tr><th>Fix, tested on a copy</th><th>Gap to source totals (line: threshold)</th><th></th></tr></thead><tbody>${cands}</tbody></table>`:''}
-  <div class="actions">${act}</div><p class="note">${r.state?'Your decision: '+r.state.toLowerCase()+'. It will be used to recalibrate the gate.':'Your decision is recorded in the audit log and used the next time the gate is calibrated.'}</p>`;
+  ${act?`<div class="actions">${act}</div>`:''}<p class="note">${r.k==='open'?'No action is recorded for a still-open partition; it will be re-checked on the next patrol.':r.state?'Your decision: '+r.state.toLowerCase()+'. It will be used to recalibrate the gate.':'Your decision is recorded in the audit log and used the next time the gate is calibrated.'}</p>`;
  el.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{r.state=b.dataset.act;toast(`${b.dataset.act}: ${fmtDate(r.partition)}`);render()})}
 
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2200)}
@@ -196,6 +212,15 @@ def render(incidents: list[dict], title: str, run_date: str, meta: dict | None =
     data = json.dumps({"incidents": _clean(incidents), "meta": meta}, default=str).replace("</", "<\\/")
     table = html.escape(str(meta.get("table", "transactions")))
     n_days = len(meta["days"])
+    metadata = meta.get("metadata")
+    meta_box = ""
+    if metadata:
+        gaps = len(metadata.get("tables_without_description") or []) + len(metadata.get("tables_without_owner") or [])
+        note = ("Every table has a description and an owner." if not gaps else
+                f"{len(metadata.get('tables_without_description') or [])} table(s) with no description, "
+                f"{len(metadata.get('tables_without_owner') or [])} with no owner.")
+        meta_box = (f'<div class="metabox" id="metadata"><strong>{html.escape(metadata.get("coverage", ""))}</strong>'
+                    f'<span>{html.escape(note)}</span></div>')
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,14 +230,14 @@ def render(incidents: list[dict], title: str, run_date: str, meta: dict | None =
 <nav class="nav" aria-label="Sections"><a href="#" aria-current="page">Patrol</a><a href="audit.jsonl">Audit log</a><a href="#gate">Calibration</a></nav>
 <div class="foot">Fixes what it can prove.<br>Calls you for the rest.</div></aside>
 <main><div class="top"><div><h1>Morning patrol</h1><p class="sub">{table}, {n_days} daily partitions, run {html.escape(run_date)}</p></div>
-<div class="gatebox" id="gate"><strong>Wrong fixes held under {meta['alpha']:.0%}</strong><span>Certified threshold: a fix may differ from the source totals by at most {meta['lambda'] * 100:.2f}%. Recalibrate as your team reviews decisions.</span></div></div>
+<div class="gatebox" id="gate"><strong>Wrong fixes held under {meta['alpha']:.0%}</strong><span>Certified threshold: a fix may differ from the source totals by at most {meta['lambda'] * 100:.2f}%. Recalibrate as your team reviews decisions.</span></div>{meta_box}</div>
 <section class="trail" aria-label="Patrol trail"><div class="trail-head"><span class="trail-label">The trail: every partition on this patrol</span>
-<span class="legend"><span><i style="background:var(--blaze);border-radius:2px;transform:rotate(45deg)"></i>Needs you</span><span><i style="background:var(--canopy)"></i>Fixed and proven</span><span><i style="border:2px solid var(--canopy)"></i>Checked, left alone</span><span><i style="background:var(--line);width:6px;height:6px"></i>No alerts</span></span></div>
+<span class="legend"><span><i style="background:var(--blaze);border-radius:2px;transform:rotate(45deg)"></i>Needs you</span><span><i style="background:var(--canopy)"></i>Fixed and proven</span><span><i style="border:2px solid var(--canopy)"></i>Checked, left alone</span><span><i style="border:2px dashed var(--ridge)"></i>Waiting on late data</span><span><i style="background:var(--line);width:6px;height:6px"></i>No alerts</span></span></div>
 <div class="path" id="path"></div><div class="ticks"><span id="t0"></span><span id="t1"></span></div></section>
 <p class="summary" id="summary"></p>
 <div class="work"><section class="queue" aria-label="Incidents"><div class="tabs" role="tablist">
 <button role="tab" data-tab="escalate">Needs you <em></em></button><button role="tab" data-tab="fixed">Fixed <em></em></button>
-<button role="tab" data-tab="benign">Left alone <em></em></button><button role="tab" data-tab="all">All <em></em></button></div>
+<button role="tab" data-tab="benign">Left alone <em></em></button><button role="tab" data-tab="open">Waiting <em></em></button><button role="tab" data-tab="all">All <em></em></button></div>
 <ul class="list" id="list"></ul></section><section class="detail" id="detail" aria-live="polite"></section></div>
 </main></div><div class="toast" id="toast" role="status"></div>
 <script type="application/json" id="data">{data}</script><script>{JS}</script></body></html>"""

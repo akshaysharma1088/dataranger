@@ -88,6 +88,24 @@ class Mapping:
         out["txn_date"] = pd.to_datetime(out["txn_date"]).dt.date
         return out[list(INTERNAL)]
 
+    def totals_to_internal(self, manifest: pd.DataFrame) -> pd.DataFrame:
+        """Control totals with DataRanger's internal names. A `distinct_<column>` measure names one of the
+        user's columns (distinct_cust_id for --reference cust_id), so it is renamed along with them; left
+        as it was, it would match no column and be skipped without a word."""
+        self.validate_manifest(manifest)
+        internal = {self.key: "txn_id", self.reference: "customer_id", self.segment: "channel"}
+        if self.category:
+            internal[self.category] = "category"
+        internal = {str(k).lower(): v for k, v in internal.items()}
+        names = {self.date: "txn_date", self.segment: "channel"}
+        for c in manifest.columns:
+            low = str(c).lower()
+            if low.startswith("distinct_"):
+                names[c] = "distinct_" + internal.get(low[len("distinct_"):], low[len("distinct_"):])
+        man = manifest.rename(columns=names).copy()
+        man["txn_date"] = pd.to_datetime(man["txn_date"]).dt.date
+        return man
+
     def to_user(self, df: pd.DataFrame) -> pd.DataFrame:
         m = {"txn_id": self.key, "customer_id": self.reference, "txn_date": self.date,
              "channel": self.segment, "amount": self.amount}
@@ -108,28 +126,39 @@ class PatrolResult:
 
 
 def patrol(facts: pd.DataFrame, refs: pd.DataFrame, manifest: pd.DataFrame, mapping: Mapping,
-           lam: float = DEFAULT_LAMBDA, source_facts: pd.DataFrame | None = None, retention_days: int = 14) -> PatrolResult:
-    """Detect, propose, verify and gate. `manifest` has columns date, segment ('*' for the total), n, amount."""
+           lam: float = DEFAULT_LAMBDA, source_facts: pd.DataFrame | None = None, retention_days: int = 14,
+           lateness_days: int = 0, detect_ties: bool = True) -> PatrolResult:
+    """Detect, propose, verify and gate. `manifest` has columns date, segment ('*' for the total), n, amount.
+
+    `lateness_days` (issue #85): a day that is short of its control totals stays "still open" -- neither
+    auto-fixed nor escalated -- for this many days after it occurs, instead of being reported as an
+    incident; see `repair.agent.run`. `detect_ties` (issue #91): escalate when two or more candidate
+    fixes reconcile equally well but leave different data, instead of silently picking one; see
+    `repair.gate.select`."""
     mapping.validate_facts(facts)
     mapping.validate_refs(refs)
     mapping.validate_manifest(manifest)
     t = mapping.to_internal(facts)
     cust = refs.rename(columns={mapping.ref_key: "customer_id"})[["customer_id"]]
-    man = manifest.rename(columns={mapping.date: "txn_date", mapping.segment: "channel"}).copy()
-    man["txn_date"] = pd.to_datetime(man["txn_date"]).dt.date
+    man = mapping.totals_to_internal(manifest)
     days = sorted(pd.date_range(min(t["txn_date"]), max(t["txn_date"])).date)
     src = mapping.to_internal(source_facts) if source_facts is not None else t.iloc[:0]
     inst = Instance(seed=0, size="user", days=days, customers=cust, source_txn=src)
     case = Case(instance=inst, source={"transactions": src, "customers": cust},
                 warehouse={"transactions": t, "customers": cust}, issues=[], manifest=man)
-    recs = run(case, retention_days=retention_days if source_facts is not None else -10**6)
+    recs = run(case, retention_days=retention_days if source_facts is not None else -10**6,
+              lateness_days=lateness_days)
     fixed = t.copy()
     for r in recs:
+        if r.get("late_open"):
+            r["decision"] = "still open"
+            r["chosen"] = None
+            continue
         r["decision"] = "escalate"
         if r["table_level"]:
             continue
-        c = select(r)
-        if c and c["tier"] == "auto" and c["residual"] <= lam:
+        c = select(r, detect_ties=detect_ties)
+        if c and not c.get("ambiguous_tie") and c["tier"] == "auto" and c["residual"] <= lam:
             r["decision"] = "no action needed" if c["action"] == "none" else "auto-fixed"
             r["applied"] = c["fix"]
             if c["action"] != "none":
@@ -156,9 +185,12 @@ def _parse(s: str) -> F.Fix:
     return F.make(action, **params)
 
 
-def write_outputs(res: PatrolResult, out: Path, title: str = "DataRanger patrol report", table: str = "transactions") -> None:
+def write_outputs(res: PatrolResult, out: Path, title: str = "DataRanger patrol report", table: str = "transactions",
+                  metadata_report=None) -> None:
     from .report import render
     out.mkdir(parents=True, exist_ok=True)
+    if metadata_report is not None:
+        pd.DataFrame(metadata_report.to_rows()).to_csv(out / "metadata.csv", index=False)
     with open(out / "audit.jsonl", "w", encoding="utf-8") as f:
         for r in res.incidents:
             clean = lambda c: {k: v for k, v in c.items() if k != "correct"} if c else c  # drop benchmark-only truth
@@ -177,6 +209,8 @@ def write_outputs(res: PatrolResult, out: Path, title: str = "DataRanger patrol 
     if res.fixed_table is not None:
         res.fixed_table.to_csv(out / "fixed_version.csv", index=False)
     meta = {"table": table, "days": res.days, "lambda": res.lam, "rows": res.rows, "alpha": 0.01}
+    if metadata_report is not None:
+        meta["metadata"] = metadata_report.to_dict()
     (out / "dashboard.html").write_text(render(res.incidents, title, run_date=date.today().isoformat(), meta=meta), encoding="utf-8")
 
 

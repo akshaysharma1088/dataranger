@@ -89,3 +89,34 @@ def test_patrol_dbt_tool(tmp_path):
     assert (tmp_path / "out" / "dashboard.html").exists()
     with pytest.raises(ValueError, match="not found in the manifest"):
         M.patrol_dbt(str(project), "nope")
+
+
+def test_patrol_files_lateness_days_reports_still_open(tmp_path):
+    from datetime import date
+
+    import pandas as pd
+
+    customers = pd.DataFrame({"customer_id": [1, 2, 3]})
+    days = [date(2026, 11, 18), date(2026, 11, 19), date(2026, 11, 20)]
+    rows = []
+    for i, d in enumerate(days):
+        for j in range(5):
+            rows.append({"txn_id": i * 10 + j, "customer_id": (j % 3) + 1, "txn_date": d,
+                        "channel": "card", "category": "x", "amount": 10.0 + j})
+    facts = pd.DataFrame(rows)
+    late_day = days[-1]
+    facts = facts.drop(facts.index[facts["txn_date"] == late_day][:2]).reset_index(drop=True)
+    manifest = pd.DataFrame([
+        {"txn_date": d, "channel": "*", "n": 5, "amount": 10.0 * 5 + 10} for d in days
+    ])
+    f, r, m = tmp_path / "facts.csv", tmp_path / "customers.csv", tmp_path / "totals.csv"
+    facts.to_csv(f, index=False)
+    customers.to_csv(r, index=False)
+    manifest.to_csv(m, index=False)
+
+    without = M.patrol_files(str(f), str(r), str(m), out_dir=str(tmp_path / "out1"))
+    assert without["still_open"] == 0
+
+    with_window = M.patrol_files(str(f), str(r), str(m), out_dir=str(tmp_path / "out2"), lateness_days=2)
+    assert with_window["still_open"] == 1
+    assert any(i["decision"] == "still open" for i in with_window["all_incidents"])

@@ -30,7 +30,7 @@ DuckDB, Snowflake and Postgres targets are supported, and BigQuery is experiment
 
 ```yaml
 - run: dbt build
-- uses: akshaysharma1088/dataranger@v0.6.0
+- uses: akshaysharma1088/dataranger@v0.8.0
   with:
     dbt-model: fct_payments
 ```

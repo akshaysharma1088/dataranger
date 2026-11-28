@@ -41,12 +41,19 @@ Threshold = Annotated[float | None, Field(description=(
 Days = Annotated[int | None, Field(description=(
     "Read only the last N days of the fact table and control totals (today counts as day one). "
     "Use at least 30 so the checks have a baseline. Pass null to read the whole table, which can be slow and costly."))]
+LatenessDays = Annotated[int, Field(description=(
+    "Give a day this many days of grace after it occurs before treating a shortfall against the control "
+    "totals as broken, since it may still be waiting on late-arriving records (there is no load timestamp "
+    "to measure from, so the grace period counts back from the most recent day in the data, not from now). "
+    "A shortfall still inside the window is reported as 'still open' rather than 'escalate', and is neither "
+    "auto-fixed nor escalated. 0 (the default) disables this and reports every shortfall immediately. A "
+    "surplus of rows is always reported immediately, even inside the window."))]
 
 
 class Incident(TypedDict):
     partition: str  # YYYY-MM-DD, or "table-level"
     problems: list[str]  # detector names, e.g. duplicate_keys, volume_drop, orphan_keys
-    decision: str  # "auto-fixed", "no action needed" or "escalate"
+    decision: str  # "auto-fixed", "no action needed", "escalate" or "still open" (see lateness_days)
     proposed_fix: str | None
     residual: float | None  # largest relative gap to the control totals after the proposed fix
 
@@ -66,6 +73,7 @@ class PatrolSummary(TypedDict):
     auto_fixed: int
     no_action_needed: int
     escalate: int
+    still_open: int  # shortfalls still inside the lateness window (see lateness_days); neither fixed nor escalated
     gate_threshold: float
     needs_a_person: list[Incident]
     all_incidents: list[Incident]
@@ -91,7 +99,8 @@ def _finite(x):
 
 
 def _summary(res, out: Path, table: str) -> PatrolSummary:
-    counts = {d: sum(r["decision"] == d for r in res.incidents) for d in ("auto-fixed", "no action needed", "escalate")}
+    counts = {d: sum(r["decision"] == d for r in res.incidents)
+              for d in ("auto-fixed", "no action needed", "escalate", "still open")}
     incidents = []
     for r in res.incidents:
         chosen = r.get("chosen") or {}
@@ -109,6 +118,7 @@ def _summary(res, out: Path, table: str) -> PatrolSummary:
         "auto_fixed": counts["auto-fixed"],
         "no_action_needed": counts["no action needed"],
         "escalate": counts["escalate"],
+        "still_open": counts["still open"],
         "gate_threshold": res.lam,
         "needs_a_person": [i for i in incidents if i["decision"] == "escalate"],
         "all_incidents": incidents,
@@ -123,12 +133,14 @@ def _summary(res, out: Path, table: str) -> PatrolSummary:
     }
 
 
-def _run(facts, refs, manifest, table: str, out_dir: str | None, mapping_kwargs: dict, threshold: float | None) -> PatrolSummary:
+def _run(facts, refs, manifest, table: str, out_dir: str | None, mapping_kwargs: dict, threshold: float | None,
+         lateness_days: int = 0) -> PatrolSummary:
     from .patrol import DEFAULT_LAMBDA, Mapping, patrol, write_outputs
 
     mapping = Mapping(**mapping_kwargs)
     try:
-        res = patrol(facts, refs, manifest, mapping, lam=DEFAULT_LAMBDA if threshold is None else threshold)
+        res = patrol(facts, refs, manifest, mapping, lam=DEFAULT_LAMBDA if threshold is None else threshold,
+                     lateness_days=lateness_days)
     except SystemExit as e:  # mapping errors are raised as SystemExit for the CLI
         raise ValueError(str(e)) from None
     out = _out_dir(out_dir)
@@ -145,7 +157,8 @@ def patrol_duckdb(
             "the date column, the segment column ('*' = whole day), n (row count) and amount (sum)."))],
         out_dir: OutDir = None, key: Key = "txn_id", reference: Reference = "customer_id",
         ref_key: RefKey = "customer_id", date: DateCol = "txn_date", segment: Segment = "channel",
-        category: Category = None, amount: Amount = "amount", threshold: Threshold = None) -> PatrolSummary:
+        category: Category = None, amount: Amount = "amount", threshold: Threshold = None,
+        lateness_days: LatenessDays = 0) -> PatrolSummary:
     """Check a fact table in a DuckDB database for data-quality incidents and say which are safe to fix.
     A patrol checks every daily partition of the fact table for duplicate keys, duplicate rows, missing
     partitions, rows that point to no reference record, null spikes, and row counts or amounts that do not
@@ -173,7 +186,7 @@ def patrol_duckdb(
     facts, refs, manifest = from_duckdb(db, table, ref_table, manifest_table)
     return _run(facts, refs, manifest, table, out_dir,
                 dict(key=key, reference=reference, ref_key=ref_key, date=date, segment=segment,
-                     category=category, amount=amount), threshold)
+                     category=category, amount=amount), threshold, lateness_days)
 
 
 def patrol_files(
@@ -184,7 +197,8 @@ def patrol_files(
             "segment, with the date column, the segment column ('*' = whole day), n (row count) and amount (sum)."))],
         out_dir: OutDir = None, key: Key = "txn_id", reference: Reference = "customer_id",
         ref_key: RefKey = "customer_id", date: DateCol = "txn_date", segment: Segment = "channel",
-        category: Category = None, amount: Amount = "amount", threshold: Threshold = None) -> PatrolSummary:
+        category: Category = None, amount: Amount = "amount", threshold: Threshold = None,
+        lateness_days: LatenessDays = 0) -> PatrolSummary:
     """Check a fact table in CSV, TSV or Parquet files for data-quality incidents and say which are safe to fix.
     A patrol checks every daily partition of the fact table for duplicate keys, duplicate rows, missing
     partitions, rows that point to no reference record, null spikes, and row counts or amounts that do not
@@ -213,7 +227,7 @@ def patrol_files(
     facts, refs, manifest = from_files(facts_file, ref_file, manifest_file)
     return _run(facts, refs, manifest, Path(facts_file).stem, out_dir,
                 dict(key=key, reference=reference, ref_key=ref_key, date=date, segment=segment,
-                     category=category, amount=amount), threshold)
+                     category=category, amount=amount), threshold, lateness_days)
 
 
 def patrol_snowflake(
@@ -229,7 +243,8 @@ def patrol_snowflake(
         days: Days = 30,
         out_dir: OutDir = None, key: Key = "txn_id", reference: Reference = "customer_id",
         ref_key: RefKey = "customer_id", date: DateCol = "txn_date", segment: Segment = "channel",
-        category: Category = None, amount: Amount = "amount", threshold: Threshold = None) -> PatrolSummary:
+        category: Category = None, amount: Amount = "amount", threshold: Threshold = None,
+        lateness_days: LatenessDays = 0) -> PatrolSummary:
     """Check a fact table in Snowflake for data-quality incidents and say which are safe to fix.
 
     A patrol checks every daily partition of the fact table for duplicate keys, duplicate rows, missing
@@ -260,7 +275,7 @@ def patrol_snowflake(
 
     columns = dict(key=key, reference=reference, ref_key=ref_key, date=date, segment=segment, category=category, amount=amount)
     facts, refs, manifest = from_snowflake(table, ref_table, manifest_table, Mapping(**columns), days=days, connection=connection)
-    return _run(facts, refs, manifest, table, out_dir, columns, threshold)
+    return _run(facts, refs, manifest, table, out_dir, columns, threshold, lateness_days)
 
 
 def patrol_dbt(
@@ -281,7 +296,10 @@ def patrol_dbt(
         segment: Annotated[str | None, Field(description="Column that splits each day into segments, such as channel; the control totals need the same column. Omit to use meta.dataranger.segment, or channel.")] = None,
         category: Annotated[str | None, Field(description="Optional categorical column of the fact model. Omit to use meta.dataranger.category, or none.")] = None,
         amount: Annotated[str | None, Field(description="Numeric amount column of the fact model. Omit to use meta.dataranger.amount, or amount.")] = None,
-        threshold: Threshold = None) -> PatrolSummary:
+        threshold: Threshold = None,
+        lateness_days: Annotated[int | None, Field(description=(
+            "Give a day this many days of grace after it occurs before treating a shortfall as broken (see "
+            "LatenessDays). Omit to use the fact model's meta.dataranger.lateness_days, or 0 if it sets none."))] = None) -> PatrolSummary:
     """Check the table behind a dbt model for data-quality incidents and say which are safe to fix.
 
     A patrol checks every daily partition of the fact table for duplicate keys, duplicate rows, missing
@@ -309,7 +327,7 @@ def patrol_dbt(
     outputs (paths to the report files). Pass outputs.folder and a partition to get_incident for the
     full evidence behind one decision. Tell the user about every escalated incident.
     """
-    from .connectors.dbt import from_dbt
+    from .connectors.dbt import find_node, from_dbt, load_manifest, model_settings
 
     overrides = dict(key=key, reference=reference, ref_key=ref_key, date=date, segment=segment, category=category, amount=amount)
     facts, refs, manifest, mapping, name = from_dbt(project_dir, model, mapping_overrides=overrides, ref_model=ref_model,
@@ -317,7 +335,12 @@ def patrol_dbt(
                                                     profiles_dir=profiles_dir, days=days)
     columns = dict(key=mapping.key, reference=mapping.reference, ref_key=mapping.ref_key, date=mapping.date,
                    segment=mapping.segment, category=mapping.category, amount=mapping.amount)
-    return _run(facts, refs, manifest, name, out_dir, columns, threshold)
+    if lateness_days is None:
+        try:
+            lateness_days = model_settings(find_node(load_manifest(project_dir), model)).get("lateness_days")
+        except ValueError:
+            lateness_days = None
+    return _run(facts, refs, manifest, name, out_dir, columns, threshold, int(lateness_days or 0))
 
 
 def get_incident(

@@ -42,7 +42,8 @@ def cutoff(days: int | None, today: date | None = None) -> date | None:
 
 def build_queries(table: str, ref_table: str, manifest_table: str, mapping, days: int | None = None,
                   today: date | None = None, dialect: str | None = None) -> tuple[str, str, str]:
-    """The three read-only queries of a patrol. Only the mapped columns are selected, to keep transfers small.
+    """The three read-only queries of a patrol. Only the mapped columns of the facts are selected, to keep
+    transfers small; the control totals are read whole, so optional measures such as hash_total are not dropped.
 
     dialect "bigquery" accepts `backtick` quoted table names and writes the date cutoff as a plain '...' string
     literal (BigQuery has no :: cast). BigQuery coerces that literal to the date column's own type, so the cutoff
@@ -57,15 +58,20 @@ def build_queries(table: str, ref_table: str, manifest_table: str, mapping, days
     if mapping.category:
         fact_cols.append(mapping.category)
     fact_cols = list(dict.fromkeys(column(c) for c in fact_cols))
-    man_cols = list(dict.fromkeys([column(mapping.date), column(mapping.segment), "n", "amount"]))
+    column(mapping.segment, "segment column")
     facts, refs, totals = (relation(name, what, backticks=bigquery) for name, what in
                            ((table, "fact table"), (ref_table, "reference table"),
                             (manifest_table, "control totals table")))
     return (
         f"select {', '.join(fact_cols)} from {facts}{where}",
         f"select distinct {column(mapping.ref_key, 'reference key')} from {refs}",
-        f"select {', '.join(man_cols)} from {totals}{where}",
+        f"select * from {totals}{where}",  # every column: the table is small, and optional measures ride along
     )
+
+
+def is_measure(name: str) -> bool:
+    """An optional control measure (issue #87), by its lower-case column name."""
+    return name in ("hash_total", "min_amount", "max_amount") or name.startswith("distinct_")
 
 
 def _match_case(df: pd.DataFrame, wanted: list[str]) -> pd.DataFrame:
@@ -82,10 +88,11 @@ def normalize(facts: pd.DataFrame, refs: pd.DataFrame, manifest: pd.DataFrame, m
     facts = _match_case(facts, fact_cols)
     refs = _match_case(refs, [mapping.ref_key])
     manifest = _match_case(manifest, [mapping.date, mapping.segment, "n", "amount"])
+    manifest = manifest.rename(columns={c: str(c).lower() for c in manifest.columns if is_measure(str(c).lower())})
     if mapping.amount in facts:  # NUMBER columns can arrive as Decimal objects
         facts[mapping.amount] = pd.to_numeric(facts[mapping.amount], errors="coerce").astype(float)
-    for col in ("n", "amount"):
-        if col in manifest:
+    for col in manifest.columns:
+        if col in ("n", "amount") or is_measure(str(col)):
             manifest[col] = pd.to_numeric(manifest[col], errors="coerce").astype(float)
     return facts, refs, manifest
 

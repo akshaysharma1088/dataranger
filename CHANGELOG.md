@@ -1,7 +1,30 @@
 # Changelog
 
-## Unreleased
+## 0.8.0 (2026-11-26)
 
+A fix to the hash-total check from 0.7.0, the first two of four steps toward safe apply on Snowflake, and two contributions from @areebaf29: Discord alerts and an Airflow example. If your control totals carry a `hash_total`, upgrade: 0.7.0 could miss a two-row swap on days with more than about 200 rows.
+
+- **Fix: the hash total now decides the day** (#113). In 0.7.0 a `hash_total` in the control totals was compared as a fraction of its own value, so two amounts swapped between rows moved it by about one row's worth and stayed under the gate's threshold on any day with more than about 200 rows; a patrol reported such days as "no action needed". When a day's row count and amount match the control totals exactly, its hash total must now match exactly too. A swap on a day that is also short of late rows still cannot be seen.
+
+- **Fix: optional control measures on warehouse sources** (#113). Snowflake, BigQuery, Postgres and dbt sources selected only `n` and `amount` from the control totals, so `hash_total`, `min_amount`, `max_amount` and `distinct_<column>` were ignored there. The control totals are now read whole. A `distinct_<column>` measure also follows your own column name (`distinct_cust_id` with `--reference cust_id`) instead of being skipped.
+
+- **Check the Snowflake clone before any swap** (#98, second part of safe apply, #96). `snowflake_apply.verify_clone` reads the fixed days back from the clone and holds them to the control totals with the same gap rule and threshold as the patrol's gate. Given the patrol's fixed table, it also requires each day to hold exactly the rows the gate approved. A failed check drops the clone. Two read-only queries; nothing in `patrol` calls it yet.
+
+- **Write a proven fix to a Snowflake clone** (#97, first part of safe apply, #96). `dataranger.connectors.snowflake_apply.write_fix_to_clone` clones the patrolled table and replays the fix on the clone as row-level statements, so columns the patrol never read stay as they were. The patrolled table is never written to, and nothing in `patrol` calls this yet: a patrol is still three `SELECT` statements. Fixes that reload rows from the source, and duplicate copies that differ only in a column the patrol did not read, are refused with a clear message.
+
+- `--notify-webhook` supports Discord webhooks: the summary is sent as `{"content": ...}` and cut to Discord's 2,000 character limit. Contributed by @areebaf29.
+
+- Example: a daily patrol as an Airflow DAG, in `examples/airflow`. Contributed by @areebaf29.
+
+## 0.7.0 (2026-11-22)
+
+Five fixes built from feedback on the launch post — thank you to everyone who commented, especially Sabarinathan Govindaraj and Lavanya Aalla, whose suggestions became two of them.
+
+- **Flags undocumented tables and columns** (Sabarinathan Govindaraj). `patrol` now also checks how much of the source is actually documented — reading descriptions and owners from dbt's manifest, DuckDB's own comments, or Snowflake's `INFORMATION_SCHEMA`. The CLI summary, `metadata.csv` and the dashboard all show the coverage line; `--skip-metadata-check` turns it off.
+- **Catches errors that reconcile at the totals level** (Lavanya Aalla). A row count and amount matching the source doesn't prove each row is right — two rows can swap values and the totals stay exactly the same. `residual()` now also checks optional extra control measures (`hash_total`, `distinct_<column>`, `min_amount`/`max_amount`) whenever a manifest publishes them; a manifest without them behaves exactly as before.
+- **A lateness window for late-arriving records.** `patrol --lateness-days N` gives a day N days of grace before a shortfall against its control totals is reported as broken, since it may just be waiting on records that haven't landed yet. A shortfall inside the window is "still open" instead of an incident, and gets re-checked on the next patrol. Wired into the CLI, the dbt `meta.dataranger` block, and all four MCP server tools.
+- **Control totals straight from a flat file's own trailer record.** `dataranger totals --from-trailer` reads one control total from a delivery file's own trailer line or a sidecar control file — delimited or fixed-width — which is stronger evidence than a totals table computed downstream, since the sender wrote it. `--compare-to` optionally checks it against computed totals.
+- **Escalates an ambiguous tie instead of guessing.** When two candidate fixes both reconcile against the source equally well but leave the table in different states, the gate now escalates rather than silently picking one (`--allow-ambiguous-autofix` restores the old behavior). The dashboard shows the competing fixes side by side.
 - `dataranger totals` builds the control totals `patrol` needs from the raw or landing table the facts are loaded from, for teams that don't keep such a table: `--db` with `--table`, or `--facts-file`, written with `--out` (CSV, TSV or Parquet) or `--out-table` (DuckDB), using the same `--date`, `--segment` and `--amount` flags.
 - The dashboard prints cleanly and saves well as a PDF: a white page whatever the system theme, no incident card cut across pages, the navigation and action buttons left out, and links written out as text. The `@media print` approach came from @HarshRajSinghania in #64.
 
