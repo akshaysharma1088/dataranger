@@ -94,6 +94,12 @@ h3{font-size:16px;margin:18px 0 8px;font-weight:600}
 .nav{flex-direction:row;overflow-x:auto}.side .foot{display:none}main{padding:18px 16px 40px}.work{grid-template-columns:1fr}}
 @media (max-width:600px){.stop.clean{display:none}.stop b{transform:scale(.75)}.stop.escalate b{transform:rotate(45deg) scale(.75)}}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+@media print{:root:root:root{--spruce:#1d332c;--canopy:#2c6a4d;--moss:#e3eee6;--blaze:#d9a21b;--blaze-soft:#fbf1d6;--ember:#b8432f;
+--fog:#ffffff;--surface:#ffffff;--ink:#000000;--ridge:#3d4743;--line:#b9c2bd;color-scheme:light}
+body{background:#fff;font-size:11pt}.app{display:block;min-height:0}.side,.toast,.actions,.tabs{display:none}main{padding:0}.work{display:block}
+.trail,.summary,.gatebox,.item,.detail,.facts,.cands tr{break-inside:avoid;page-break-inside:avoid}.detail{margin-top:16px}
+.mark,.stop b,.legend i,.badge,.gap i,.chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+main a[href]:not([href^="#"])::after{content:" (" attr(href) ")";font-size:.85em;word-break:break-all}}
 """
 
 JS = r"""

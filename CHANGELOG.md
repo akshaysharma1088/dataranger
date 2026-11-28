@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The dashboard prints cleanly and saves well as a PDF: a white page whatever the system theme, no incident card cut across pages, the navigation and action buttons left out, and links written out as text. The `@media print` approach came from @HarshRajSinghania in #64.
+
 ## 0.8.0 (2026-11-26)
 
 A fix to the hash-total check from 0.7.0, the first two of four steps toward safe apply on Snowflake, and two contributions from @areebaf29: Discord alerts and an Airflow example. If your control totals carry a `hash_total`, upgrade: 0.7.0 could miss a two-row swap on days with more than about 200 rows.
