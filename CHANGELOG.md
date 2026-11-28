@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The dashboard prints cleanly and saves well as a PDF: a white page whatever the system theme, no incident card cut across pages, the navigation and action buttons left out, and links written out as text. The `@media print` approach came from @HarshRajSinghania in #64.
+
 ## 0.8.0 (2026-11-26)
 
 A fix to the hash-total check from 0.7.0, the first two of four steps toward safe apply on Snowflake, and two contributions from @areebaf29: Discord alerts and an Airflow example. If your control totals carry a `hash_total`, upgrade: 0.7.0 could miss a two-row swap on days with more than about 200 rows.
@@ -26,7 +30,6 @@ Five fixes built from feedback on the launch post — thank you to everyone who 
 - **Control totals straight from a flat file's own trailer record.** `dataranger totals --from-trailer` reads one control total from a delivery file's own trailer line or a sidecar control file — delimited or fixed-width — which is stronger evidence than a totals table computed downstream, since the sender wrote it. `--compare-to` optionally checks it against computed totals.
 - **Escalates an ambiguous tie instead of guessing.** When two candidate fixes both reconcile against the source equally well but leave the table in different states, the gate now escalates rather than silently picking one (`--allow-ambiguous-autofix` restores the old behavior). The dashboard shows the competing fixes side by side.
 - `dataranger totals` builds the control totals `patrol` needs from the raw or landing table the facts are loaded from, for teams that don't keep such a table: `--db` with `--table`, or `--facts-file`, written with `--out` (CSV, TSV or Parquet) or `--out-table` (DuckDB), using the same `--date`, `--segment` and `--amount` flags.
-- The dashboard prints cleanly and saves well as a PDF: a white page whatever the system theme, no incident card cut across pages, the navigation and action buttons left out, and links written out as text. The `@media print` approach came from @HarshRajSinghania in #64.
 
 ## 0.6.0 (2026-11-18)
 
